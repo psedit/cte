@@ -2,7 +2,7 @@
 
 ## Overview
 
-At the moment, there is nothing special to see here yet...
+See README in src/client and src/server for installing dependencies.
 
 ## Status
 

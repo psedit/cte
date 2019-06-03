@@ -1,3 +1,4 @@
+/* Copyright 2019 Collaborative Text Editor. All rights reserved */
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
