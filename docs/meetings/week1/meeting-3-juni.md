@@ -1,6 +1,5 @@
-# Notulen
+# Notulen 3 Juni
 
-## 3 Juni
 Niet aanwezig: Martijn, Chris, Sam, Robin.
 Vandaag is het belangrijkste vooral rollen verdelen.
 
@@ -19,7 +18,7 @@ Een git-branching model is al gekozen: https://nvie.com/posts/a-successful-git-b
 
 Nog te bespreken: coding style, pitch morgen.
 
-### Week 1 doelen
+## Week 1 doelen
 #### GUI
 Een tekstbestand kunnen renderen.
 
