@@ -9,9 +9,9 @@
 	* Bespreken resultaten *pitch*
 	* Vaststellen groepsformaties
 	* Kort doornemen van besprekingen gisteren voor zij die afwezig waren
+	* Bespreken *tech stack*
 	* Doornemen *milestones* deze week
 	* *Brainstorm* naam
-	* Nadenken over manier om zitplekken te regelen
 	* (Mogelijke) planning volgende vergadering
 7. W.V.T.T.K
 8. Doornemen nieuwe actiepunten
