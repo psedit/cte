@@ -8,7 +8,7 @@
             {{this.currFolder}}
           </li>
           <li v-for="file in files" >
-            <a :class="file.type" v-on:click="getFiles(file)">{{file.name}}</a>
+            <a :class="file.type" v-on:click="fileClick(file)">{{file.name}}</a>
           </li>
         </ul>
       </div>
@@ -79,7 +79,7 @@
         this.$electron.shell.openExternal(link)
       },
 
-      getFiles (file) {
+      fileClick (file) {
         if (file.type === 'dir') {
           this.currFolder = file.path
         }
