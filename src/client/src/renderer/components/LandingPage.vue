@@ -4,8 +4,11 @@
       <!-- Create a sidemenu. -->
       <div class="sidenav">
         <ul>
+          <li class="curr-folder">
+            {{this.currFolder}}
+          </li>
           <li v-for="file in files" >
-          <a :class="file.type" v-on:click="getFiles(file)">{{file.name}}</a>
+            <a :class="file.type" v-on:click="getFiles(file)">{{file.name}}</a>
           </li>
         </ul>
       </div>
@@ -26,22 +29,45 @@
 
   export default {
     name: 'landing-page',
+    data () {
+      return {
+        currFolder: './'
+      }
+    },
     components: { SystemInformation },
     computed: {
       files () {
         /* Create list of all files in current folder. */
-        const currFolder = './'
         const fs = require('fs')
-        let files = []
+        const currFolder = this.currFolder
+        let parentFolder
+
+        /* Get path of parent folder, used for the back button. */
+        if (currFolder === './') {
+          parentFolder = './'
+        } else {
+          let currTrimmed = currFolder.slice(0, -1)
+          let lastIndex = currTrimmed.lastIndexOf('/')
+          parentFolder = currFolder.substring(0, lastIndex + 1)
+        }
+
+        let files = [{name: '\ud83d\udd19', type: 'dir', path: parentFolder},
+          {name: 'HOME', type: 'dir', path: `./`}]
 
         /* Loop over all files in current directory and add
          * object to files array, storing the name and type
-         * (either directory or file) of the file. */
+         * (either directory or file) of the file.
+         * For sorting purposes, first push all directories
+         * and then all other files. */
         fs.readdirSync(currFolder).forEach(file => {
           if (fs.lstatSync(currFolder + file).isDirectory()) {
-            files.push({name: file, type: 'dir', path: currFolder + file})
-          } else {
-            files.push({name: file, type: 'file', path: currFolder + file})
+            files.push({name: file, type: 'dir', path: `${currFolder}${file}/`})
+          }
+        })
+
+        fs.readdirSync(currFolder).forEach(file => {
+          if (!fs.lstatSync(currFolder + file).isDirectory()) {
+            files.push({name: file, type: 'file', path: `${currFolder}${file}/`})
           }
         })
 
@@ -54,7 +80,9 @@
       },
 
       getFiles (file) {
-        console.log(file.name)
+        if (file.type === 'dir') {
+          this.currFolder = file.path
+        }
       }
     }
   }
@@ -83,6 +111,10 @@
   .file:hover {
     color: rgb(102, 15, 102) !important;
     cursor:pointer;
+  }
+
+  .curr-folder {
+    color: #fff;
   }
 
 
@@ -138,6 +170,7 @@
     /* overflow-x: hidden; */
     padding-top: 20px;
     display: flex;
+    overflow-y: scroll;
   }
 
   .sidenav a {
