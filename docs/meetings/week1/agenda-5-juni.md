@@ -7,9 +7,9 @@
 5. Actiepunten
 6. Agenda
 	* Evalueren *stand-up*
-  * *Breefing* sub-leiders over voortgang gisteren
-    * mogelijk met demonstratie
-  * Vaststellen tweetal voor inter-server-client-overleg
+  	* *Breefing* sub-leiders over voortgang gisteren
+    		* mogelijk met demonstratie
+  	* Vaststellen tweetal voor inter-server-client-overleg
 7. W.V.T.T.K
 8. Doornemen nieuwe actiepunten
 9. Vragenrondje
