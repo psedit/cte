@@ -1,7 +1,7 @@
 # Notulen Juni 4
 Notulist: Sverre Kroesen
 Iedereen is aanwezig
-Vergadering is beginnen om 10:45
+Vergadering geopend om 10:45
 Pauze om 11:42, weer begonnen om 12:05
 Vergadering gesloten om 12:21
 
