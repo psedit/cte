@@ -23,7 +23,7 @@ Currently, you only need to choose a password for the database by creating a
 `.env` file with the following contents:
 
 ```sh
-DATABASE_PASSWORD=â€¦
+DATABASE_PASSWORD=...
 ```
 
 Just make up a strong, random password here.
@@ -44,7 +44,7 @@ ALTER USER bunit IDENTIFIED BY 'new_random_password';
 Close the shell with `\q` and edit `.env` to the new password.
 
 ## Running
-Open a terminal in the server folder, run `docker-compose up -d`, the database should now be available through adminer at localhost:8080
+Open a terminal in the server folder, run `docker-compose up -d`, the database should now be available through adminer at `localhost:8080`
 
 
 [docker-install]: https://docs.docker.com/install/
