@@ -9,6 +9,7 @@
 	* *Briefing* door groepsleiders
     * Bespreken bereikbaarheid doelen deze week
     * Evaluatie samenwerking tot nu toe
+    * Evaluatie taken
     * Git-overleg
     * Vaststellen notulen-checkers
 7. W.V.T.T.K
