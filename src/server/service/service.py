@@ -1,12 +1,12 @@
 import inspect
 import Pyro4
-from typing import Dict, Any
+from typing import Dict, Any, Callable
 import uuid
 
 
-def message_type(msg_t: str):
+def message_type(msg_type: str):
     def decorator(f):
-        f._type = msg_t
+        f._msg_type = msg_type
         return f
     return decorator
 
@@ -18,6 +18,10 @@ class Service():
     def __init__(self, msg_bus):
         self._msg_bus = msg_bus
         self._resp_cache: Dict[str, Any]
+        self._type_map: Dict[str, Callable[[dict], None]]
+        for _, func in inspect.getmembers(self, predicate=lambda x: hasattr(x, "_msg_type")):
+            self._type_map[func._msg_type] = func
+
 
     @classmethod
     def start(cls):
@@ -42,8 +46,7 @@ class Service():
         return self._wanted_msg_types
 
     def handle_message(self, msg):
-        for func_name, func in inspect.getmembers(self, predicate=lambda x: x._type==msg["type"]):
-            f(msg)
+        self._type_map[msg["type"]](msg)
 
     def send_message(self, msg_t: str, content: Any, pref_dest: str=None):
         msg_uuid = uuid.uuid()
