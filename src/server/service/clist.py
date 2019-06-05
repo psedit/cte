@@ -1,35 +1,25 @@
+from clist_t import Client, Address
 import Pyro4
-import time
-
-
-class Client():
-    def __init__(self, addr):
-        self.addr = addr
-        self.auth = False
-        self.uname = ""
-        self.conn_time = time.time()
-
-    def __str__(self):
-        return f"{addr} - {uname}"
+from typing import Dict, List, Tuple
 
 
 @Pyro4.expose
 @Pyro4.behavior(instance_mode="single")
 class ClientList():
-    def __init__(self):
-        self.clients = {}
+    def __init__(self) -> None:
+        self.clients: Dict[Address, Client] = {}
 
-    def get_list(self):
+    def get_list(self) -> Dict[Address, Client]:
         return self.clients
 
-    def add_client(self, addr):
+    def add_client(self, addr: Address) -> None:
         client: Client = Client(addr)
         self.clients[addr] = client
 
-    def rem_client(self, addr):
+    def rem_client(self, addr: Address):
         del self.clients[addr]
 
-    def auth_client(self, addr, uname):
+    def auth_client(self, addr: Address, uname: str):
         self.clients[addr].auth = True
         self.clients[addr].uname = uname
 
