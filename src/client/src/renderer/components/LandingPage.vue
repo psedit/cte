@@ -1,33 +1,25 @@
 <template>
   <div id="wrapper">
-    <img id="logo" src="~@/assets/logo.png" alt="electron-vue">
     <main>
-      <div class="left-side">
-        <span class="title">
-          Welcome to your new project!
-        </span>
-        <system-information></system-information>
+      <!-- Create a sidemenu. -->
+      <div class="sidenav">
+        <ul>
+          <li v-for="file in files" >
+          <a :class="file.type" v-on:click="getFiles(file)">{{file.name}}</a>
+          </li>
+        </ul>
       </div>
 
       <div class="right-side">
-        <div class="doc">
-          <div class="title">Getting Started</div>
-          <p>
-            electron-vue comes packed with detailed documentation that covers everything from
-            internal configurations, using the project structure, building your application,
-            and so much more.
-          </p>
-          <button @click="open('https://simulatedgreg.gitbooks.io/electron-vue/content/')">Read the Docs</button><br><br>
-        </div>
-        <div class="doc">
-          <div class="title alt">Other Documentation</div>
-          <button class="alt" @click="open('https://electron.atom.io/docs/')">Electron</button>
-          <button class="alt" @click="open('https://vuejs.org/v2/guide/')">Vue.js</button>
-        </div>
+        <span class="title">
+          Welcome to your new project!
+        </span>
+        <textarea name="standard-text" class="main-textbox"></textarea>
       </div>
     </main>
   </div>
 </template>
+
 
 <script>
   import SystemInformation from './LandingPage/SystemInformation'
@@ -35,9 +27,34 @@
   export default {
     name: 'landing-page',
     components: { SystemInformation },
+    computed: {
+      files () {
+        /* Create list of all files in current folder. */
+        const currFolder = './'
+        const fs = require('fs')
+        let files = []
+
+        /* Loop over all files in current directory and add
+         * object to files array, storing the name and type
+         * (either directory or file) of the file. */
+        fs.readdirSync(currFolder).forEach(file => {
+          if (fs.lstatSync(currFolder + file).isDirectory()) {
+            files.push({name: file, type: 'dir', path: currFolder + file})
+          } else {
+            files.push({name: file, type: 'file', path: currFolder + file})
+          }
+        })
+
+        return files
+      }
+    },
     methods: {
       open (link) {
         this.$electron.shell.openExternal(link)
+      },
+
+      getFiles (file) {
+        console.log(file.name)
       }
     }
   }
@@ -51,6 +68,23 @@
     margin: 0;
     padding: 0;
   }
+
+  .dir {
+    color: #0ff !important;
+  }
+  .dir:hover {
+    color: rgb(12, 52, 184) !important;
+    cursor:pointer;
+  }
+
+  .file {
+    color: #f3f !important;
+  }
+  .file:hover {
+    color: rgb(102, 15, 102) !important;
+    cursor:pointer;
+  }
+
 
   body { font-family: 'Source Sans Pro', sans-serif; }
 
@@ -82,6 +116,40 @@
   .left-side {
     display: flex;
     flex-direction: column;
+  }
+
+  .right-side {
+    float: left;
+    /* This marigin has to be the same percentage as the width of the sidenav. */
+    margin-left: 30%;
+  }
+
+  .sidenav {
+    height: 100%;
+    width: 30%;
+    float:left;
+    position: fixed;
+    
+    /* Sidebar starts at top left of screen. */
+    top: 0;
+    left: 0;
+    
+    background-color: #111;
+    /* overflow-x: hidden; */
+    padding-top: 20px;
+    display: flex;
+  }
+
+  .sidenav a {
+    padding: 6px 8px 6px 16px;
+    text-decoration: none; /* No underline in links. */
+    font-size: 25px;
+    color: #818181;
+    display: block;
+  }
+
+  .sidenav a:hover {
+    color: #f1f1f1;
   }
 
   .welcome {
@@ -124,5 +192,10 @@
   .doc button.alt {
     color: #42b983;
     background-color: transparent;
+  }
+
+  .main-textbox {
+    width: 85%;
+    height: 100%;
   }
 </style>
