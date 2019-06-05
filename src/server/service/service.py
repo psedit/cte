@@ -13,7 +13,7 @@ def message_type(msg_type: str):
 
 class Service():
     """"""
-    self._wanted_msg_types = []
+    _wanted_msg_types = []
 
     def __init__(self, msg_bus):
         self._msg_bus = msg_bus
@@ -49,7 +49,7 @@ class Service():
         self._type_map[msg["type"]](msg)
 
     def send_message(self, msg_type: str, content: Any, pref_dest: str=None):
-        msg_uuid = uuid.uuid()
+        msg_uuid = uuid.uuid4()
         msg = {"type": msg_type,
                "uuid": msg_uuid,
                "sender": self.__class__.__name__,
