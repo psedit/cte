@@ -1,3 +1,23 @@
+# Setup
+You need to install SDL2 with your package manager.
+  sudo apt install sdl2
+
+Or download and install ![Windows SDL2](http://www.libsdl.org/download-2.0.php)
+
+# Collaborative Text Editor
+
+## Overview
+
+See README in src/client and src/server for installing dependencies.
+
+## Status
+
+At the moment, there is nothing special to see here yet...
+
+## Credits
+
+See COPYING.md for all names
+
 # cte-client
 
 > the client of cte
