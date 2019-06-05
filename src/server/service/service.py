@@ -8,6 +8,7 @@ class Service():
     """"""
     def __init__(self, msg_pass):
         self._msg_pass = msg_pass
+        self._resp_cache: Dict[str, Any]
 
     def message_type(msg_t: str):
         def decorator(f):
@@ -38,7 +39,7 @@ class Service():
         for func_name, func in inspect.getmembers(self, predicate=lambda x: x._type==msg["type"]):
             f(msg)
 
-    def send_message(self, msg_t: str, content: Dict[Any, Any], pref_dest: str=None):
+    def send_message(self, msg_t: str, content: Any, pref_dest: str=None):
         msg_uuid = uuid.uuid()
         msg = {"type": msg_type,
                "uuid": msg_uuid,
@@ -47,6 +48,3 @@ class Service():
                "content": content}
         self._msg_pass.put_message(msg)
         return msg
-
-
-
