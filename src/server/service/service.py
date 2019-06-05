@@ -13,6 +13,8 @@ def message_type(msg_t: str):
 
 class Service():
     """"""
+    self._wanted_msg_types = []
+
     def __init__(self, msg_bus):
         self._msg_bus = msg_bus
         self._resp_cache: Dict[str, Any]
@@ -35,6 +37,9 @@ class Service():
         # Start request loop
         print(f"{cls.__class__.__name__} service running")
         inst_d.requestLoop()
+
+    def get_wanted_messages(self):
+        return self._wanted_msg_types
 
     def handle_message(self, msg):
         for func_name, func in inspect.getmembers(self, predicate=lambda x: x._type==msg["type"]):
