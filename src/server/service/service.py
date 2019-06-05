@@ -4,35 +4,36 @@ from typing import Dict, Any
 import uuid
 
 
+def message_type(msg_t: str):
+    def decorator(f):
+        f._type = msg_t
+        return f
+    return decorator
+
+
 class Service():
     """"""
-    def __init__(self, msg_pass):
-        self._msg_pass = msg_pass
+    def __init__(self, msg_bus):
+        self._msg_bus = msg_bus
         self._resp_cache: Dict[str, Any]
-
-    def message_type(msg_t: str):
-        def decorator(f):
-            f._type = msg_t
-            return f
-        return decorator
 
     @classmethod
     def start(cls):
         """"""
         try:
-            msg_pass = Pyro4.Proxy("service.MessagePasser")
+            msg_bus = Pyro4.Proxy("service.MessageBus")
         except Exception as e:
             print("Message passer service not reachable")
 
         # Register Pyro4 daemon
-        inst = cls(msg_pass)
+        inst = cls(msg_bus)
         inst_d = Pyro4.Daemon()
         ns = Pyro4.locateNS()
         inst_uri = clist_d.register(accman)
-        ns.register(f"service.{cls.__name__}", inst_uri)
+        ns.register(f"service.{cls.__class__.__name__}", inst_uri)
 
         # Start request loop
-        print(f"{cls.__name__} service running")
+        print(f"{cls.__class__.__name__} service running")
         inst_d.requestLoop()
 
     def handle_message(self, msg):
@@ -46,5 +47,5 @@ class Service():
                "sender": self.__name__,
                "pref_dest": pref_dest,
                "content": content}
-        self._msg_pass.put_message(msg)
+        self._msg_bus.put_message(msg)
         return msg
