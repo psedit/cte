@@ -9,14 +9,10 @@ import argparse
 import socket
 import logging
 import traceback
-import inspect
 import re
 import ssl
-from functools import wraps
-from datetime import datetime
 from select import select
-from typing import List, Dict, Union, ValuesView, Tuple, Any
-import ipaddress
+from typing import List, Tuple, Any
 
 LOGFMT = "[%(asctime)s] [%(levelname)7s] %(name)7s: %(message)s"
 logging.basicConfig(level=logging.DEBUG, format=LOGFMT)
@@ -26,6 +22,7 @@ NICK_RE = re.compile("^[A-Za-z0-9]+$")
 
 context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
 context.load_cert_chain('./cert.pem', './key.pem')
+
 
 class Client:
     """ A client of our chat server. """
