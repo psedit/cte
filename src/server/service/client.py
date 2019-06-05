@@ -7,6 +7,7 @@ Address = Tuple[str, int]
 
 
 class Client():
+    """"""
     def __init__(self, addr: Address):
         self.addr = addr
         self.auth = False
