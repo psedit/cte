@@ -122,9 +122,21 @@ let rendererConfig = {
   plugins: [
     new VueLoaderPlugin(),
     new MiniCssExtractPlugin({filename: 'styles.css'}),
-    new HtmlWebpackPlugin({
+    new HtmlWebpackPlugin({ // fixes process not found error on macOS
       filename: 'index.html',
       template: path.resolve(__dirname, '../src/index.ejs'),
+      templateParameters(compilation, assets, options) {
+        return {
+          compilation: compilation,
+          webpack: compilation.getStats().toJson(),
+          webpackConfig: compilation.options,
+          htmlWebpackPlugin: {
+            files: assets,
+            options: options
+          },
+          process,
+        };
+      },
       minify: {
         collapseWhitespace: true,
         removeAttributeQuotes: true,
