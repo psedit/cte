@@ -23,7 +23,7 @@ class Service():
     def start(cls):
         """"""
         try:
-            msg_bus = Pyro4.Proxy("service.MessageBus")
+            msg_bus = Pyro4.Proxy("PYRONAME:service.MessageBus")
         except Exception as e:
             print("Message passer service not reachable")
 
