@@ -131,4 +131,3 @@ if __name__ == '__main__':
     Pyro4.Daemon.serveSimple({
         mb: 'service.MessageBus'
     }, ns=True)
-

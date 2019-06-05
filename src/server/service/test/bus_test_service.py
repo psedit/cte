@@ -1,6 +1,7 @@
 import traceback
 import Pyro4
 
+
 @Pyro4.expose
 class Test:
     def __init__(self, bus):
@@ -11,6 +12,7 @@ class Test:
 
     def handle_message(self, message: dict):
         print(f"Got message {message}")
+
 
 if __name__ == '__main__':
     # Connect to message handler
