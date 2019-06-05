@@ -1,4 +1,4 @@
-# Agenda - 4 juni
+# Agenda - 5 juni
 1. Vaststellen notulist
 2. Opening
 3. Mededelingen
@@ -7,7 +7,7 @@
 5. Actiepunten
 6. Agenda
 	* Evalueren *stand-up*
-  	* *Breefing* sub-leiders over voortgang gisteren
+  	* *Briefing* sub-leiders over voortgang gisteren
     		--* mogelijk met demonstratie
   	* Vaststellen tweetal voor inter-server-client-overleg
 7. W.V.T.T.K
