@@ -48,7 +48,7 @@ class Service():
     def handle_message(self, msg):
         self._type_map[msg["type"]](msg)
 
-    def send_message(self, msg_type: str, content: Any, pref_dest: str=None):
+    def send_message(self, msg_type: str, content: Any, pref_dest: str = None):
         msg_uuid = uuid.uuid4()
         msg = {"type": msg_type,
                "uuid": msg_uuid,
