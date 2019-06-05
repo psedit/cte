@@ -8,6 +8,7 @@
 6. Agenda
 	* *Briefing* door groepsleiders
     * Bespreken bereikbaarheid doelen deze week
+    * Evaluatie samenwerking tot nu toe
     * Git-overleg
     * Vaststellen notulen-checkers
 7. W.V.T.T.K
