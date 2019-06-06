@@ -43,6 +43,9 @@ ALTER USER cte IDENTIFIED BY 'new_random_password';
 
 Close the shell with `\q` and edit `.env` to the new password.
 
+## Building
+Open terminal in the server folder and run `docker-compose up -d --build`, everything should now be ready for running.
+
 ## Running
 Open a terminal in the server folder, run `docker-compose up -d`, the database should now be available through adminer at `localhost:8080`
 
