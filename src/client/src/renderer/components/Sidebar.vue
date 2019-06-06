@@ -1,28 +1,17 @@
 <template>
-  <div class="sidenav">
-    <div id="toolbar">
-      <span class="curr-folder">{{this.currFolder}}</span>
-      <back-icon title="Go to previous folder" class="button" @click="previous"/>
-      <home-icon title="Go to home folder" class="button" @click="home"/>
+    <div class="sidenav">
+        <ul>
+            <li class="curr-folder">
+                {{this.currFolder}}
+            </li>
+            <li v-for="file in files" >
+                <a :class="file.type" v-on:click="fileClick(file)">{{file.name}}</a>
+            </li>
+        </ul>
     </div>
-
-
-    <ul id="file-list">
-      <li v-for="file in files" :class="file.type" @click="fileClick(file)">
-        <folder-icon v-if="file.type === 'dir'" />
-        <file-icon v-if="file.type === 'file'" />
-        {{ file.name }}
-      </li>
-    </ul>
-  </div>
 </template>
 
 <script>
-  import HomeIcon from 'vue-material-design-icons/Home'
-  import BackIcon from 'vue-material-design-icons/ArrowLeft'
-  import FolderIcon from 'vue-material-design-icons/Folder'
-  import FileIcon from 'vue-material-design-icons/File'
-
   export default {
     name: 'sidebar',
     data () {
@@ -30,21 +19,25 @@
         currFolder: './'
       }
     },
-    components: {
-      HomeIcon,
-      BackIcon,
-      FolderIcon,
-      FileIcon
-    },
+    components: { },
     computed: {
       files () {
         /* Create list of all files in current folder. */
         const fs = require('fs')
         const currFolder = this.currFolder
+        let parentFolder
 
-        // let files = [{name: '\ud83d\udd19', type: 'dir', path: parentFolder},
-        //   {name: 'HOME', type: 'dir', path: `./`}]
-        let files = []
+        /* Get path of parent folder, used for the back button. */
+        if (currFolder === './') {
+          parentFolder = './'
+        } else {
+          let currTrimmed = currFolder.slice(0, -1)
+          let lastIndex = currTrimmed.lastIndexOf('/')
+          parentFolder = currFolder.substring(0, lastIndex + 1)
+        }
+
+        let files = [{name: '\ud83d\udd19', type: 'dir', path: parentFolder},
+          {name: 'HOME', type: 'dir', path: `./`}]
 
         /* Loop over all files in current directory and add
          * object to files array, storing the name and type
@@ -69,31 +62,6 @@
     methods: {
       /* When clicking on a file, go inside directory or
        * render file and show its content on screen. */
-      previous () {
-        let parentFolder
-        /* Get path of parent folder, used for the back button. */
-        if (this.currFolder === './') {
-          parentFolder = './'
-        } else {
-          let currTrimmed = this.currFolder.slice(0, -1)
-          let lastIndex = currTrimmed.lastIndexOf('/')
-          parentFolder = this.currFolder.substring(0, lastIndex + 1)
-        }
-        this.fileClick({
-          // name: parentFolder,
-          type: 'dir',
-          path: parentFolder
-        })
-      },
-
-      home () {
-        this.fileClick({
-          // name: parentFolder,
-          type: 'dir',
-          path: './'
-        })
-      },
-
       fileClick (file) {
         if (file.type === 'dir') {
           this.currFolder = file.path
@@ -120,74 +88,140 @@
   }
 </script>
 
-<style scoped lang="scss">
-  $padding: 1em;
-
-  .sidenav {
-    background-color: #111;
-    display: grid;
-    grid-template-rows: auto 1fr;
-    height: 100vh;
-  }
-
-  .curr-folder {
-    color: #ccc;
-    font-size: 0.8em;
-  }
-
-  #toolbar {
-    background-color: #333;
-    color: #fff;
-    font-size: 1.3em;
-    padding: .5em $padding;
-    display: grid;
-    grid-template-columns: 1fr auto auto;
-    grid-gap: 0.5em;
-  }
-
-  #file-list {
-    overflow-y: auto;
-    padding: 0 1em;
-    margin-top: .5em;
-    list-style-type: none;
-  }
-
-  .button {
-    cursor: pointer;
-    :hover {
-      color: #fff;
-    }
-  }
+<style scoped>
 
   .dir {
-    color: #ccc;
+    color: #0ff !important;
+  }
+  .dir:hover {
+    color: rgb(12, 52, 184) !important;
     cursor:pointer;
-
-    &:hover {
-      color: rgb(102, 15, 102);
-    }
   }
 
   .file {
-    color: #fff;
+    color: #f3f !important;
+  }
+  .file:hover {
+    color: rgb(102, 15, 102) !important;
+    cursor:pointer;
+  }
 
-    &:hover {
-      color: rgb(102, 15, 102);
-      cursor: pointer;
-    }
+  .curr-folder {
+    color: #fff;
   }
 
 
+  body { font-family: 'Source Sans Pro', sans-serif; }
+
+  #wrapper {
+    background:
+      radial-gradient(
+        ellipse at top left,
+        rgba(255, 255, 255, 1) 40%,
+        rgba(229, 229, 229, .9) 100%
+      );
+    height: 100vh;
+    padding: 60px 80px;
+    width: 100vw;
+  }
+
+  #logo {
+    height: auto;
+    margin-bottom: 20px;
+    width: 420px;
+  }
+
+  main {
+    display: flex;
+    justify-content: space-between;
+  }
+
+  main > div { flex-basis: 50%; }
+
+  .left-side {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .right-side {
+    float: left;
+    /* This marigin has to be the same percentage as the width of the sidenav. */
+    margin-left: 30%;
+  }
+
+  .sidenav {
+    height: 100%;
+    width: 30%;
+    float:left;
+    position: fixed;
+    
+    /* Sidebar starts at top left of screen. */
+    top: 0;
+    left: 0;
+    
+    background-color: #111;
+    /* overflow-x: hidden; */
+    padding-top: 20px;
+    display: flex;
+    overflow-y: scroll;
+  }
+
   .sidenav a {
-    /*padding: 6px 8px 6px 16px;*/
+    padding: 6px 8px 6px 16px;
     text-decoration: none; /* No underline in links. */
     font-size: 25px;
     color: #818181;
     display: block;
+  }
 
-    &:hover {
-      color: #f1f1f1;
+  .sidenav a:hover {
+    color: #f1f1f1;
+  }
 
-    }
+  .welcome {
+    color: #555;
+    font-size: 23px;
+    margin-bottom: 10px;
+  }
+
+  .title {
+    color: #2c3e50;
+    font-size: 20px;
+    font-weight: bold;
+    margin-bottom: 6px;
+  }
+
+  .title.alt {
+    font-size: 18px;
+    margin-bottom: 10px;
+  }
+
+  .doc p {
+    color: black;
+    margin-bottom: 10px;
+  }
+
+  .doc button {
+    font-size: .8em;
+    cursor: pointer;
+    outline: none;
+    padding: 0.75em 2em;
+    border-radius: 2em;
+    display: inline-block;
+    color: #fff;
+    background-color: #4fc08d;
+    transition: all 0.15s ease;
+    box-sizing: border-box;
+    border: 1px solid #4fc08d;
+  }
+
+  .doc button.alt {
+    color: #42b983;
+    background-color: transparent;
+  }
+
+  .main-textbox {
+    width: 85%;
+    height: 100%;
   }
 </style>
