@@ -4,14 +4,16 @@
       <!-- Create a sidemenu. -->
       <sidebar />
       <editor />
-      
 
-      <div class="right-side">
+      <!-- <input id='input' ref="fileSelect" type="file" name="myFile" @change="file_select"> -->
+
+
+      <!-- <div class="right-side">
         <span class="title">
           Welcome to your new project!
         </span>
         <textarea name="standard-text" class="main-textbox"></textarea>
-      </div>
+      </div> -->
     </main>
   </div>
 </template>
@@ -104,11 +106,11 @@
     width: 30%;
     float:left;
     position: fixed;
-    
+
     /* Sidebar starts at top left of screen. */
     top: 0;
     left: 0;
-    
+
     background-color: #111;
     /* overflow-x: hidden; */
     padding-top: 20px;

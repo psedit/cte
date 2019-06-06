@@ -1,7 +1,11 @@
 <template>
-    <div class="editor">
-        <code-mirror ref="codemirror" v-model="code"/>
+  <div class="editor">
+    <code-mirror v-show="this.ready" v-model="code" ref="codemirror"/>
+
+    <div v-show="!this.ready">
+      Select an file
     </div>
+  </div>
 </template>
 
 <script>
@@ -16,18 +20,14 @@
 
     data () {
       return {
-        code: `const a = 10
-const b = 5
-let c = a + b
-for(let i = 0; i < c; i++) {
-    c -= i;
-}
-
-console.log(c)
-`
+        code: ''
       }
     },
     methods: {
+      updateCode () {
+        console.log('hey', this.$store.state)
+        this.code = this.$store.state.fileTracker.code
+      },
       startFakeMovement () {
         const cm = this.$refs.codemirror
         const timeout = (func) => setTimeout(func, 1000)
@@ -51,20 +51,30 @@ console.log(c)
         setTimeout(step1, 1000)
       }
     },
-    computed: {
 
+    computed: {
+      ready () {
+        return this.code !== undefined && this.code !== ''
+      }
     },
 
     mounted () {
       // Add fake demo cursor
       const cm = this.$refs.codemirror
-      cm.addShadowCursor(1, 3)
-      cm.addShadowCursor(4, 3)
-      cm.addShadowCursor(0, 3)
-      cm.addShadowCursor(6, 3)
+      cm.addShadowCursor(1, 3, 'Martijn')
+      cm.addShadowCursor(4, 3, 'Mund')
+      cm.addShadowCursor(0, 3, 'Mark')
+      cm.addShadowCursor(6, 3, 'HAL_9000')
       this.startFakeMovement()
 
-      cm.lock(3, 5)
+      this.updateCode()
+      this.$store.subscribe((mutation, state) => {
+        if (mutation.type === 'updateCode') {
+          this.updateCode()
+        }
+        console.log(mutation.type)
+        console.log(mutation.payload)
+      })
     }
   }
 </script>

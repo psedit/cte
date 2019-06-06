@@ -1,6 +1,6 @@
 import inspect
 import Pyro4
-from typing import Dict, Any, Callable
+from typing import Dict, Any, Callable, List
 import uuid
 
 
@@ -15,6 +15,7 @@ def message_type(msg_type: str):
     return decorator
 
 
+@Pyro4.expose
 class Service():
     """
     Super class for services.
@@ -38,15 +39,14 @@ class Service():
     method accepts by adding the @message_type(<type>) decorator,
     where <type> is a string containing the message type name.
     """
-    _wanted_msg_types = []
+    _wanted_msg_types: List[str] = []
 
     def __init__(self, msg_bus):
         self._msg_bus = msg_bus
-        self._resp_cache: Dict[str, Any]
-        self._type_map: Dict[str, Callable[[dict], None]]
+        self._resp_cache: Dict[str, Any] = {}
+        self._type_map: Dict[str, Callable[[dict], None]] = {}
         for _, func in inspect.getmembers(self, predicate=lambda x: hasattr(x, "_msg_type")):
             self._type_map[func._msg_type] = func
-
 
     @classmethod
     def start(cls):
@@ -69,7 +69,7 @@ class Service():
         ns.register(f"service.{cls.__class__.__name__}", inst_uri)
 
         # Start request loop
-        print(f"{cls.__class__.__name__} service running")
+        print(f"{cls.__name__} service running")
         inst_d.requestLoop()
 
     def get_wanted_messages(self):
@@ -84,17 +84,39 @@ class Service():
         service method based on the the received message's type and
         this type's mapping in _type_map.
         """
-        self._type_map[msg["type"]](msg)
+        try:
+            self._type_map[msg["type"]](msg)
+        except KeyError:
+            print(f"Message type {msg['type']} not accepted by service {self.__class__.__name__}")
 
-    def _send_message(self, msg_type: str, content: Any, pref_dest: str = None):
-        """
-        Assembles all message components and puts the combined message on the message bus.
-        """
+    def _construct_message(self, msg_type: str, content: Any, pref_dest: str = None):
         msg_uuid = uuid.uuid4()
         msg = {"type": msg_type,
                "uuid": msg_uuid,
                "sender": self.__class__.__name__,
                "pref_dest": pref_dest,
                "content": content}
+        return msg
+
+    def _send_message(self, msg_type: str, content: Any, pref_dest: str = None):
+        """
+        Assembles all message components and puts the combined message on the message bus.
+        """
+        msg = self._construct_message(msg_type, content, pref_dest)
         self._msg_bus.put_message(msg)
         return msg
+
+    def _send_message_client(self,  msg_type: str, content: Any, *addrs):
+        """
+        Assembles all message components and puts the combined message on the message bus.
+        Only for messages destined for a client.
+        """
+        client_msg = self._construct_message(msg_type, content)
+        net_cont = {
+                "response_addrs": addrs,
+                "msg": client_msg
+                }
+        net_msg = self._construct_message("net-send", net_cont)
+        self._msg_bus.put_message(net_msg)
+        return net_msg
+

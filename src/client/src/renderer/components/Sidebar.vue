@@ -60,9 +60,28 @@
       }
     },
     methods: {
+      /* When clicking on a file, go inside directory or
+       * render file and show its content on screen. */
       fileClick (file) {
         if (file.type === 'dir') {
           this.currFolder = file.path
+        } else {
+          const store = this.$store
+          const fs = require('fs')
+
+          console.log('test1!!!!!')
+          fs.readFile(file.path.substring(0, file.path.length - 1), 'utf8', (err, data) => {
+            console.log('EINDELIJK')
+            if (err) {
+              throw err
+            }
+            console.log('NIEUWE CODE LALALA: ' + data)
+            store.dispatch('updateCodeAction', data)
+          })
+          console.log('test2!!!!!')
+          // const file = ev.target.files[0]
+          // const reader = new FileReader()
+          // reader.readAsText(file)
         }
       }
     }
