@@ -5,6 +5,7 @@ import asyncio
 import json
 import websockets
 from client import Address
+from service import Service, message_type
 
 
 @Pyro4.expose
@@ -93,4 +94,5 @@ class WSServer(Service):
         pass
 
 
-WSServer.start()
+if __name__ == '__main__':
+    WSServer.start()
