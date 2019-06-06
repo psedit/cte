@@ -1,5 +1,5 @@
 <template>
-    <div class="codemirror-wrapper" ref="wrapper"></div>
+  <div class="codemirror-wrapper" ref="wrapper"></div>
 </template>
 
 <script>
@@ -122,7 +122,9 @@
         const cursorElm = this.ghostCursors[id]
 
         const {left, top, bottom} = this.cminstance.charCoords({line, ch})
-        cursorElm.style.left = left + 'px'
+        const {x} = this.cminstance.display.lineSpace.getBoundingClientRect()
+
+        cursorElm.style.left = left - x + 'px'
         cursorElm.style.top = top + 'px'
         cursorElm.style.height = bottom - top + 'px'
       },
@@ -165,42 +167,43 @@
 </script>
 
 <style lang="scss">
-    .shadow-cursor {
-        --hue-color: 180;
-        --user-name: 'no';
-        position: absolute;
-        width: 2px;
-        background-color: hsl(var(--hue-color), 100%, 50%);
+  .shadow-cursor {
+    --hue-color: 180;
+    --user-name: 'no';
+    position: absolute !important;
+    width: 2px;
+    background-color: hsl(var(--hue-color), 100%, 50%);
 
-        &:after {
-            content: var(--user-name);
-            position: absolute;
-            display: block;
-            height: 1em;
-            font-size: 0.8em;
-            padding: 0 2px;
-            z-index: 100;
-            background-color: hsl(var(--hue-color), 90%, 40%);
-        }
+    &:after {
+      content: var(--user-name);
+      position: absolute;
+      display: block;
+      height: 1em;
+      font-size: 0.8em;
+      padding: 0 2px;
+      margin-top: -.3em;
+      z-index: 100;
+      background-color: hsl(var(--hue-color), 90%, 40%);
     }
+  }
 
-    .codemirror-wrapper, .CodeMirror{
-        height: 100%;
+  .codemirror-wrapper, .CodeMirror{
+    height: 100%;
+  }
+
+  @keyframes blinker {
+    to {
+      opacity: 0;
     }
+  }
 
-    @keyframes blinker {
-        to {
-            opacity: 0;
-        }
+  .lock {
+    background-color: rgba(#600, .5);
+
+    .CodeMirror-gutter-wrapper {
+      &:before {
+      }
+
     }
-
-    .lock {
-        background-color: rgba(#600, .5);
-
-        .CodeMirror-gutter-wrapper {
-            &:before {
-            }
-
-        }
-    }
+  }
 </style>
