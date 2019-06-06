@@ -1,45 +1,75 @@
 <template>
-  <div id="wrapper">
-    <main>
-      <!-- Create a sidemenu. -->
-      <sidebar />
-      <editor />
-      
-
-      <div class="right-side">
-        <span class="title">
-          Welcome to your new project!
-        </span>
-        <textarea name="standard-text" class="main-textbox"></textarea>
-      </div>
-    </main>
-  </div>
+    <div class="sidenav">
+        <ul>
+            <li class="curr-folder">
+                {{this.currFolder}}
+            </li>
+            <li v-for="file in files" >
+                <a :class="file.type" v-on:click="fileClick(file)">{{file.name}}</a>
+            </li>
+        </ul>
+    </div>
 </template>
 
-
 <script>
-  import Editor from './Editor'
-  import Sidebar from './Sidebar'
-
   export default {
-    name: 'landing-page',
-    components: { Editor, Sidebar },
+    name: 'sidebar',
+    data () {
+      return {
+        currFolder: './'
+      }
+    },
+    components: { },
+    computed: {
+      files () {
+        /* Create list of all files in current folder. */
+        const fs = require('fs')
+        const currFolder = this.currFolder
+        let parentFolder
+
+        /* Get path of parent folder, used for the back button. */
+        if (currFolder === './') {
+          parentFolder = './'
+        } else {
+          let currTrimmed = currFolder.slice(0, -1)
+          let lastIndex = currTrimmed.lastIndexOf('/')
+          parentFolder = currFolder.substring(0, lastIndex + 1)
+        }
+
+        let files = [{name: '\ud83d\udd19', type: 'dir', path: parentFolder},
+          {name: 'HOME', type: 'dir', path: `./`}]
+
+        /* Loop over all files in current directory and add
+         * object to files array, storing the name and type
+         * (either directory or file) of the file.
+         * For sorting purposes, first push all directories
+         * and then all other files. */
+        fs.readdirSync(currFolder).forEach(file => {
+          if (fs.lstatSync(currFolder + file).isDirectory()) {
+            files.push({name: file, type: 'dir', path: `${currFolder}${file}/`})
+          }
+        })
+
+        fs.readdirSync(currFolder).forEach(file => {
+          if (!fs.lstatSync(currFolder + file).isDirectory()) {
+            files.push({name: file, type: 'file', path: `${currFolder}${file}/`})
+          }
+        })
+
+        return files
+      }
+    },
     methods: {
-      open (link) {
-        this.$electron.shell.openExternal(link)
+      fileClick (file) {
+        if (file.type === 'dir') {
+          this.currFolder = file.path
+        }
       }
     }
   }
 </script>
 
-<style>
-  @import url('https://fonts.googleapis.com/css?family=Source+Sans+Pro');
-
-  * {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-  }
+<style scoped>
 
   .dir {
     color: #0ff !important;
@@ -72,6 +102,7 @@
         rgba(229, 229, 229, .9) 100%
       );
     height: 100vh;
+    padding: 60px 80px;
     width: 100vw;
   }
 
