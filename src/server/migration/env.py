@@ -35,10 +35,6 @@ config.set_main_option(
     # "sqlalchemy.url", "mysql://cte:yeet@127.0.0.1:3307/cte"
 )
 
-url = config.get_main_option("sqlalchemy.url")
-print(url)
-print('\n'*3)
-
 
 def run_migrations_offline():
     """Run migrations in 'offline' mode.
