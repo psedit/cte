@@ -6,7 +6,10 @@ from typing import Dict, List, Tuple
 @Pyro4.expose
 @Pyro4.behavior(instance_mode="single")
 class ClientList():
-    """"""
+    """
+    Service responsible for keeping track of all connected clients
+    and handling client related inqueries.
+    """
     def __init__(self, msg_pass) -> None:
         self._msg_pass = msg_pass
         self._clients: Dict[Address, Client] = {}
