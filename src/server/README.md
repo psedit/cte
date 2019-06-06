@@ -38,7 +38,7 @@ docker-compose run database mysql cte -u cte -p
 Then, enter the *old* password and execute the following command:
 
 ```sql
-ALTER USER bunit IDENTIFIED BY 'new_random_password';
+ALTER USER cte IDENTIFIED BY 'new_random_password';
 ```
 
 Close the shell with `\q` and edit `.env` to the new password.
