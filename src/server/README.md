@@ -32,7 +32,7 @@ Just make up a strong, random password here.
 You can change it by opening a mysql shell with
 
 ```sh
-docker-compose run database mysql bunit -u bunit -p
+docker-compose run database mysql cte -u cte -p
 ```
 
 Then, enter the *old* password and execute the following command:
