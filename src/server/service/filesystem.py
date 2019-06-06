@@ -65,7 +65,7 @@ class FileSystem(Service):
         end = content["end"]
         start = content["start"]
         file_path = content["file"]
-        adress = content["request_address"]
+        address = content["request_address"]
 
         block = self.get_block(file_path, start, end)
 
