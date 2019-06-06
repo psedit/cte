@@ -1,5 +1,5 @@
 import Vue from 'vue'
-Vue.config.devtools = false
+Vue.config.devtools = true
 Vue.config.productionTip = false
 
 // require all test files (files that ends with .spec.js)
