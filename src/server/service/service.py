@@ -88,15 +88,34 @@ class Service():
         except KeyError:
             print(f"Message type {msg['type']} not accepted by service {self.__class__.__name__}")
 
-    def send_message(self, msg_type: str, content: Any, pref_dest: str = None):
-        """
-        Assembles all message components and puts the combined message on the message bus.
-        """
+    def _construct_message(self, msg_type: str, content: Any, pref_dest: str = None):
         msg_uuid = uuid.uuid4()
         msg = {"type": msg_type,
                "uuid": msg_uuid,
                "sender": self.__class__.__name__,
                "pref_dest": pref_dest,
                "content": content}
+        return msg
+
+    def send_message(self, msg_type: str, content: Any, pref_dest: str = None):
+        """
+        Assembles all message components and puts the combined message on the message bus.
+        """
+        msg = self._construct_message(msg_type, content, pref_dest)
         self._msg_bus.put_message(msg)
         return msg
+
+    def _send_message_client(self,  msg_type: str, content: Any, *addrs):
+        """
+        Assembles all message components and puts the combined message on the message bus.
+        Only for messages destined for a client.
+        """
+        client_msg = self._construct_message(msg_type, content)
+        net_cont = {
+                "response_addrs": addrs,
+                "msg": client_msg
+                }
+        net_msg = self._construct_message("net-send", net_cont)
+        self._msg_bus.put_message(net_msg)
+        return net_msg
+
