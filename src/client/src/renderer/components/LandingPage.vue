@@ -6,12 +6,12 @@
       <editor />
       
 
-      <div class="right-side">
+      <!-- <div class="right-side">
         <span class="title">
           Welcome to your new project!
         </span>
         <textarea name="standard-text" class="main-textbox"></textarea>
-      </div>
+      </div> -->
     </main>
   </div>
 </template>

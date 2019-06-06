@@ -49,6 +49,11 @@ console.log(c)
         }
 
         setTimeout(step1, 1000)
+      },
+
+      /* FIXME: weghalen. */
+      newCode (newCode) {
+        this.code = newCode
       }
     },
     computed: {
@@ -71,7 +76,11 @@ console.log(c)
 
 <style scoped>
     .editor{
-        width: 100%;
+        /* float: left; */
+
+        /* This marigin has to be the same percentage as the width of the sidenav. */
+        margin-left: 30%;
         height: 100%;
+        width: 100%;
     }
 </style>

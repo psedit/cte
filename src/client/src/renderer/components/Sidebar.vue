@@ -60,9 +60,14 @@
       }
     },
     methods: {
+      /* When clicking on a file, go inside directory or
+       * render file and show its content on screen. */
       fileClick (file) {
         if (file.type === 'dir') {
           this.currFolder = file.path
+        } else {
+          // FIXME: Code aanpassen
+          this.$parent.children[0].newCode('hello')
         }
       }
     }
