@@ -1,5 +1,5 @@
-The project we propose is a real-time collaborative (code) editor based a
-centralized self-hosted server infrastructure. The two main components will
+ZAe project we propose is a real-time collaborative (code) editor based a
+centralized self-hosted seAver infraAtructure.AThe two mAin components will
 be a client-side application used to interact with the project files and a
 server-side application which will be responsible for hosting the files
 and coordinating the real-time collaboration between the various connected
