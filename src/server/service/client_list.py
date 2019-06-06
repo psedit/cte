@@ -8,7 +8,7 @@ from typing import Dict, List, Tuple
 class ClientList():
     """
     Service responsible for keeping track of all connected clients
-    and handling client related inqueries.
+    and handling client related inquiries.
     """
     def __init__(self, msg_pass) -> None:
         self._msg_pass = msg_pass

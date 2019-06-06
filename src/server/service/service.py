@@ -7,7 +7,7 @@ import uuid
 def message_type(msg_type: str):
     """
     Decorator used with Service functions to signal
-    which message type it handels.
+    which message type it handles.
     """
     def decorator(f):
         f._msg_type = msg_type
@@ -21,21 +21,21 @@ class Service():
 
     This class implements basic message handling mechanics
     with handle_message and allows for simple message
-    sending with sen_message.
+    sending with send_message.
 
     This class also implements the Service starting procedure,
     including the outbound connection with the message bus.
     New services can be started using .start (duh).
 
     Inheriting classes must call super().__init__(message_bus)
-    withing their own __init__. This init must take the message
-    bus as its only argument (except for self of cource).
+    within their own __init__. This init must take the message
+    bus as its only argument (except for self, of course).
 
     Inheriting classes can reassign the _wanted_msg_types variable
     to include the various message types the service accepts.
 
     Inheriting classes can declare which message type a certain
-    method accepts by adding the @message_type(<type>] decorator,
+    method accepts by adding the @message_type(<type>) decorator,
     where <type> is a string containing the message type name.
     """
     _wanted_msg_types = []
@@ -74,21 +74,21 @@ class Service():
 
     def get_wanted_messages(self):
         """
-        Return the list of all message types accepted bu this service.
+        Return the list of all message types accepted by this service.
         """
         return self._wanted_msg_types
 
     def handle_message(self, msg):
         """
         Endpoint called by the message bus which calls the appropriate
-        service method based on the the recieved message's type and
+        service method based on the the received message's type and
         this type's mapping in _type_map.
         """
         self._type_map[msg["type"]](msg)
 
     def send_message(self, msg_type: str, content: Any, pref_dest: str = None):
         """
-        Assembles all message components and puts it on the message bus.
+        Assembles all message components and puts the combined message on the message bus.
         """
         msg_uuid = uuid.uuid4()
         msg = {"type": msg_type,
