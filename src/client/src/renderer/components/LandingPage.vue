@@ -3,6 +3,8 @@
     <main>
       <!-- Create a sidemenu. -->
       <sidebar />
+      <editor />
+      
 
       <div class="right-side">
         <span class="title">
@@ -16,11 +18,12 @@
 
 
 <script>
+  import Editor from './Editor'
   import Sidebar from './Sidebar'
 
   export default {
     name: 'landing-page',
-    components: { Sidebar },
+    components: { Editor, Sidebar },
     methods: {
       open (link) {
         this.$electron.shell.openExternal(link)
@@ -69,7 +72,6 @@
         rgba(229, 229, 229, .9) 100%
       );
     height: 100vh;
-    padding: 60px 80px;
     width: 100vw;
   }
 
