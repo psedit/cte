@@ -34,10 +34,13 @@
       file_select (ev) {
         const file = ev.target.files[0]
         const reader = new FileReader()
+        const store = this.$store
 
-        reader.onload = function (e) {
+        reader.onload = (e) => {
           // Dit werkt nog niet voor het editor textveld, maar wel voor een html textarea
-          document.getElementById('standard-text').value = e.target.result
+          console.log('Hier wordt de log gedaan', store)
+          store.dispatch('updateCodeAction', e.target.result)
+          // document.getElementById('standard-text').value = e.target.result
         }
 
         reader.readAsText(file)
