@@ -1,3 +1,4 @@
+from service import Service, message_type
 from client import Client, Address
 import Pyro4
 from typing import Dict, List, Tuple
@@ -5,54 +6,49 @@ from typing import Dict, List, Tuple
 
 @Pyro4.expose
 @Pyro4.behavior(instance_mode="single")
-class ClientList():
+class ClientList(Service):
     """
     Service responsible for keeping track of all connected clients
     and handling client related inquiries.
     """
-    def __init__(self, msg_pass) -> None:
-        self._msg_pass = msg_pass
+    _wanted_msg_types = [
+            "client-list-request",
+            "client-add",
+            "client-remove",
+            "client-authorize",
+            "client-unauthorize"
+            ]
+
+    def __init__(self, msg_bus) -> None:
+        super().__init__(msg_bus)
         self._clients: Dict[Address, Client] = {}
 
-    def handle_msg(self, msg):
-        pass
-
+    @message_type("client-list-request")
     def get_list(self) -> Dict[Address, Client]:
         return self._clients
 
-    def add_client(self, addr: Address) -> None:
-        client: Client = Client(addr)
-        self._clients[addr] = client
+    @message_type("client-add")
+    def _client_add(self, msg) -> None:
+        content = msg["content"]
+        client: Client = Client(content["address"])
+        self._clients[content["address"]] = client
 
-    def rem_client(self, addr: Address) -> None:
-        del self._clients[addr]
+    @message_type("client-remove")
+    def _client_rem(self, msg) -> None:
+        content = msg["content"]
+        del self._clients[content["address"]]
 
-    def auth_client(self, addr: Address, uname: str) -> None:
-        self._clients[addr].auth = True
-        self._clients[addr].uname = uname
+    @message_type("client-authorize")
+    def _client_auth(self, msg) -> None:
+        content = msg["content"]
+        self._clients[content["address"]].auth = True
+        self._clients[content["address"]].uname = content["username"]
 
-    def unauth_client(self, addr: Address) -> None:
-        self._clients[addr].auth = False
-        self._clients[addr].uname = ""
-
-
-def main():
-    # Connect to message handler
-    try:
-        msg_pass = Pyro4.Proxy("service.message_passer")
-    except Exception as e:
-        print("Message passer service not reachable")
-
-    # Register Pyro4 daemon
-    clist = ClientList(msg_pass)
-    clist_d = Pyro4.Daemon()
-    ns = Pyro4.locateNS()
-    clist_uri = clist_d.register(clist)
-    ns.register("service.clist", clist_uri)
-
-    # Start request loop
-    print("ClientList service running")
-    clist_d.requestLoop()
+    @message_type("client-unauthorize")
+    def _client_unaut(self, msg) -> None:
+        content = msg["content"]
+        self._clients[content["address"]].auth = False
+        self._clients[content["address"]].uname = ""
 
 
 if __name__ == "__main__":
