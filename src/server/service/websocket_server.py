@@ -15,7 +15,7 @@ class WSServer(Service):
     def __init__(self, msg_bus):
         super().__init__(msg_bus)
 
-        self.clients: Dict[Address, websockets.WebSocketClientProtocol] = []
+        self.clients: Dict[Address, websockets.WebSocketClientProtocol] = {}
         self.messages_to_send: asyncio.Queue = asyncio.Queue()
 
     @classmethod
@@ -74,6 +74,7 @@ class WSServer(Service):
                 data = json.loads(message)
                 new_type = data['type']
                 data['request_address'] = (websocket.host, websocket.port)
+                print(f"Received message: {data}")
                 self._send_message(new_type, data)
         finally:
             del self.clients[(websocket.host, websocket.port)]
@@ -89,8 +90,8 @@ class WSServer(Service):
 
     @message_type("net-send")
     def send_message(self, msg):
+        print(f"Putting message on send queue: {msg}")
         self.messages_to_send.put_nowait(msg)
-        pass
 
 
 if __name__ == '__main__':
