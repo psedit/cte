@@ -4,7 +4,10 @@
       <!-- Create a sidemenu. -->
       <sidebar />
       <editor />
-      
+
+      <input id='input' ref="fileSelect" type="file" name="myFile" @change="file_select">
+      <textarea id="standard-text" name="standard-text" class="main-textbox"></textarea>
+
 
       <!-- <div class="right-side">
         <span class="title">
@@ -27,6 +30,17 @@
     methods: {
       open (link) {
         this.$electron.shell.openExternal(link)
+      },
+      file_select (ev) {
+        const file = ev.target.files[0]
+        const reader = new FileReader()
+
+        reader.onload = function (e) {
+          // Dit werkt nog niet voor het editor textveld, maar wel voor een html textarea
+          document.getElementById('standard-text').value = e.target.result
+        }
+
+        reader.readAsText(file)
       }
     }
   }
@@ -104,11 +118,11 @@
     width: 30%;
     float:left;
     position: fixed;
-    
+
     /* Sidebar starts at top left of screen. */
     top: 0;
     left: 0;
-    
+
     background-color: #111;
     /* overflow-x: hidden; */
     padding-top: 20px;
