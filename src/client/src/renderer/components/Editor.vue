@@ -58,13 +58,13 @@ console.log(c)
     mounted () {
       // Add fake demo cursor
       const cm = this.$refs.codemirror
-      cm.addShadowCursor(1, 3)
-      cm.addShadowCursor(4, 3)
-      cm.addShadowCursor(0, 3)
-      cm.addShadowCursor(6, 3)
+      cm.addShadowCursor(1, 3, 'Martijn')
+      cm.addShadowCursor(4, 3, 'Mund')
+      cm.addShadowCursor(0, 3, 'Mark')
+      cm.addShadowCursor(6, 3, 'HAL_9000')
       this.startFakeMovement()
 
-      cm.lock(3, 5)
+      // cm.lock(3, 5)
     }
   }
 </script>

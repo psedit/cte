@@ -7,6 +7,7 @@
   import 'codemirror/lib/codemirror.css'
   import 'codemirror/theme/cobalt.css'
   import 'codemirror/mode/javascript/javascript'
+  // import 'codemirror/keymap/vim'
 
   export default {
     name: 'CodeMirror',
@@ -16,6 +17,7 @@
         codemirror: null,
         cminstance: null,
         options: {
+          // keyMap: 'vim',
           mode: 'javascript',
           lineSeparator: '\n',
           lineNumbers: true,
@@ -25,10 +27,6 @@
           showCursorWhenSelecting: true,
           gutters: ['locker', 'CodeMirror-linenumbers']
         },
-        // shadowCursors: [
-        //   {char: 5, line: 1},
-        //   {char: 3, line: 3}
-        // ],
         ghostCursorWrapper: null,
         ghostCursors: []
       }
@@ -77,21 +75,19 @@
         this.refresh()
       },
 
-      addShadowCursor (line, ch) {
+      addShadowCursor (line, ch, userName) {
         const cursorElm = document.createElement('div')
-        cursorElm.classList.add('CodeMirror-cursor')
         cursorElm.classList.add('shadow-cursor')
 
-        const {left, top, bottom} = this.cminstance.charCoords({line, ch})
-        cursorElm.style.left = left + 'px'
-        cursorElm.style.top = top + 'px'
-        cursorElm.style.height = bottom - top + 'px'
+        cursorElm.style.height = this.cminstance.display.cachedTextHeight + 'px'
 
         const hue = this.ghostCursors.length * 70
+        cursorElm.style.setProperty('--hue-color', hue)
+        cursorElm.style.setProperty('--user-name', `'${userName}'`)
         cursorElm.style.borderLeftColor = `hsl(${hue},90%,50%)`
 
-        this.ghostCursorWrapper.append(cursorElm)
         this.ghostCursors.push(cursorElm)
+        this.cminstance.addWidget({line, ch}, cursorElm, false)
 
         // return an id
         return this.ghostCursors.length - 1
@@ -144,8 +140,23 @@
 </script>
 
 <style lang="scss">
-    .shadow-cursor{
-        /*animation: blinker 1s steps() infinite alternate;*/
+    .shadow-cursor {
+        --hue-color: 180;
+        --user-name: 'no';
+        position: absolute;
+        width: 2px;
+        background-color: hsl(var(--hue-color), 100%, 50%);
+
+        &:after {
+            content: var(--user-name);
+            position: absolute;
+            display: block;
+            height: 1em;
+            font-size: 0.8em;
+            padding: 0 2px;
+            z-index: 100;
+            background-color: hsl(var(--hue-color), 90%, 40%);
+        }
     }
 
     .codemirror-wrapper, .CodeMirror{
