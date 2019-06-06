@@ -86,7 +86,7 @@ class Service():
         """
         self._type_map[msg["type"]](msg)
 
-    def send_message(self, msg_type: str, content: Any, pref_dest: str = None):
+    def _send_message(self, msg_type: str, content: Any, pref_dest: str = None):
         """
         Assembles all message components and puts the combined message on the message bus.
         """

@@ -1,5 +1,6 @@
 from fileio import ServerFile
 from typing import Dict, List
+from service import Service, message_type
 import sys
 import os
 import Pyro4
@@ -7,21 +8,21 @@ import Pyro4
 
 @Pyro4.expose
 @Pyro4.behavior(instance_mode="single")
-class FileSystem:
+class FileSystem(Service):
     # Files sorted by path relative to root dir
     file_dict: Dict[str,ServerFile] = {}
     root_dir: str
-    msg_pass = None
 
-    def __init__(self, msg_pass):
-        self.msg_pass = msg_pass
+    _wanted_msg_types = [
+            "request_file"
+        ]
+
+    def __init__(self, msg_bus) -> None:
+        super().__init__(msg_bus)
 
         # Check server config for root directory
         # TODO: retrieve from server
-        self.root_dir = os.getcwd().replace('service','') + "test/"
-
-    def handle_msg(self, msg):
-        pass
+        self.root_dir = os.getcwd().replace('service','') + "test" + os.sep
 
     def add_file(self, path: str) -> None:
         """Add the file to the FileSystem. Path file is relative to root
@@ -29,6 +30,51 @@ class FileSystem:
         """
 
         self.file_dict[path] = ServerFile(self.root_dir, path)
+
+
+    def list_files(self) -> List[str]:
+        """Lists all files currently within the file system, relative to
+        the root directory.
+        """
+
+        return list(self.file_dict.keys())
+
+    def list_files_available(self) -> List[str]:
+        """Lists all files currently available, but not necessarily added,
+        to the file system, relative to the root directory.
+        """
+
+        root_dir = self.root_dir()[:-1]
+        file_list = []
+
+        for root, dirs, files in os.walk(root_dir):
+            for f in files:
+                file_list.append((root + os.sep + f).replace(root_dir,""))
+            for d in dirs:
+                file_list.append((root + os.sep + d + os.sep).replace(root_dir,""))
+
+        return file_list
+
+    @message_type("file_content_request")
+    def _process_file_content_request(self, msg) -> None:
+        """Take the file content request message and construct the appropriate response,
+        sending the block via a new 'file_content_response' message.
+        """
+        content = msg["content"]
+
+        end = content["end"]
+        start = content["start"]
+        file_path = content["file"]
+        adress = content["request_adress"]
+
+        block = self.get_block(file_path, start, end)
+
+        response_content = {
+                    "request_adress": adress,
+                    "file_content": block,
+                }
+        self._send_message("file_content_response", response_content)
+
 
     def get_block(self, path: str, start: int = 0, end: int = -1) -> List[str]:
         """Returns all line between (and including) a start and end line, split
@@ -47,30 +93,5 @@ class FileSystem:
             return None
 
 
-
-def main():
-    # Connect to message handler
-    try:
-        msg_pass = Pyro4.Proxy("service.message_passer")
-    except Exception as e:
-        msg_pass = None
-        print("Message passer service not reachable")
-
-    # Register Pyro4 daemon
-    filesystem = FileSystem(msg_pass)
-    filesystem_d = Pyro4.Daemon()
-    ns = Pyro4.locateNS()
-    filesystem_uri = filesystem_d.register(filesystem)
-    ns.register("service.filesystem", filesystem_uri)
-
-    # Start request loop
-    print("FileSystem service running")
-    filesystem_d.requestLoop()
-
-    daemon = Pyro4.Daemon()                # make a Pyro daemon
-    ns = Pyro4.locateNS()                  # find the name server
-    uri = daemon.register(FileSystem)   # register the greeting maker as a Pyro object
-    ns.register("service.filesystem", uri)   # register the object with a name in the name server
-
 if __name__ == "__main__":
-    main()
+    FileSystem.start()

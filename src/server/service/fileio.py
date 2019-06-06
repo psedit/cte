@@ -1,5 +1,6 @@
 import mmap
-from typing import List
+from typing import List, Tuple
+# from client import Adress
 import os
 
 
@@ -7,6 +8,9 @@ class ServerFile:
     root_dir: str
     file_path_relative: str
     file_mmap: mmap
+    # A list of locks: (Client Adress, start line, end line)
+    # TODO: after merge: use 'Adress' class
+    lock_list: List[Tuple[Tuple[str,int],int,int]] = []
 
     def __init__(self, root: str, path: str) -> None:
         self.root_dir = root
@@ -41,3 +45,26 @@ class ServerFile:
             return block
         else:
             pass
+
+    def save_buffer(self) -> None:
+        """Writes the current buffer to the file on disk, although the mmap
+        automatically writes to disk in most instances.
+        """
+
+        self.file_mmap.flush()
+
+    def update_buffer(self, delta) -> None:
+        """ Writes the the delta contents (= file change) to the buffer.
+        """
+
+        # TODO: Keep locks in mind
+        # TODO: Return error code(?)
+        pass
+
+    def add_lock(self, delta) -> int:
+        # TODO: Return error code(?)
+        pass
+
+    def remove_lock(self, delta) -> None:
+        # TODO: Return error code(?)
+        pass
