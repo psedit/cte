@@ -1,6 +1,6 @@
 import mmap
 from typing import List, Tuple
-# from client import Adress
+# from client import Address
 import os
 
 
@@ -8,8 +8,8 @@ class ServerFile:
     root_dir: str
     file_path_relative: str
     file_mmap: mmap
-    # A list of locks: (Client Adress, start line, end line)
-    # TODO: after merge: use 'Adress' class
+    # A list of locks: (Client Address, start line, end line)
+    # TODO: after merge: use 'Address' class
     lock_list: List[Tuple[Tuple[str,int],int,int]] = []
 
     def __init__(self, root: str, path: str) -> None:

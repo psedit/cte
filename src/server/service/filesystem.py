@@ -65,12 +65,12 @@ class FileSystem(Service):
         end = content["end"]
         start = content["start"]
         file_path = content["file"]
-        adress = content["request_adress"]
+        adress = content["request_address"]
 
         block = self.get_block(file_path, start, end)
 
         response_content = {
-                    "request_adress": adress,
+                    "request_address": address,
                     "file_content": block,
                 }
         self._send_message("file_content_response", response_content)
