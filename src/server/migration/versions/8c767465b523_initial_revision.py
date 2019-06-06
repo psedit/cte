@@ -25,7 +25,7 @@ def upgrade():
         sa.Column("deleted_at", sa.DateTime(), nullable=True),
         sa.Column("username", sa.String(length=36), nullable=False),
         sa.Column("email", sa.String(length=36), nullable=True),
-        sa.Column("password", sa.String(length=22), nullable=False),
+        sa.Column("password", sa.String(length=50), nullable=False),
         sa.PrimaryKeyConstraint("id"),
     )
 
