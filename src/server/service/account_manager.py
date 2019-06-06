@@ -1,4 +1,4 @@
-from Client import Address
+from client import Address
 import Pyro4
 from typing import Dict, List, Tuple
 
