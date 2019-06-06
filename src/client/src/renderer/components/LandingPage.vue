@@ -38,7 +38,6 @@
 
         reader.onload = (e) => {
           // Dit werkt nog niet voor het editor textveld, maar wel voor een html textarea
-          console.log('Hier wordt de log gedaan', store)
           store.dispatch('updateCodeAction', e.target.result)
           // document.getElementById('standard-text').value = e.target.result
         }

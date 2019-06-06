@@ -29,7 +29,8 @@ console.log(c)
   },
   methods: {
     updateCode () {
-      this.code = this.$store.code
+      console.log('hey', this.$store.state)
+      this.code = this.$store.state.fileTracker.code
     },
     startFakeMovement () {
       const cm = this.$refs.codemirror
@@ -71,6 +72,9 @@ console.log(c)
     this.startFakeMovement()
     this.updateCode()
     this.$store.subscribe((mutation, state) => {
+      if (mutation.type === 'updateCode') {
+        this.updateCode()
+      }
       console.log(mutation.type)
       console.log(mutation.payload)
     })

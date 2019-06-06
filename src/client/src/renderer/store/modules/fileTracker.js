@@ -4,8 +4,8 @@ const state = {
 
 const mutations = {
   updateCode (state, newCode) {
-    console.log(newCode)
     state.code = newCode
+    console.log('State is: ' + state.code)
   }
 }
 
