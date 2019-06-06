@@ -2,8 +2,8 @@
   <div class="editor">
     <code-mirror v-show="this.ready" v-model="code" ref="codemirror"/>
 
-    <div v-show="!this.ready">
-      Select an file
+    <div id="placeholder" v-if="!this.ready">
+      ⇚ Select a file
     </div>
   </div>
 </template>
@@ -80,8 +80,16 @@
 </script>
 
 <style scoped>
-    .editor{
-        width: 100%;
-        height: 100%;
-    }
+  .editor{
+      width: 100%;
+      height: 100vh;
+  }
+
+  #placeholder{
+    font-size: 3em;
+    height: 100%;
+    line-height: 100vh;
+    color: #555;
+    text-align: center;
+  }
 </style>
