@@ -19,7 +19,7 @@
         options: {
           // keyMap: 'vim',
           mode: 'javascript',
-          lineSeparator: '\n',
+          // lineSeparator: '\n',
           lineNumbers: true,
           theme: 'cobalt',
           smartIndent: true,
@@ -78,13 +78,31 @@
           }
         })
 
+        this.codemirror.on('update', () => {
+          this.updateCursors()
+        })
+
         // prevents funky dynamic rendering
         this.refresh()
+      },
+
+      updateCursors () {
+        for (let cursor of this.ghostCursors) {
+          const line = cursor.dataset.line
+          const ch = cursor.dataset.ch
+          const id = cursor.dataset.id
+          this.updateShadowCursorLocation(Number(id), line, ch)
+        }
       },
 
       addShadowCursor (line, ch, userName) {
         const cursorElm = document.createElement('div')
         cursorElm.classList.add('shadow-cursor')
+
+        cursorElm.dataset.line = line
+        cursorElm.dataset.ch = ch
+        cursorElm.dataset.username = userName
+        cursorElm.dataset.id = this.ghostCursors.length.toString()
 
         cursorElm.style.height = this.cminstance.display.cachedTextHeight + 'px'
 

@@ -1,6 +1,10 @@
 <template>
   <div class="editor">
-    <code-mirror ref="codemirror" v-model="code"/>
+    <code-mirror v-show="this.ready" v-model="code" ref="codemirror"/>
+
+    <div v-show="!this.ready">
+      Select an file
+    </div>
   </div>
 </template>
 
@@ -16,15 +20,7 @@
 
     data () {
       return {
-        code: `const a = 10
-const b = 5
-let c = a + b
-for(let i = 0; i < c; i++) {
-    c -= i;
-}
-
-console.log(c)
-`
+        code: ''
       }
     },
     methods: {
@@ -55,8 +51,11 @@ console.log(c)
         setTimeout(step1, 1000)
       }
     },
-    computed: {
 
+    computed: {
+      ready () {
+        return this.code !== undefined && this.code !== ''
+      }
     },
 
     mounted () {
