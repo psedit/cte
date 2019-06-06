@@ -93,4 +93,5 @@ class WSServer(Service):
         pass
 
 
-WSServer.start()
+if __name__ == '__main__':
+    WSServer.start()
