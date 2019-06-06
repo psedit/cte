@@ -5,8 +5,7 @@
       <sidebar />
       <editor />
 
-      <input id='input' ref="fileSelect" type="file" name="myFile" @change="file_select">
-      <textarea id="standard-text" name="standard-text" class="main-textbox"></textarea>
+      <!-- <input id='input' ref="fileSelect" type="file" name="myFile" @change="file_select"> -->
 
 
       <!-- <div class="right-side">
@@ -30,19 +29,6 @@
     methods: {
       open (link) {
         this.$electron.shell.openExternal(link)
-      },
-      file_select (ev) {
-        const file = ev.target.files[0]
-        const reader = new FileReader()
-        const store = this.$store
-
-        reader.onload = (e) => {
-          // Dit werkt nog niet voor het editor textveld, maar wel voor een html textarea
-          store.dispatch('updateCodeAction', e.target.result)
-          // document.getElementById('standard-text').value = e.target.result
-        }
-
-        reader.readAsText(file)
       }
     }
   }

@@ -66,8 +66,22 @@
         if (file.type === 'dir') {
           this.currFolder = file.path
         } else {
-          // FIXME: Code aanpassen
-          this.$parent.children[0].newCode('hello')
+          const store = this.$store
+          const fs = require('fs')
+
+          console.log('test1!!!!!')
+          fs.readFile(file.path.substring(0, file.path.length - 1), 'utf8', (err, data) => {
+            console.log('EINDELIJK')
+            if (err) {
+              throw err
+            }
+            console.log('NIEUWE CODE LALALA: ' + data)
+            store.dispatch('updateCodeAction', data)
+          })
+          console.log('test2!!!!!')
+          // const file = ev.target.files[0]
+          // const reader = new FileReader()
+          // reader.readAsText(file)
         }
       }
     }
