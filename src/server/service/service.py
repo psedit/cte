@@ -1,6 +1,6 @@
 import inspect
 import Pyro4
-from typing import Dict, Any, Callable
+from typing import Dict, Any, Callable, List
 import uuid
 
 
@@ -38,7 +38,7 @@ class Service():
     method accepts by adding the @message_type(<type>) decorator,
     where <type> is a string containing the message type name.
     """
-    _wanted_msg_types = []
+    _wanted_msg_types: List[str] = []
 
     def __init__(self, msg_bus):
         self._msg_bus = msg_bus
@@ -46,7 +46,6 @@ class Service():
         self._type_map: Dict[str, Callable[[dict], None]]
         for _, func in inspect.getmembers(self, predicate=lambda x: hasattr(x, "_msg_type")):
             self._type_map[func._msg_type] = func
-
 
     @classmethod
     def start(cls):
@@ -84,7 +83,10 @@ class Service():
         service method based on the the received message's type and
         this type's mapping in _type_map.
         """
-        self._type_map[msg["type"]](msg)
+        try:
+            self._type_map[msg["type"]](msg)
+        except KeyError:
+            print(f"Message type {msg['type']} not accepted by service {self.__class__.__name__}")
 
     def send_message(self, msg_type: str, content: Any, pref_dest: str = None):
         """
