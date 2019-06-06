@@ -1,7 +1,7 @@
 <template>
-    <div class="editor">
-        <code-mirror ref="codemirror" v-model="code"/>
-    </div>
+  <div class="editor">
+    <code-mirror ref="codemirror" v-model="code"/>
+  </div>
 </template>
 
 <script>
@@ -28,6 +28,10 @@ console.log(c)
       }
     },
     methods: {
+      updateCode () {
+        console.log('hey', this.$store.state)
+        this.code = this.$store.state.fileTracker.code
+      },
       startFakeMovement () {
         const cm = this.$refs.codemirror
         const timeout = (func) => setTimeout(func, 1000)
@@ -64,7 +68,14 @@ console.log(c)
       cm.addShadowCursor(6, 3, 'HAL_9000')
       this.startFakeMovement()
 
-      // cm.lock(3, 5)
+      this.updateCode()
+      this.$store.subscribe((mutation, state) => {
+        if (mutation.type === 'updateCode') {
+          this.updateCode()
+        }
+        console.log(mutation.type)
+        console.log(mutation.payload)
+      })
     }
   }
 </script>

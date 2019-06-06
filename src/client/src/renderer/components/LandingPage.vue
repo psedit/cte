@@ -1,16 +1,31 @@
 <template>
   <div id="wrapper">
-    <editor/>
+    <main>
+      <!-- Create a sidemenu. -->
+      <sidebar />
+      <editor />
+
+      <!-- <input id='input' ref="fileSelect" type="file" name="myFile" @change="file_select"> -->
+
+
+      <!-- <div class="right-side">
+        <span class="title">
+          Welcome to your new project!
+        </span>
+        <textarea name="standard-text" class="main-textbox"></textarea>
+      </div> -->
+    </main>
   </div>
 </template>
 
+
 <script>
-  // import SystemInformation from './LandingPage/SystemInformation'
   import Editor from './Editor'
+  import Sidebar from './Sidebar'
 
   export default {
     name: 'landing-page',
-    components: { Editor },
+    components: { Editor, Sidebar },
     methods: {
       open (link) {
         this.$electron.shell.openExternal(link)
@@ -27,6 +42,27 @@
     margin: 0;
     padding: 0;
   }
+
+  .dir {
+    color: #0ff !important;
+  }
+  .dir:hover {
+    color: rgb(12, 52, 184) !important;
+    cursor:pointer;
+  }
+
+  .file {
+    color: #f3f !important;
+  }
+  .file:hover {
+    color: rgb(102, 15, 102) !important;
+    cursor:pointer;
+  }
+
+  .curr-folder {
+    color: #fff;
+  }
+
 
   body { font-family: 'Source Sans Pro', sans-serif; }
 
@@ -57,6 +93,41 @@
   .left-side {
     display: flex;
     flex-direction: column;
+  }
+
+  .right-side {
+    float: left;
+    /* This marigin has to be the same percentage as the width of the sidenav. */
+    margin-left: 30%;
+  }
+
+  .sidenav {
+    height: 100%;
+    width: 30%;
+    float:left;
+    position: fixed;
+
+    /* Sidebar starts at top left of screen. */
+    top: 0;
+    left: 0;
+
+    background-color: #111;
+    /* overflow-x: hidden; */
+    padding-top: 20px;
+    display: flex;
+    overflow-y: scroll;
+  }
+
+  .sidenav a {
+    padding: 6px 8px 6px 16px;
+    text-decoration: none; /* No underline in links. */
+    font-size: 25px;
+    color: #818181;
+    display: block;
+  }
+
+  .sidenav a:hover {
+    color: #f1f1f1;
   }
 
   .welcome {
@@ -99,5 +170,10 @@
   .doc button.alt {
     color: #42b983;
     background-color: transparent;
+  }
+
+  .main-textbox {
+    width: 85%;
+    height: 100%;
   }
 </style>

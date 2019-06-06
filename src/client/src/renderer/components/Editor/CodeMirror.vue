@@ -36,6 +36,13 @@
       value: String
     },
 
+    watch: {
+      value (newVal, oldVal) { // watch it
+        this.cminstance.setValue(this.value)
+        console.log('Prop changed: ', newVal, ' | was: ', oldVal)
+      }
+    },
+
     methods: {
       initialize () {
         this.codemirror = CodeMirror(this.$refs.wrapper, this.options)
