@@ -29,7 +29,7 @@ class WSServer(Service):
         inst = cls(msg_bus)
         inst_d = Pyro4.Daemon()
         ns = Pyro4.locateNS()
-        inst_uri = clist_d.register(inst)
+        inst_uri = inst_d.register(inst)
 
         ns.register("service.WSServer", inst_uri)
 
@@ -78,9 +78,9 @@ class WSServer(Service):
         finally:
             del self.clients[(websocket.host, websocket.port)]
 
-    def handle_pyro_event(self, fd):
+    def handle_pyro_event(self, socket):
         """ Handle an event on a Pyro fd. """
-        self._pyro_daemon.events(sock)
+        self._pyro_daemon.events([socket])
         for sock in self._pyro_daemon.sockets:
             if sock not in self._known_pyro_socks:
                 self._known_pyro_socks.append(sock)
