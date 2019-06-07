@@ -1,5 +1,6 @@
 # Notulen - 7 Juni
 Notulist: Sverre Kroesen
+Iedereen is aanwezig, behalve Mark, want hij is in Wenen. Frederick ging halverwege de dag ook weg.
 
 De vergadering vandaag verliep niet zoals in de agenda, omdat we in plaats van de onderwerpen in de agenda aan de slag gingen aan de user stories bij dit project, op advies van Thomas. Zo kunnen we bepalen waar we aan moeten werken op basis van de user stories, in plaats van op basis van wat we technisch werkend willen hebben, zoals we tot nu toe hebben gedaan.
 
@@ -45,3 +46,15 @@ Uiteindelijk gaven we het een 2.5.
 **Bestanden toevoegen aan en verwijderen van de server** - Dit gaven we een 2.
 
 **Meerdere tabbladen in de editor** - De meeste mensen gaven dit een 3, er waren 3 mensen die het een 2 gaven, en Folkert gaf het een 4, want het kan moeilijk zijn om van alle aanpassingen van tabbladen in de achtergrond bij te houden. We kunnen het ook inplementeren door gewoon het bestand opnieuw te laden, dat is een stuk makkelijk. We gaven het uiteindeijk een 2.5.
+
+## Taakverdeling
+
+We hebben nu de meeste van de user stories waarover hebben gepokerd verdeelt.
+
+- **Cursor van anderen zien** - Martijn, Sam, Robin
+- **Zien met wie je werkt** - Martijn, Sam, Robin
+- **Toegang tot bestanden tot de server** - Maxim, Jim
+- **Stuk tekst als enige aanpassen** - Jorik, Maxim, Folkert
+- **Meerdere tabbladen in de editor** - Sverre, Mund, Folkert
+
+Chris is ondertussen bezig met de docker.
