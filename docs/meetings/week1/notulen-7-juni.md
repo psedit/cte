@@ -1,5 +1,6 @@
 # Notulen - 7 Juni
 Notulist: Sverre Kroesen
+
 Iedereen is aanwezig, behalve Mark, want hij is in Wenen. Frederick ging halverwege de dag ook weg.
 
 De vergadering vandaag verliep niet zoals in de agenda, omdat we in plaats van de onderwerpen in de agenda aan de slag gingen aan de user stories bij dit project, op advies van Thomas. Zo kunnen we bepalen waar we aan moeten werken op basis van de user stories, in plaats van op basis van wat we technisch werkend willen hebben, zoals we tot nu toe hebben gedaan.
