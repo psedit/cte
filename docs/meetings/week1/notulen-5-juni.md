@@ -1,7 +1,10 @@
 # Notulen Juni 5
 Notulist: Sverre Kroesen
+
 Martijn heeft aangegeven afwezig te zijn, Chris kort voor de vergadering ook. Verder is iedereen aanwezig.
+
 Vergadering geopend om 10:20
+
 Vergadering gesloten om 10:41
 
 ## Voortgang sinds gisteren
