@@ -10,29 +10,28 @@ import Pyro4
 @Pyro4.behavior(instance_mode="single")
 class Filesystem(Service):
     """
-    
+
     """
 
     def __init__(self, msg_bus) -> None:
         super().__init__(msg_bus)
 
-        # Files sorted by path relative to root dir        
+        # Files sorted by path relative to root dir
         self.file_dict: Dict[str, ServerFile] = {}
 
         # Check server config for root directory
         # TODO: retrieve from server
         self.root_dir: str = os.path.realpath('../test/')
-    
+
     @message_type("file-add")
     def add_file(self, msg) -> None:
         """
         Add the file to the Filesystem. Path file is relative to root
         directory.
         """
-        
+
         path = msg['content']['file_path']
         self.file_dict[path] = ServerFile(self.root_dir, path)
-
 
     def list_files(self) -> List[str]:
         """
@@ -53,9 +52,9 @@ class Filesystem(Service):
 
         for root, dirs, files in os.walk(root_dir):
             for f in files:
-                file_list.append(os.path.join(root, f).replace(root_dir,""))
+                file_list.append(os.path.join(root, f).replace(root_dir, ""))
             for d in dirs:
-                file_list.append(os.path.join(root, d).replace(root_dir,""))
+                file_list.append(os.path.join(root, d).replace(root_dir, ""))
 
         return file_list
 
@@ -75,8 +74,8 @@ class Filesystem(Service):
         block = self.get_block(file_path, start, end)
 
         response_content = {"file_content": block}
-        self._send_message_client("file-content-response", response_content, address)
-
+        self._send_message_client(
+            "file-content-response", response_content, address)
 
     def get_block(self, path: str, start: int = 0, end: int = -1) -> List[str]:
         """
@@ -94,15 +93,14 @@ class Filesystem(Service):
         else:
             print("Error: File is not present in the file system.")
             return None
-            
-            
+
     @message_type("cursor-move")
     def _move_cursor(self, msg) -> None:
         pass
         # response_content = {
-                
+
         #     }
-        
+
         # self._send_message_client("cursor-move-broadcast", response_content)
 
 

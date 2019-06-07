@@ -44,10 +44,10 @@ class WSServer(Service):
         for sock in inst_d.sockets:
             self._known_pyro_socks.append(sock)
             self._asio_event_loop.add_reader(sock.fileno(),
-                    partial(self.handle_pyro_event, sock))
+                                             partial(self.handle_pyro_event, sock))
 
         self._asio_event_loop.run_until_complete(
-                websockets.serve(self.ws_loop, '0.0.0.0', 12345))
+            websockets.serve(self.ws_loop, '0.0.0.0', 12345))
         self._asio_event_loop.run_forever()
 
     async def ws_loop(self, websocket, path):

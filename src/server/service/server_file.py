@@ -5,11 +5,12 @@ import os
 
 Range = Tuple[int, int]
 
+
 class ServerFile:
     def __init__(self, root: str, path: str) -> None:
         # A list of locks: (Client Address, start line, end line)
         self.lock_list: Dict[Address, Range] = {}
-        self.cursor_list: Dict[Adress, Tuple[int,int]] = {}
+        self.cursor_list: Dict[Adress, Tuple[int, int]] = {}
         self.root_dir: str = root
         self.file_path_relative: str = path
         self.file_mmap: mmap
@@ -19,8 +20,9 @@ class ServerFile:
     def load_file(self) -> None:
         """Create the mmap file object (Loads the file into virtual memory).
         """
-        f = os.open(os.path.join(self.root_dir, self.file_path_relative), os.O_RDWR)
-        self.file_mmap = mmap.mmap(f,0,prot=mmap.PROT_READ | mmap.PROT_WRITE)
+        f = os.open(os.path.join(self.root_dir,
+                                 self.file_path_relative), os.O_RDWR)
+        self.file_mmap = mmap.mmap(f, 0, prot=mmap.PROT_READ | mmap.PROT_WRITE)
 
     def retrieve_block(self, start: int = 0, end: int = -1) -> List[str]:
         """Returns all line between (and including) a start and end line, split
@@ -62,13 +64,12 @@ class ServerFile:
     def remove_lock(self, delta) -> None:
         # TODO: Return error code(?)
         pass
-    
+
     def move_cursor(self, client: Address, row: int, column: int) -> None:
         self.cursor_list[client] = (row, column)
-    
-    def get_cursor(self, client) -> Tuple[int,int]:
-        return self.cursor_list[client]
-        
-    def drop_client(self, client) -> None:
-        self.cursor_list,pop(client)
 
+    def get_cursor(self, client) -> Tuple[int, int]:
+        return self.cursor_list[client]
+
+    def drop_client(self, client) -> None:
+        self.cursor_list, pop(client)
