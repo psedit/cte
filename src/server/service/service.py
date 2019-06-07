@@ -90,7 +90,7 @@ class Service():
         else:
             try:
                 func(msg)
-            except:
+            except BaseException:
                 traceback.print_exc()
 
     def _construct_message(self, msg_type: str, content: Any, pref_dest: str = None):

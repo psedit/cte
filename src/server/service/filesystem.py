@@ -1,7 +1,6 @@
 from server_file import ServerFile
 from typing import Dict, List
 from service import Service, message_type
-import sys
 import os
 import Pyro4
 

@@ -6,7 +6,6 @@ import json
 import websockets
 from client import Address
 from service import Service, message_type
-import threading
 
 @Pyro4.expose
 class WSServer(Service):
