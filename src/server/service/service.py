@@ -2,7 +2,7 @@ import inspect
 import Pyro4
 from typing import Dict, Any, Callable, List
 import uuid
-
+import traceback
 
 def message_type(msg_type: str):
     """
@@ -39,7 +39,6 @@ class Service():
     method accepts by adding the @message_type(<type>) decorator,
     where <type> is a string containing the message type name.
     """
-    _wanted_msg_types: List[str] = []
 
     def __init__(self, msg_bus):
         self._msg_bus = msg_bus
@@ -65,8 +64,8 @@ class Service():
         inst = cls(msg_bus)
         inst_d = Pyro4.Daemon()
         ns = Pyro4.locateNS()
-        inst_uri = clist_d.register(accman)
-        ns.register(f"service.{cls.__class__.__name__}", inst_uri)
+        inst_uri = inst_d.register(inst)
+        ns.register(f"service.{cls.__name__}", inst_uri)
 
         # Start request loop
         print(f"{cls.__name__} service running")
@@ -76,7 +75,7 @@ class Service():
         """
         Return the list of all message types accepted by this service.
         """
-        return self._wanted_msg_types
+        return [*self._type_map.keys()]
 
     def handle_message(self, msg):
         """
@@ -85,12 +84,17 @@ class Service():
         this type's mapping in _type_map.
         """
         try:
-            self._type_map[msg["type"]](msg)
+            func = self._type_map[msg["type"]]
         except KeyError:
             print(f"Message type {msg['type']} not accepted by service {self.__class__.__name__}")
+        else:
+            try:
+                func(msg)
+            except:
+                traceback.print_exc()
 
     def _construct_message(self, msg_type: str, content: Any, pref_dest: str = None):
-        msg_uuid = uuid.uuid4()
+        msg_uuid = str(uuid.uuid4())
         msg = {"type": msg_type,
                "uuid": msg_uuid,
                "sender": self.__class__.__name__,

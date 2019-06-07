@@ -6,6 +6,7 @@ import json
 import websockets
 from client import Address
 from service import Service, message_type
+import threading
 
 @Pyro4.expose
 class WSServer(Service):
@@ -46,15 +47,15 @@ class WSServer(Service):
                     partial(self.handle_pyro_event, sock))
 
         self._asio_event_loop.run_until_complete(
-                websockets.serve(self.ws_loop, 'localhost', 12345))
+                websockets.serve(self.ws_loop, '0.0.0.0', 12345))
         self._asio_event_loop.run_forever()
 
     async def ws_loop(self, websocket, path):
         """ Handle new messages from a websocket. """
-        self.clients[(websocket.host, websocket.port)] = websocket
+        self.clients[websocket.remote_address] = websocket
 
-        read_task = asyncio.ensure_future(self.ws_read_loop(websocket, path))
-        write_task = asyncio.ensure_future(self.ws_write_loop())
+        read_task = asyncio.create_task(self.ws_read_loop(websocket, path))
+        write_task = asyncio.create_task(self.ws_write_loop())
 
         done, pending = await asyncio.wait([read_task, write_task],
                                            return_when=asyncio.FIRST_COMPLETED)
@@ -63,25 +64,33 @@ class WSServer(Service):
         """ Write loop for websockets. """
         while True:
             msg = await self.messages_to_send.get()
+            print(f"Got message: {msg}")
             recipients = msg["content"]["response_addrs"]
             for recipient in recipients:
-                await self.clients[recipient].send(msg["content"]["msg"])
+                await self.clients[recipient].send(json.dumps(msg["content"]["msg"]))
+            self.messages_to_send.task_done()
 
     async def ws_read_loop(self, websocket, path):
         """ Read loop for websockets. """
         try:
             async for message in websocket:
                 data = json.loads(message)
+                if 'type' not in data or 'content' not in data:
+                    print("Unacceptable message (missing type or content)")
+                    continue
                 new_type = data['type']
-                data['request_address'] = (websocket.host, websocket.port)
+                data['content']['request_address'] = websocket.remote_address
                 print(f"Received message: {data}")
-                self._send_message(new_type, data)
+                self._send_message(new_type, data['content'])
         finally:
-            del self.clients[(websocket.host, websocket.port)]
+            del self.clients[websocket.remote_address]
 
     def handle_pyro_event(self, socket):
         """ Handle an event on a Pyro fd. """
+        print("Started Pyro event handling.")
         self._pyro_daemon.events([socket])
+        print("Finished Pyro event handling.")
+        print("Started Pyro socket registration")
         for sock in self._pyro_daemon.sockets:
             if sock not in self._known_pyro_socks:
                 self._known_pyro_socks.append(sock)
@@ -90,9 +99,10 @@ class WSServer(Service):
 
     @message_type("net-send")
     def send_message(self, msg):
-        print(f"Putting message on send queue: {msg}")
-        self.messages_to_send.put_nowait(msg)
+        asyncio.create_task(self.messages_to_send.put(msg))
 
 
 if __name__ == '__main__':
+    # threading causes weird issues
+    Pyro4.config.SERVERTYPE = 'multiplex'
     WSServer.start()
