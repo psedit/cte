@@ -143,6 +143,7 @@
     display: grid;
     grid-template-columns: 1fr auto auto;
     grid-gap: 0.5em;
+    height: 50px;
   }
 
   #file-list {

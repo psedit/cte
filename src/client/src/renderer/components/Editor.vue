@@ -82,7 +82,7 @@
 <style scoped>
   .editor{
       width: 100%;
-      height: 100vh;
+      height: calc(100% - 50px);
   }
 
   #placeholder{
