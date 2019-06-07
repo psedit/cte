@@ -1,11 +1,8 @@
 linters:
   flake8:
-    fixer: true
-  phpcs:
-    standard: PSR2
-    fixer: true
-  shellcheck:
-    shell: bash
+    python: 3
+    fixer: false
+    max-line-length: 119
 files:
   ignore:
     - 'bower_components/*'
