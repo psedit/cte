@@ -43,9 +43,24 @@ ALTER USER cte IDENTIFIED BY 'new_random_password';
 
 Close the shell with `\q` and edit `.env` to the new password.
 
+## Building
+Open terminal in the server folder and run `docker-compose up -d --build`, everything should now be ready for running.
+
 ## Running
 Open a terminal in the server folder, run `docker-compose up -d`, the database should now be available through adminer at `localhost:8080`
 
+## Database Migration
+In order to upgrade or downgrade the database versions, you can use the alembic commands. To make sure your database is at the most recent revision, first run the command 
+
+```sh
+docker-compose run migration alembic upgrade head
+```
+
+To downgrade 1 revision use
+
+```sh
+docker-compose run migration alembic downgrade -1
+```
 
 [docker-install]: https://docs.docker.com/install/
 [docker-compose-install]: https://docs.docker.com/compose/install/
