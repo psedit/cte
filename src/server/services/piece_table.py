@@ -136,7 +136,7 @@ class PieceTable:
         
         Use when saving to disk.
         """
-        stitched_file = self.stitch(0, -1)
+        stitched_file = self.stitch()
         self.blocks[0] = TextBlock(stitched_file)
         # TODO: update open block indices & table
         
