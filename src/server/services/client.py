@@ -1,10 +1,5 @@
 from datetime import datetime
-from typing import Tuple
-
-
-# Type definition for client address
-Address = Tuple[str, int]
-
+from typedefs import Address
 
 class Client():
     """"""

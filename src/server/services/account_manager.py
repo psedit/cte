@@ -1,5 +1,5 @@
 from service import Service, message_type
-from client import Address
+from typedefs import Address
 import Pyro4
 from typing import Dict, List, Tuple
 
@@ -12,10 +12,6 @@ class AccountManager(Service):
     Handles: login, logout, account registration, account deletion,
     account management (nomen est omen) and permission-related requests.
     """
-    _wanted_msg_types = [
-            "account-login"
-            ]
-
     def __init__(self, msg_bus):
         super().__init__(msg_bus)
         self._msg_pass = msg_pass

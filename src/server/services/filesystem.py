@@ -11,7 +11,6 @@ class Filesystem(Service):
     """
 
     """
-
     def __init__(self, msg_bus) -> None:
         super().__init__(msg_bus)
 
@@ -28,7 +27,6 @@ class Filesystem(Service):
         Add the file to the Filesystem. Path file is relative to root
         directory.
         """
-
         path = msg['content']['file_path']
         self.file_dict[path] = ServerFile(self.root_dir, path)
 
@@ -37,7 +35,6 @@ class Filesystem(Service):
         Lists all files currently within the file system, relative to
         the root directory.
         """
-
         return list(self.file_dict.keys())
 
     def list_files_available(self) -> List[str]:
@@ -45,7 +42,6 @@ class Filesystem(Service):
         Lists all files currently available, but not necessarily added,
         to the file system, relative to the root directory.
         """
-
         root_dir = self.root_dir()[:-1]
         file_list = []
 
@@ -86,7 +82,6 @@ class Filesystem(Service):
         start -- Line number indicating start position
         end -- Line number indicating end position, -1 indicates the last line.
         """
-
         if path in self.file_dict.keys():
             return self.file_dict[path].retrieve_block(start, end)
         else:
