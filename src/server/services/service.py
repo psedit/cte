@@ -115,7 +115,7 @@ class Service():
         self._msg_bus.put_message(msg)
         return msg
 
-    def _send_message_client(self,  msg_type: str, content: Any, *addrs):
+    def _send_message_client(self, msg_type: str, content: Any, *addrs):
         """
         Assembles all message components and puts the combined message on the message bus.
         Only for messages destined for a client.
