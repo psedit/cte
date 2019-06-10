@@ -91,7 +91,7 @@ class PieceTable:
         
         When length is -1, returns until the last line.
         """
-        if length == -1:
+        if length < 0:
             length = len(self)
             
         lines: List[str] = []

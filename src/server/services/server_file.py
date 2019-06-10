@@ -8,62 +8,79 @@ class ServerFile:
     def __init__(self, root: str, path: str) -> None:
         self.root_dir: str = root
         self.file_path_relative: str = path
+        self.file_pt: PieceTable
+        # Clients and their location (row, column, is_idle)
+        self.clients: Dict[Address, List[int, int, bool]] = {}
+        self.is_saved: bool
 
-        self.load_file()
+        self.load_from_disk()
 
-    def load_file(self) -> None:
-        """Create the mmap file object (Loads the file into virtual memory).
+    def load_from_disk(self) -> None:
         """
-        # f = os.open(os.path.join(self.root_dir, self.file_path_relative),
-        #             os.O_RDWR)
-        pass
-
-    def retrieve_block(self, start: int = 0, end: int = -1) -> List[str]:
-        """Returns all line between (and including) a start and end line, split
-        up per line.
-
-        Keyword arguments:
-        start -- Line number indicating start position
-        end -- Line number indicating end position, -1 indicates the last line.
+        Loads the file from disk and creates the piece table object.
         """
-        if self.file_mmap:
-            self.file_mmap.seek(0)
-            block: List[str] = []
+        file_path = os.path.join(self.root_dir, self.file_path_relative)
+        f = open(file_path)
+        
+        file_list: List[str] = list(f)
+        self.file_pt = PieceTable(file_list)
+        self.is_saved = True
 
-            for i, line in enumerate(iter(self.file_mmap.readline, b"")):
-                if start <= i and (end < 0 or i <= end):
-                    block.append(line.decode('utf-8'))
-
-            return block
-        else:
-            pass
-
-    def save_buffer(self) -> None:
-        """Writes the current buffer to the file on disk, although the mmap
-        automatically writes to disk in most instances.
+    def save_to_disk(self) -> None:
         """
-        self.file_mmap.flush()
+        Writes the current buffer to the file on disk, while keeping all
+        open edit-blocks open.
+        """
+        f = open(os.path.join(self.root_dir, self.file_path_relative), 'w')
+        for line in self.file_pt.stitch():
+            f.write(line)
+        
+        self.is_saved = True
 
-    def update_buffer(self, delta) -> None:
-        """ Writes the the delta contents (= file change) to the buffer.
+    def retrieve_block(self, start: int = 0, length: int = -1) -> List[str]:
+        """
+        Returns all 'length' lines from line 'start', split up per line.
+
+        A negative length will return until the last line.
+        """
+        return self.file_pt.get_lines(start, length)
+        
+
+    def process_delta(self, delta) -> bool:
+        """ 
+        Writes the the delta contents (= file change) to the piece table.
         """
         # TODO: Keep locks in mind
-        # TODO: Return error code(?)
+        # TODO: Return True if succesfull
+        self.is_saved = False
         pass
 
-    def add_lock(self, delta) -> int:
-        # TODO: Return error code(?)
+    def add_lock(self, delta) -> bool:
+        # TODO: Return True if succesfull
         pass
 
     def remove_lock(self, delta) -> None:
         # TODO: Return error code(?)
         pass
 
+
     def move_cursor(self, client: Address, row: int, column: int) -> None:
-        self.file_buffer.move_cursor(client, row, column)
+        self.clients[client] = [row, column, True]
 
-    def get_cursor(self, client) -> Tuple[int, int]:
-        return self.file_buffer.get_cursor_list()
+    def get_cursor(self, client: Address) -> Tuple[int, int]:
+        return self.clients[client]
+        
+    def make_idle(self, client: Address) -> None:
+        self.clients[client][2] = False
 
-    def drop_cursor(self, client) -> None:
-        self.file_buffer.remove_cursor(client)
+    def drop_client(self, client: Address) -> None:
+        self.clients.pop(client)
+    
+    def client_count(self) -> int:
+        return len(self.clients)
+    
+    def is_joined(self, client) -> bool:
+        return address in self.clients.keys()
+        
+    def saved_status(self) -> bool:
+        return self.is_saved

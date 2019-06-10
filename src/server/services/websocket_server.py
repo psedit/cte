@@ -78,9 +78,9 @@ class WSServer(Service):
                     print("Unacceptable message (missing type or content)")
                     continue
                 new_type = data['type']
-                data['content']['request_address'] = websocket.remote_address
+                client_info = (websocket.remote_address, "uname")
                 print(f"Received message: {data}")
-                self._send_message(new_type, data['content'])
+                self._send_message_from_client(new_type, data['content'], client_info)
         finally:
             del self.clients[websocket.remote_address]
 
