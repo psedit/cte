@@ -93,13 +93,18 @@ class Service():
             except BaseException:
                 traceback.print_exc()
 
-    def _construct_message(self, msg_type: str, content: Any, pref_dest: str = None):
+    def _construct_message(self, msg_type: str, 
+                                 content: Any, 
+                                 pref_dest: str = None,
+                                 client_info = None):
         msg_uuid = str(uuid.uuid4())
         msg = {"type": msg_type,
                "uuid": msg_uuid,
                "sender": self.__class__.__name__,
                "pref_dest": pref_dest,
                "content": content}
+        if client_info:
+            msg["sender"] = client_info
         return msg
 
     def _send_message(self, msg_type: str, content: Any, pref_dest: str = None):
@@ -123,4 +128,9 @@ class Service():
         net_msg = self._construct_message("net-send", net_cont)
         self._msg_bus.put_message(net_msg)
         return net_msg
+        
+    def _send_message_from_client(self, msg_type: str, content: Any, client_info):
+        msg = self._construct_message(msg_type, content, None, client_info)
+        self._msg_bus.put_message(msg)
+        return msg
 
