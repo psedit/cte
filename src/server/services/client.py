@@ -1,6 +1,7 @@
 from datetime import datetime
 from typedefs import Address
 
+
 class Client():
     """"""
     def __init__(self, addr: Address):

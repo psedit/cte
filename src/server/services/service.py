@@ -1,8 +1,10 @@
 import inspect
 import Pyro4
-from typing import Dict, Any, Callable, List
+from typing import Dict, Any, Callable, List, Tuple
 import uuid
+from typedefs import Address
 import traceback
+
 
 def message_type(msg_type: str):
     """
@@ -44,7 +46,8 @@ class Service():
         self._msg_bus = msg_bus
         self._resp_cache: Dict[str, Any] = {}
         self._type_map: Dict[str, Callable[[dict], None]] = {}
-        for _, func in inspect.getmembers(self, predicate=lambda x: hasattr(x, "_msg_type")):
+        for _, func in inspect.getmembers(
+                self, predicate=lambda x: hasattr(x, "_msg_type")):
             self._type_map[func._msg_type] = func
 
     @classmethod
@@ -86,17 +89,17 @@ class Service():
         try:
             func = self._type_map[msg["type"]]
         except KeyError:
-            print(f"Message type {msg['type']} not accepted by service {self.__class__.__name__}")
+            print(f"Message type {msg['type']} not accepted"
+                  "by service {self.__class__.__name__}")
         else:
             try:
                 func(msg)
             except BaseException:
                 traceback.print_exc()
 
-    def _construct_message(self, msg_type: str, 
-                                 content: Any, 
-                                 pref_dest: str = None,
-                                 client_info = None):
+    def _construct_message(self, msg_type: str, content: Any,
+                           pref_dest: str = None,
+                           client_info: Tuple[Address, str] = None):
         msg_uuid = str(uuid.uuid4())
         msg = {"type": msg_type,
                "uuid": msg_uuid,
@@ -107,9 +110,13 @@ class Service():
             msg["sender"] = client_info
         return msg
 
-    def _send_message(self, msg_type: str, content: Any, pref_dest: str = None):
+    def _send_message(self,
+                      msg_type: str,
+                      content: Any,
+                      pref_dest: str = None):
         """
-        Assembles all message components and puts the combined message on the message bus.
+        Assembles all message components and puts the combined message
+        on the message bus.
         """
         msg = self._construct_message(msg_type, content, pref_dest)
         self._msg_bus.put_message(msg)
@@ -117,7 +124,8 @@ class Service():
 
     def _send_message_client(self, msg_type: str, content: Any, *addrs):
         """
-        Assembles all message components and puts the combined message on the message bus.
+        Assembles all message components and puts the combined
+        message on the message bus.
         Only for messages destined for a client.
         """
         client_msg = self._construct_message(msg_type, content)
@@ -128,9 +136,11 @@ class Service():
         net_msg = self._construct_message("net-send", net_cont)
         self._msg_bus.put_message(net_msg)
         return net_msg
-        
-    def _send_message_from_client(self, msg_type: str, content: Any, client_info):
+
+    def _send_message_from_client(self,
+                                  msg_type: str,
+                                  content: Any,
+                                  client_info):
         msg = self._construct_message(msg_type, content, None, client_info)
         self._msg_bus.put_message(msg)
         return msg
-
