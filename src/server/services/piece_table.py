@@ -14,10 +14,13 @@ class PieceTable:
     while the piece table makes sure the general structure stays intact.
     """
     def __init__(self, text) -> None:
-        lines = text.splitlines(True)
+        if isinstance(text, str):
+            lines = text.splitlines(True)
+        else:
+            lines = text
+        
         orig_block = TextBlock(lines, False)
         self.blocks: List[TextBlock] = [orig_block]
-        
         self.table: List[List[int]] = [[0, 0, len(lines)]]
         
     def __len__(self) -> int:
