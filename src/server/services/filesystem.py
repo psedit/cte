@@ -1,4 +1,5 @@
 from server_file import ServerFile
+from typedefs import Address
 from typing import Dict, List
 from service import Service, message_type
 import os
@@ -16,10 +17,12 @@ class Filesystem(Service):
         # Check server config for root directory
         # TODO: retrieve from server
         self.root_dir: str = os.path.realpath('../test/')
+        self.usernames: Dict[Address, str] = {}
 
         # Files sorted by path relative to root dir
         self.file_dict: Dict[str, ServerFile] = {}
-        self.root_tree = self.parse_walk(list(os.walk(self.root_dir)), self.root_dir)
+        self.root_tree = self.parse_walk(list(os.walk(self.root_dir)), 
+                                         self.root_dir)
 
     def add_file(self, file_path: str) -> None:
         """
@@ -73,12 +76,12 @@ class Filesystem(Service):
         Take the file content request message and construct the appropriate 
         response, sending the block via a new 'file-content-response' message.
         """
+        address = msg["sender"][0]
         content = msg["content"]
 
-        end = content["end"]
         start = content["start"]
-        file_path = content["file"]
-        address = content["address"]
+        length = content["length"]
+        file_path = content["file_path"]
 
         if file_path not in self.file_dict.keys():
             # TODO: send exception to client
@@ -89,7 +92,7 @@ class Filesystem(Service):
             # "Please join the file before requesting its contents."
             pass 
         else:
-            block = self.get_block(file_path, start, end)
+            block = self.get_block(file_path, start, length)
     
             response_content = {"file_content": block, "address": address}
             self._send_message_client("file-content-response", response_content, 
@@ -109,15 +112,53 @@ class Filesystem(Service):
             
     @message_type("cursor-move")
     def _move_cursor(self, msg) -> None:
+        address, username = msg["sender"]
+        content = msg["content"]
         
-        # response_content = {
-
-        #     }
-
-        # self._send_message_client("cursor-move-broadcast", response_content)
+        path = content["file_path"]
+        row = content["row"]
+        column = content["column"]
         
-        pass
+        file = self.file_dict[path]
+        
+        if not file.is_joined(address):
+            # TODO: send exception to client
+            # "Please join the file first before moving within it."
+            return
+
+        file.move_cursor(address, row, column)
+        
+        new_content = {
+            "username": username,
+            "file_path": path,
+            "row": row,
+            "column": column
+        }
+        
+        self._send_message_client("cursor-move-broadcast",
+                                  new_content,
+                                  *file.get_clients(exclude=[address]))
     
+    @message_type("cursor-list-request")
+    def _send_cursor_list(self, msg):
+        address = msg["sender"][0]
+        content = msg["content"]
+        
+        path = content["file_path"]
+        
+        if not file.is_joined(address):
+            # TODO: send exception to client
+            # "Please join the file first before requesting cursor locations."
+            return
+        
+        curs_f = self.file_dict[path].get_cursors()
+        print(curs_f)
+        cursors = [[self.usernames[c]] + curs_f[c] for c in curs_f.keys()]
+        
+        self._send_message_client("cursor-list-response",
+                                  {"cursor_list": cursors},
+                                  address)
+        
     @message_type("file-join")
     def _file_add_client(self, msg) -> None:
         """
@@ -127,7 +168,10 @@ class Filesystem(Service):
         content = msg["content"]
 
         file = content["file_path"]
-        address = content["address"]
+        address, username = msg["sender"]
+        
+        # TODO: this should go via the database
+        self.usernames[address] = username
         
         if not os.path.isfile(os.path.join(self.root_dir, file)):
             # TODO: send exception to client
@@ -140,7 +184,6 @@ class Filesystem(Service):
             
         # Add the file to the client list in the ServerFile class.
         self.file_dict[file].move_cursor(address, 0, 0)
-
     
     @message_type("file-leave")
     def _file_remove_client(self, msg) -> None:
@@ -151,8 +194,8 @@ class Filesystem(Service):
         content = msg["content"]
 
         file = content["file_path"]
-        address = content["address"]
         force = content["force_exit"]
+        address = msg["sender"][0]
 
         if (force == False and self.file_dict[file].client_count() == 1 and 
                 self.file_dict[file].saved_status() is False):
