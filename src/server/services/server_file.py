@@ -13,6 +13,9 @@ class ServerFile:
         self.file_pt: PieceTable
         # Clients and their location (row, column, is_idle)
         self.clients: Dict[Address, List[Any]] = {}
+        # Clients and their locks (as an index), sorted by id
+        self.locks: Dict[Address, Dict[int, int]] = {}
+        self.lock_id_count: int = 0
         self.is_saved: bool
 
         self.load_from_disk()
@@ -56,13 +59,34 @@ class ServerFile:
         self.is_saved = False
         pass
 
-    def add_lock(self, delta) -> None:
-        # TODO: Return True if succesfull
-        pass
+    def add_lock(self, client: Address, start: int, length: int) -> int:
+        """
+        Tries to create the block within the piece table.
+        Returns the block ID of the created block when successful, None
+        otherwise
+        """
+        try:
+            block_id = self.file_pt.open_block(start, length)
+        except ValueError:
+            return None
 
-    def remove_lock(self, delta) -> None:
-        # TODO: Return error code(?)
-        pass
+        if not clients in self.locks.keys():
+            self.locks[client] = [block_id]
+        else:
+            self.locks[client].append(block_id)
+
+        return block_id
+
+    def remove_lock(self, client: Address, block_id: int) -> None:
+        """
+        Remove the lock if the client has access to it.
+        """
+        if client in self.locks.keys() and block_id in self.locks[client]:
+            self.file_pt.close_block(block_id)
+            self.locks[client].pop(block_id)
+
+            if self.locks[client] is []:
+                self.locks.pop(client)
 
     def move_cursor(self, client: Address, row: int, column: int) -> None:
         self.clients[client] = [row, column, True]

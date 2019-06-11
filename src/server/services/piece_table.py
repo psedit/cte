@@ -19,8 +19,8 @@ class PieceTable:
         else:
             lines = text
 
-        orig_block = TextBlock(lines, False)
-        self.blocks: List[TextBlock] = [orig_block]
+        orig_piece = TextBlock(lines, False)
+        self.blocks: Dict[TextBlock] = {0: orig_piece}
         self.table: List[List[int]] = [[0, 0, len(lines)]]
 
     def __len__(self) -> int:
@@ -47,35 +47,35 @@ class PieceTable:
 
     def line_to_table_index(self, line: int) -> Tuple[int, int]:
         """
-        Returns the corresponding block index and block offset
+        Returns the corresponding piece index and piece offset
         for a given file line.
         """
-        block_start: int = 0
+        piece_start: int = 0
         i: int
         for i in range(len(self.table)):
-            block_length: int = self.table[i][2]
+            piece_length: int = self.table[i][2]
 
-            if line >= block_start and line < block_start + block_length:
-                return i, line - block_start
+            if line >= piece_start and line < piece_start + piece_length:
+                return i, line - piece_start
 
-            block_start += block_length
+            piece_start += block_length
         raise ValueError("Invalid line number")
 
-    def get_block_start(self, block_index: int) -> int:
+    def get_piece_start(self, piece_index: int) -> int:
         """
-        Returns the line at which the given block (table index) begins within
+        Returns the line at which the given piece (table index) begins within
         the stitched file.
         """
         line: int = 0
-        for i in range(block_index):
+        for i in range(piece_index):
             line += self.table[i][2]
 
         return line
 
-    def get_block_range(self, start: int, length: int) -> Tuple[int, int]:
+    def get_piece_range(self, start: int, length: int) -> Tuple[int, int]:
         """
-        Returns a range of blocks which cover the given line range, in the
-        form '(start-block, end-block)'.
+        Returns a range of pieces which cover the given line range, in the
+        form '(start_pieces, end_piece)'.
         """
         first, offset = self.line_to_table_index(start)
         length_rem: int = length - (self.table[first][2] - offset)
@@ -90,7 +90,7 @@ class PieceTable:
     def get_lines(self, start: int, length: int) -> List[str]:
         """
         Returns a list with the requested lines assembled
-        from the block present in the piece table.
+        from the piece present in the piece table.
 
         When length is -1, returns until the last line.
         """
@@ -100,7 +100,7 @@ class PieceTable:
         lines: List[str] = []
         length_rem: int = length
         index, offset = self.line_to_table_index(start)
-        first, last = self.get_block_range(start, length)
+        first, last = self.get_piece_range(start, length)
 
         for i in range(first, last + 1):
             tab_ent = self.table[i]
@@ -143,6 +143,30 @@ class PieceTable:
         self.blocks[0] = TextBlock(stitched_file)
         # TODO: update open block indices & table
 
+        # Update the table section lengths and starting positions
+        cur_pos = 0
+        last_open_index = 0
+        for i, section in enumerate(self.table):
+            if self.blocks[section[0]].is_open():
+                last_open_index = i + 1
+            else:
+                self.table[last_orig_index][2] += section[2]
+
+                if i is last_open_index:
+                    section = [0, cur_pos, section[2]]
+                else:
+                    # '-1' signal that the section is to be removed.
+                    section[0] = -1
+
+            cur_pos += section[2]
+
+        self.table = [s for s in self.table if not s[0] is -1]
+
+        # Remove the closed blocks from memory
+        for block_id in self.blocks.keys():
+            if not self.blocks[block_id].is_open():
+                self.blocks.pop(block_id)
+
         return stitched_file
 
     def open_block(self, start: int, length: int) -> int:
@@ -154,21 +178,20 @@ class PieceTable:
         of file boundaries.
         """
         # Check if block creation is allowed
-        range_start, range_end = self.get_block_range(start, length)
-        for block_index in range(range_start, range_end + 1):
-            if self.blocks[self.table[block_index][0]].status() is True:
+        range_start, range_end = self.get_piece_range(start, length)
+        for piece_index in range(range_start, range_end + 1):
+            if self.blocks[self.table[piece_index][0]].status() is True:
                 raise ValueError("Illegal block request")
 
         if start + length > len(self):
             raise ValueError("Illegal block request")
 
         # Create the new TextBlock object
-        print(self.get_lines(start, length))
         block_lines: List[str] = self.get_lines(start, length)
 
         new_block: TextBlock = TextBlock(block_lines)
-        print(new_block.lines)
-        self.blocks.append(new_block)
+        block_id = max(self.blocks.keys()) + 1
+        self.blocks[block_id] = new_block
 
         # Find and shrink previous containing block
         index, offset = self.line_to_table_index(start)
@@ -188,27 +211,27 @@ class PieceTable:
         else:
             # Cut or shrink the next couple blocks to make space
             length_rem: int = -1 * rem
-            cur_block_index: int = index + 2
+            cur_piece_index: int = index + 2
 
-            while length_rem > 0 and len(self.table) > cur_block_index:
-                block_len: int = self.table[cur_block_index][2]
+            while length_rem > 0 and len(self.table) > cur_piece_index:
+                piece_len: int = self.table[cur_piece_index][2]
 
-                if length_rem > block_len:
-                    length_rem -= block_len
-                    self.table.pop(cur_block_index)
+                if length_rem > piece_len:
+                    length_rem -= piece_len
+                    self.table.pop(cur_piece_index)
                 else:
-                    self.table[cur_block_index][1] += length_rem
-                    self.table[cur_block_index][2] -= length_rem
+                    self.table[cur_piece_index][1] += length_rem
+                    self.table[cur_piece_index][2] -= length_rem
 
                     break
 
-        return index + 1
+        return block_id
 
-    def close_block(self, index: int) -> None:
+    def close_block(self, block_id: int) -> None:
         """
         Closes the block with the corresponsing index.
 
         The block is kept within the piece table but should not be written to
         anymore.
         """
-        self.blocks[index].close()
+        self.blocks[block_id].close()
