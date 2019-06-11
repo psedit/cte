@@ -11,7 +11,7 @@ sleep .5
 python3 -m cProfile -o out.prof websocket_server.py &
 PIDW=$1
 
-trap 'pkill python3' SIGINT
+trap 'pkill python3' INT TERM QUIT
 
 wait $PIDW
 wait $PIDF
