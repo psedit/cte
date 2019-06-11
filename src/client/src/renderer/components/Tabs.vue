@@ -15,7 +15,7 @@
     name: 'tabs',
     data () {
       return {
-        file_paths: this.$store.state.tabs
+        file_paths: this.$store.state.fileTracker.tabs
       }
     },
     methods: {

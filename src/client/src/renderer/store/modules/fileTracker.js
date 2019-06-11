@@ -3,7 +3,7 @@ const state = {
   code: '',
   openedFile: '',
   filePaths: '',
-  tabs: ['']
+  tabs: []
 }
 
 const mutations = {
@@ -16,7 +16,7 @@ const mutations = {
    */
   addTab (state, newTab) {
     if (!state.tabs.includes(newTab)) {
-      state.tabs.push(newTab)
+      state.tabs = [...state.tabs, newTab]
     }
   },
   /** Removes a tab from state
