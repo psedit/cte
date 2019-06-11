@@ -11,8 +11,8 @@ const mutations = {
     state.code = newCode
   },
   /** Adds a tab to state
-   * @param {Object} state
-   * @param {string} newTab
+   * @param {Object} state vuex state
+   * @param {string} newTab the tab that need to be added
    */
   addTab (state, newTab) {
     if (!state.tabs.includes(newTab)) {
@@ -20,8 +20,8 @@ const mutations = {
     }
   },
   /** Removes a tab from state
-   * @param {Object} state
-   * @param {string} tabToRemove
+   * @param {Object} state vuex state
+   * @param {string} tabToRemove the tab that needs to be removed
    */
   removeTab (state, tabToRemove) {
     state.tabs.filter(x => x !== tabToRemove)
@@ -38,8 +38,8 @@ const mutations = {
 const actions = {
   /** Opens a file from the root of the project, and updates the code.
    * Also changes the openedFile state. Add the file to the tabs.
-   * @param {Object} state
-   * @param {string} filePath
+   * @param {Object} state vuex state
+   * @param {string} filePath the file path to document to be opened
    */
   openFile (state, filePath) {
     state.openedFile = filePath
