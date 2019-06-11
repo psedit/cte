@@ -26,7 +26,8 @@
     name: 'sidebar',
     data () {
       return {
-        currFolder: './'
+        currFolder: './',
+        dirTree: []
       }
     },
     components: {
@@ -41,6 +42,7 @@
         /* Create list of all files in current folder. */
         const fs = require('fs')
         const currFolder = this.currFolder
+
         // let files = [{name: '\ud83d\udd19', type: 'dir', path: parentFolder},
         //   {name: 'HOME', type: 'dir', path: `./`}]
         let files = []
@@ -50,6 +52,9 @@
       }
     },
     methods: {
+      updateDirTree () {
+          this.dirTree = this.$store.state.fileTracker.dirTree
+      }
       /* When clicking on a file, go inside directory or
        * render file and show its content on screen. */
       previous () {

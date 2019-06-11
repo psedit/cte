@@ -2,7 +2,7 @@ const fs = require('fs')
 const state = {
   code: '',
   openedFile: '',
-  filePaths: '',
+  filePaths: [],
   tabs: ['']
 }
 
