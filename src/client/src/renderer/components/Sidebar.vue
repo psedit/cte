@@ -39,7 +39,10 @@
     },
     // FIXME: use the data from vuex
     computed: {
+      // TODO: functie fixen en documentatie schrijven
       files () {
+        this.updateDirTree() //FIXME: wellicht geen this.
+
         /* Create list of all files in current folder. */
         const fs = require('fs')
         const currFolder = this.currFolder
@@ -53,11 +56,13 @@
       }
     },
     methods: {
+      /** Update the directory tree (by getting it from store). */
       updateDirTree () {
-          this.files = this.$store.state.fileTracker.dirTree
-      }
-      /* When clicking on a file, go inside directory or
-       * render file and show its content on screen. */
+          this.dirTree = this.$store.state.fileTracker.dirTree
+      },
+
+      /** When clicking on a file, go inside directory or
+       *  render file and show its content on screen. */
       previous () {
         let parentFolder
         /* Get path of parent folder, used for the back button. */
@@ -74,6 +79,7 @@
           path: parentFolder
         })
       },
+      /** Go to the root directory. */
       home () {
         this.fileClick({
           // name: parentFolder,
@@ -81,6 +87,9 @@
           path: './'
         })
       },
+      /** When clicking on a file, show the content of the directory or
+       *  open the file in the editor.
+       */
       fileClick (file) {
         if (file.type === 'dir') {
           this.currFolder = file.path
