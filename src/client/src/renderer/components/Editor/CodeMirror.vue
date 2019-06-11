@@ -73,7 +73,9 @@
           console.log(change)
           const line = change.to.line
           const info = cm.lineInfo(line)
-          if (info.wrapClass === 'lock') {
+          /* Cancel change if it was initiated by a user outside of their
+           * locked sections */
+          if (change.origin !== 'setValue' && info.wrapClass !== 'lock') {
             change.cancel()
           }
         })
