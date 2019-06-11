@@ -8,8 +8,9 @@
 6. Agenda
     * Evaluatie bespreking Thomas
     * Werkzaamheden weekend
+    * Rick Kruk
     * Doel teams vandaag
-    * Einddoel en weekend
+    * Einddoel voor demo
     * Nieuwe *user stories*
 7. W.V.T.T.K
 8. Doornemen nieuwe actiepunten
