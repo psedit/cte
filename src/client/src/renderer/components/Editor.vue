@@ -25,7 +25,7 @@
     },
     methods: {
       updateCode () {
-        console.log('hey', this.$store.state)
+        // console.log('hey', this.$store.state)
         this.code = this.$store.state.fileTracker.code
       },
       startFakeMovement () {
@@ -72,8 +72,8 @@
         if (mutation.type === 'updateCode') {
           this.updateCode()
         }
-        console.log(mutation.type)
-        console.log(mutation.payload)
+        // console.log(mutation.type)
+        // console.log(mutation.payload)
       })
     }
   }

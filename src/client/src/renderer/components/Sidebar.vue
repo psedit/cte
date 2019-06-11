@@ -36,6 +36,7 @@
       FolderIcon,
       FileIcon
     },
+    // FIXME: use the data from vuex
     computed: {
       files () {
         /* Create list of all files in current folder. */
@@ -63,6 +64,7 @@
           }
         })
 
+        this.$store.commit('updateFiles', files)
         return files
       }
     },
@@ -98,15 +100,7 @@
         if (file.type === 'dir') {
           this.currFolder = file.path
         } else {
-          const store = this.$store
-          const fs = require('fs')
-
-          fs.readFile(file.path.substring(0, file.path.length - 1), 'utf8', (err, data) => {
-            if (err) {
-              throw err
-            }
-            store.dispatch('updateCodeAction', data)
-          })
+          this.$store.dispatch('openFile', file.path)
         }
       }
     }
