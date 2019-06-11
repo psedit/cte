@@ -22,12 +22,16 @@
   import BackIcon from 'vue-material-design-icons/ArrowLeft'
   import FolderIcon from 'vue-material-design-icons/Folder'
   import FileIcon from 'vue-material-design-icons/File'
+  import connector from 'path/to/connector'
+
   export default {
     name: 'sidebar',
     data () {
       return {
         /* The variable currFolder is relative to the root of the server. */
         currFolder: './',
+        /* The variable currFiles contains all files in currFolder. */
+        currFiles: [],
         dirTree: []
       }
     },
@@ -39,27 +43,39 @@
     },
     // FIXME: use the data from vuex
     computed: {
-      // TODO: functie fixen en documentatie schrijven
+      /** Loop over all files in current directory and add
+       *  object to files array, storing the name and type
+       *  (either directory or file) of the file.
+       */
       files () {
-        this.updateDirTree() //FIXME: wellicht geen this.
+        // currFiles = [currFolder, [<bestanden>]]
+        let files
+        let currFiles = this.currFiles
+        let currFolder = this.currFolder
 
-        /* Create list of all files in current folder. */
-        const fs = require('fs')
-        const currFolder = this.currFolder
+        /*  For sorting purposes, first push all directories
+         *  and then all other files.
+         */
+        currFiles[1].forEach(file => {
+          if (typeof (file) !== 'string') {
+            files.push({name: file, type: 'dir', path: `${currFolder}${file}/`})
+          }
+        })
 
-        // let files = [{name: '\ud83d\udd19', type: 'dir', path: parentFolder},
-        //   {name: 'HOME', type: 'dir', path: `./`}]
-        let files = []
+        currFiles[1].forEach(file => {
+          if (typeof (file) === 'string') {
+            files.push({name: file, type: 'file', path: `${currFolder}${file}/`})
+          }
+        })
 
-        this.$store.commit('updateFiles', files)
         return files
       }
     },
     methods: {
       /** Update the directory tree (by getting it from store). */
-      updateDirTree () {
-          this.dirTree = this.$store.state.fileTracker.dirTree
-      },
+      // updateDirTree () {
+      //     this.dirTree = this.$store.state.fileTracker.dirTree
+      // },
 
       /** When clicking on a file, go inside directory or
        *  render file and show its content on screen. */
@@ -88,15 +104,37 @@
         })
       },
       /** When clicking on a file, show the content of the directory or
-       *  open the file in the editor.
+       *  open the file in the editor. If the clicked file is a directory,
+       *  then also update currFiles.
        */
       fileClick (file) {
         if (file.type === 'dir') {
+          let currFiles = this.currFiles
           this.currFolder = file.path
+          
+          // TODO: Rekening houden met dubbele namen?
+          for (let i = 0; i < currFiles.length; i++) {
+            currFile = currFiles[1][i]
+            // TODO: file.path = "./data/src/.../foo/" regex ==> "foo"
+            if (typeof (currFile) !== 'string' && currFile[0] === file.path) {
+              this.currFiles = currFile
+            }
+          }
         } else {
           this.$store.dispatch('openFile', file.path)
         }
       }
+    },
+    mounted () {
+      connector.addEventListener('open', () => {
+        connector.listenToMsg('file-list-broadcast', (content) => {
+          console.log(content.root_tree)
+          this.$store.dispatch('updateFilesAction', content.root_tree)
+
+          // TODO: Eventueel nog ergens anders naar fileTracker luisteren.
+          this.dirTree = this.$store.state.fileTracker.dirTree
+        })
+      })
     }
   }
 </script>

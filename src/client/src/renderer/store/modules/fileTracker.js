@@ -38,6 +38,13 @@ const actions = {
   },
   updateCodeAction (state, newCode) {
     state.commit('updateCode', newCode)
+  },
+  /** Updates the filepaths
+   * @param {Object} state
+   * @param {Object[]} filePaths
+   */
+  updateFilesAction (state, filePaths) {
+    state.commit('updateFiles', filePaths)
   }
 }
 
@@ -46,21 +53,21 @@ export default {
   mutations,
   actions
 }
-  // readLocalDirTree (root) {
-  //   /* Loop over all files in current directory and add
-  //    * object to files array, storing the name and type
-  //    * (either directory or file) of the file.
-  //    * For sorting purposes, first push all directories
-  //    * and then all other files. */
-  //   fs.readdirSync(currFolder).forEach(file => {
-  //     if (fs.lstatSync(currFolder + file).isDirectory()) {
-  //       files.push({name: file, type: 'dir', path: `${currFolder}${file}/`})
-  //     }
-  //   })
-  //
-  //   fs.readdirSync(currFolder).forEach(file => {
-  //     if (!fs.lstatSync(currFolder + file).isDirectory()) {
-  //       files.push({name: file, type: 'file', path: `${currFolder}${file}/`})
-  //     }
-  //   })
-  // }
+// readLocalDirTree (root) {
+//   /* Loop over all files in current directory and add
+//    * object to files array, storing the name and type
+//    * (either directory or file) of the file.
+//    * For sorting purposes, first push all directories
+//    * and then all other files. */
+//   fs.readdirSync(currFolder).forEach(file => {
+//     if (fs.lstatSync(currFolder + file).isDirectory()) {
+//       files.push({name: file, type: 'dir', path: `${currFolder}${file}/`})
+//     }
+//   })
+//
+//   fs.readdirSync(currFolder).forEach(file => {
+//     if (!fs.lstatSync(currFolder + file).isDirectory()) {
+//       files.push({name: file, type: 'file', path: `${currFolder}${file}/`})
+//     }
+//   })
+// }
