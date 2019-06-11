@@ -1,12 +1,10 @@
 <template>
-  <div class="tabnav">
-    <ul id="tab-list">
+  <div>
+    <ul id="tab-list" @wheel="scroll()">
       <li v-for="file in file_paths" class="tab" @click="tabClick(file)">
         {{ file }}
       </li>
     </ul>
-    <!-- [insert tab bar here]
-     <button @click="func">Click me</button> -->
   </div>
 </template>
 
@@ -15,38 +13,56 @@
     name: 'tabs',
     data () {
       return {
-        file_paths: ['test', 'test2']
+        current_file: 'package.json',
+        file_paths: ['package.json', 'README.md', 'package-lock.json', 'appveyor.yml']
       }
     },
     methods: {
-      func () {
-        console.log(this)
+      scroll (e) {
+        console.log('scrolling')
+      },
+      tabClick (file) {
+        const store = this.$store
+        const fs = require('fs')
+
+        fs.readFile(file, 'utf8', (err, data) => {
+          if (err) {
+            throw err
+          }
+          store.dispatch('updateCodeAction', data)
+        })
       }
     }
   }
 </script>
 
 <style scoped lang="scss">
-  .tabnav {
+  ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
     background-color: #333;
     color: #fff;
     width: 100%;
     font-size: 1.3em;
-    padding: .5em 1em;
     height: 50px;
+    white-space: nowrap;
+    overflow: hidden;
   }
-
-  #tab-list {
-    list-style-type: none;
-    margin: 0;
-    padding: 0;
-  }
-
-  #tab-list li {
+  li {
+    float: left;
     display: inline;
-    width: 60px;
-    background-color: #595;
-    margin-left: 5px;
-    padding: 5px;
+    color: white;
+    text-align: center;
+    border-right: 1px solid #000;
+    padding: 10px;
+    text-decoration: none;
+    height: 100%;
+    min-width: 200px;
   }
+
+  li:hover {
+    background-color: #111;
+  }
+
 </style>

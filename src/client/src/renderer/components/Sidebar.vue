@@ -120,7 +120,8 @@
     background-color: #111;
     display: grid;
     grid-template-rows: auto 1fr;
-    height: 100vh;
+    height: 100%;
+    border-right: 1px solid #000;
   }
 
   .curr-folder {

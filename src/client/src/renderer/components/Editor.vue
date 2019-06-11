@@ -81,13 +81,14 @@
 
 <style scoped>
   .editor{
-      width: 100%;
-      height: calc(100% - 50px);
+      width: 100vh;
+      height: calc(100vh - 50px);
   }
 
   #placeholder{
     font-size: 3em;
-    height: 100%;
+    height: 100vh;
+    width: 100vh;
     line-height: 100vh;
     color: #555;
     text-align: center;
