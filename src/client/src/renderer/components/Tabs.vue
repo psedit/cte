@@ -1,13 +1,30 @@
 <template>
   <div class="tabnav">
-    <!-- <ul id="tab-list">
-      <li v-for="file in files" :class="file.type" @click="tabClick(file)">
-        {{ file.name }}
+    <ul id="tab-list">
+      <li v-for="file in file_paths" class="tab" @click="tabClick(file)">
+        {{ file }}
       </li>
-    </ul> -->
-    [insert tab bar here]
+    </ul>
+    <!-- [insert tab bar here]
+     <button @click="func">Click me</button> -->
   </div>
 </template>
+
+<script>
+  export default {
+    name: 'tabs',
+    data () {
+      return {
+        file_paths: ['test', 'test2']
+      }
+    },
+    methods: {
+      func () {
+        console.log(this)
+      }
+    }
+  }
+</script>
 
 <style scoped lang="scss">
   .tabnav {
@@ -17,5 +34,19 @@
     font-size: 1.3em;
     padding: .5em 1em;
     height: 50px;
+  }
+
+  #tab-list {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  #tab-list li {
+    display: inline;
+    width: 60px;
+    background-color: #595;
+    margin-left: 5px;
+    padding: 5px;
   }
 </style>
