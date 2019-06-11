@@ -98,15 +98,7 @@
         if (file.type === 'dir') {
           this.currFolder = file.path
         } else {
-          const store = this.$store
-          const fs = require('fs')
-
-          fs.readFile(file.path.substring(0, file.path.length - 1), 'utf8', (err, data) => {
-            if (err) {
-              throw err
-            }
-            store.dispatch('updateCodeAction', data)
-          })
+          this.$store.dispatch('openFile', file.path)
         }
       }
     }
