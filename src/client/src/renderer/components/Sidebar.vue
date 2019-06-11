@@ -36,6 +36,7 @@
       FolderIcon,
       FileIcon
     },
+    // FIXME: use the data from vuex
     computed: {
       files () {
         /* Create list of all files in current folder. */
@@ -63,7 +64,7 @@
           }
         })
 
-        return files
+        this.$store.commit('updateFiles', files)
       }
     },
     methods: {
