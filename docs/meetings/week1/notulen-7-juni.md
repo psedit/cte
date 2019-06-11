@@ -50,7 +50,7 @@ Uiteindelijk gaven we het een 2.5.
 
 ## Taakverdeling
 
-We hebben nu de meeste van de user stories waarover hebben gepokerd verdeelt.
+We hebben nu de meeste van de user stories waarover hebben gepokerd verdeeld.
 
 - **Cursor van anderen zien** - Martijn, Sam, Robin
 - **Zien met wie je werkt** - Martijn, Sam, Robin
