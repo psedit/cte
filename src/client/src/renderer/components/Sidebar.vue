@@ -26,8 +26,9 @@
     name: 'sidebar',
     data () {
       return {
+        /* The variable currFolder is relative to the root of the server. */
         currFolder: './',
-        files: []
+        dirTree: []
       }
     },
     components: {
