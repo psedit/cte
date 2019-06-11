@@ -12,16 +12,16 @@ class TextBlock:
 
     def __len__(self) -> int:
         return len(self.lines)
-        
+
     def update(self, delta) -> None:
         # TODO
         pass
-    
+
     def get_lines(self, start: int, length: int) -> List[str]:
         return self.lines[start:start + length]
-    
+
     def close(self) -> None:
         self.is_open = False
-        
+
     def status(self) -> bool:
         return self.is_open
