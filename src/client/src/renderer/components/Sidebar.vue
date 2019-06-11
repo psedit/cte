@@ -27,7 +27,7 @@
     data () {
       return {
         currFolder: './',
-        dirTree: []
+        files: []
       }
     },
     components: {
@@ -53,7 +53,7 @@
     },
     methods: {
       updateDirTree () {
-          this.dirTree = this.$store.state.fileTracker.dirTree
+          this.files = this.$store.state.fileTracker.dirTree
       }
       /* When clicking on a file, go inside directory or
        * render file and show its content on screen. */
