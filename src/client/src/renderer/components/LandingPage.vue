@@ -1,5 +1,6 @@
 <template>
   <div id="wrapper">
+    <tabs id="tabs"/>
     <sidebar id="sidebar"/>
     <editor id="editor"/>
   </div>
@@ -9,10 +10,11 @@
 <script>
   import Editor from './Editor'
   import Sidebar from './Sidebar'
+  import Tabs from './Tabs'
 
   export default {
     name: 'landing-page',
-    components: { Editor, Sidebar },
+    components: { Editor, Sidebar, Tabs },
     methods: {
       open (link) {
         this.$electron.shell.openExternal(link)
@@ -33,16 +35,19 @@
     height: 100vh;
     width: 100vw;
     display: grid;
-    grid-template-areas: 'sidebar editor';
+    grid-template-areas:
+        'sidebar tabs'
+        'sidebar editor';
     grid-template-columns: 15em 1fr;
-    grid-template-rows: 1fr;
+    grid-template-rows: auto 1fr;
   }
-
   #sidebar {
     grid-area: sidebar;
   }
-
   #editor {
     grid-area: editor;
+  }
+  #tabs {
+    grid-area: tabs;
   }
 </style>
