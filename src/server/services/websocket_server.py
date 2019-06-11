@@ -7,9 +7,12 @@ import websockets
 from typedefs import Address
 from service import Service, message_type
 
+
 @Pyro4.expose
 class WSServer(Service):
-    """ WebSocket server which is also available over Pyro. """
+    """
+    WebSocket server which is also available over Pyro.
+    """
     _wanted_msg_types = ["net-send"]
 
     def __init__(self, msg_bus):
@@ -20,7 +23,9 @@ class WSServer(Service):
 
     @classmethod
     def start(cls):
-        """ Starts the WebSocket server, hooking Pyro into the asyncio event loop. """
+        """
+        Starts the WebSocket server, hooking Pyro into the asyncio event loop.
+        """
         try:
             msg_bus = Pyro4.Proxy("PYRONAME:service.MessageBus")
         except Exception as e:
@@ -36,21 +41,26 @@ class WSServer(Service):
         inst.hook_and_start_event_loop(inst_d)
 
     def hook_and_start_event_loop(self, inst_d: Pyro4.Daemon):
-        """ Hooks Pyro into the asyncio event loop and starts it. """
+        """
+        Hooks Pyro into the asyncio event loop and starts it.
+        """
         self._asio_event_loop = asyncio.get_event_loop()
         self._pyro_daemon = inst_d
         self._known_pyro_socks = []
         for sock in inst_d.sockets:
             self._known_pyro_socks.append(sock)
-            self._asio_event_loop.add_reader(sock.fileno(),
-                                             partial(self.handle_pyro_event, sock))
+            self._asio_event_loop.add_reader(
+                    sock.fileno(), partial(self.handle_pyro_event, sock)
+                )
 
         self._asio_event_loop.run_until_complete(
             websockets.serve(self.ws_loop, '0.0.0.0', 12345))
         self._asio_event_loop.run_forever()
 
     async def ws_loop(self, websocket, path):
-        """ Handle new messages from a websocket. """
+        """
+        Handle new messages from a websocket.
+        """
         self.clients[websocket.remote_address] = websocket
 
         read_task = asyncio.create_task(self.ws_read_loop(websocket, path))
@@ -60,17 +70,23 @@ class WSServer(Service):
                                            return_when=asyncio.FIRST_COMPLETED)
 
     async def ws_write_loop(self):
-        """ Write loop for websockets. """
+        """
+        Write loop for websockets.
+        """
         while True:
             msg = await self.messages_to_send.get()
             print(f"Got message: {msg}")
             recipients = msg["content"]["response_addrs"]
             for recipient in recipients:
-                await self.clients[recipient].send(json.dumps(msg["content"]["msg"]))
+                await self.clients[recipient].send(
+                        json.dumps(msg["content"]["msg"])
+                    )
             self.messages_to_send.task_done()
 
     async def ws_read_loop(self, websocket, path):
-        """ Read loop for websockets. """
+        """
+        Read loop for websockets.
+        """
         try:
             async for message in websocket:
                 data = json.loads(message)
@@ -80,12 +96,15 @@ class WSServer(Service):
                 new_type = data['type']
                 client_info = (websocket.remote_address, "uname")
                 print(f"Received message: {data}")
-                self._send_message_from_client(new_type, data['content'], client_info)
+                self._send_message_from_client(new_type, data['content'],
+                                               client_info)
         finally:
             del self.clients[websocket.remote_address]
 
     def handle_pyro_event(self, socket):
-        """ Handle an event on a Pyro fd. """
+        """
+        Handle an event on a Pyro fd.
+        """
         print("Started Pyro event handling.")
         self._pyro_daemon.events([socket])
         print("Finished Pyro event handling.")
@@ -93,8 +112,9 @@ class WSServer(Service):
         for sock in self._pyro_daemon.sockets:
             if sock not in self._known_pyro_socks:
                 self._known_pyro_socks.append(sock)
-                self._asio_event_loop.add_reader(sock.fileno(),
-                        partial(self.handle_pyro_event, sock))
+                self._asio_event_loop.add_reader(
+                        sock.fileno(), partial(self.handle_pyro_event, sock)
+                    )
 
     @message_type("net-send")
     def send_message(self, msg):
