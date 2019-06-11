@@ -65,6 +65,7 @@
         })
 
         this.$store.commit('updateFiles', files)
+        return files
       }
     },
     methods: {
