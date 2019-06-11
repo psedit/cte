@@ -9,14 +9,15 @@ const state = {
 const mutations = {
   updateCode (state, newCode) {
     state.code = newCode
-    console.log('State is: ' + state.code)
   },
   /** Adds a tab to state
    * @param {Object} state
    * @param {string} newTab
    */
   addTab (state, newTab) {
-    state.push(newTab)
+    if (!state.tabs.includes(newTab)) {
+      state.tabs.push(newTab)
+    }
   },
   /** Removes a tab from state
    * @param {Object} state
@@ -42,7 +43,7 @@ const actions = {
    */
   openFile (state, filePath) {
     state.openedFile = filePath
-
+    state.commit('addTab', filePath)
     fs.readFile(filePath.substring(0, filePath.length - 1), 'utf8', (err, data) => {
       if (err) {
         console.error(err)

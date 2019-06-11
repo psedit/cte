@@ -15,12 +15,12 @@
     name: 'tabs',
     data () {
       return {
-        file_paths: ['test', 'test2']
+        file_paths: this.$store.state.tabs
       }
     },
     methods: {
       func () {
-        console.log(this)
+        console.log(this.$store.state.tabs)
       }
     }
   }
