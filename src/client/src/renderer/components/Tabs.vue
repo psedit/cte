@@ -1,7 +1,7 @@
 <template>
   <div>
     <ul id="tab-list" @wheel="scroll()">
-      <li v-for="file in file_paths" class="tab" @click="tabClick(file)">
+      <li v-for="file in filePaths" class="tab" @click="tabClick(file)">
         {{ file }}
       </li>
     </ul>
@@ -13,8 +13,12 @@
     name: 'tabs',
     data () {
       return {
-        current_file: 'package.json',
-        file_paths: ['package.json', 'README.md', 'package-lock.json', 'appveyor.yml']
+        current_file: 'package.json'
+      }
+    },
+    computed: {
+      filePaths () {
+        return this.$store.state.fileTracker.tabs
       }
     },
     methods: {
@@ -22,15 +26,7 @@
         console.log('scrolling')
       },
       tabClick (file) {
-        const store = this.$store
-        const fs = require('fs')
-
-        fs.readFile(file, 'utf8', (err, data) => {
-          if (err) {
-            throw err
-          }
-          store.dispatch('updateCodeAction', data)
-        })
+        this.$store.dispatch('openFile', file)
       }
     }
   }
