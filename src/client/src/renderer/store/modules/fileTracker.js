@@ -1,5 +1,6 @@
 import Tab from '../../components/Tabs/tabType'
-const fs = require('fs')
+import connector from '../../../main/connector'
+// const fs = require('fs')
 
 const state = {
   code: '',
@@ -47,14 +48,19 @@ const actions = {
    * @param {string} filePath the file path to document to be opened
    */
   openFile (store, filePath) {
-    store.commit('updateOpenFile', filePath)
-    store.commit('addTab', filePath)
-    fs.readFile(filePath.substring(0, filePath.length - 1), 'utf8', (err, data) => {
-      if (err) {
-        console.error(err)
-        store.commit('updateCode', `Something went wrong: ${err}`)
-      }
-      store.commit('updateCode', data)
+    // store.commit('updateOpenFile', filePath)
+    // store.commit('addTab', filePath)
+    // fs.readFile(filePath.substring(0, filePath.length - 1), 'utf8', (err, data) => {
+    //   if (err) {
+    //     console.error(err)
+    //     store.commit('updateCode', `Something went wrong: ${err}`)
+    //   }
+    //   store.commit('updateCode', data)
+    // })
+    connector.send('file-join', {file_path: 'file.txt'})
+    console.log('join request sent')
+    connector.request('file-content-request', 'file-content-response', {file_path: 'file.txt', start: 0, length: -1}).then((response) => {
+      store.commit('updateCode', response.file_content.join(" "))
     })
   },
   /**
@@ -85,21 +91,21 @@ export default {
   mutations,
   actions
 }
-  // readLocalDirTree (root) {
-  //   /* Loop over all files in current directory and add
-  //    * object to files array, storing the name and type
-  //    * (either directory or file) of the file.
-  //    * For sorting purposes, first push all directories
-  //    * and then all other files. */
-  //   fs.readdirSync(currFolder).forEach(file => {
-  //     if (fs.lstatSync(currFolder + file).isDirectory()) {
-  //       files.push({name: file, type: 'dir', path: `${currFolder}${file}/`})
-  //     }
-  //   })
-  //
-  //   fs.readdirSync(currFolder).forEach(file => {
-  //     if (!fs.lstatSync(currFolder + file).isDirectory()) {
-  //       files.push({name: file, type: 'file', path: `${currFolder}${file}/`})
-  //     }
-  //   })
-  // }
+// readLocalDirTree (root) {
+//   /* Loop over all files in current directory and add
+//    * object to files array, storing the name and type
+//    * (either directory or file) of the file.
+//    * For sorting purposes, first push all directories
+//    * and then all other files. */
+//   fs.readdirSync(currFolder).forEach(file => {
+//     if (fs.lstatSync(currFolder + file).isDirectory()) {
+//       files.push({name: file, type: 'dir', path: `${currFolder}${file}/`})
+//     }
+//   })
+//
+//   fs.readdirSync(currFolder).forEach(file => {
+//     if (!fs.lstatSync(currFolder + file).isDirectory()) {
+//       files.push({name: file, type: 'file', path: `${currFolder}${file}/`})
+//     }
+//   })
+// }
