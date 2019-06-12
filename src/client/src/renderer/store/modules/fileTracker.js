@@ -59,7 +59,7 @@ const actions = {
   },
   /**
    * Removes a tab from state and switches to a new tab if the tab was opened.
-   * @param {Object} store vuex state
+   * @param {Object} store vuex store
    * @param {Tab} tabToRemove the tab that needs to be removed
    */
   removeTab (store, tabToRemove) {
