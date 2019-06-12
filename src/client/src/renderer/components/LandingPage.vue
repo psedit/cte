@@ -1,7 +1,8 @@
 <template>
   <div id="wrapper">
-    <sidebar id="sidebar"/>
-    <editor id="editor"/>
+    <sidebar id="sidebar" v-if="isLoggedIn"/>
+    <editor id="editor" v-if="isLoggedIn"/>
+    <login id="login" v-if="!isLoggedIn"/>
   </div>
 </template>
 
@@ -9,10 +10,16 @@
 <script>
   import Editor from './Editor'
   import Sidebar from './Sidebar'
+  import Login from './Login'
 
   export default {
     name: 'landing-page',
-    components: { Editor, Sidebar },
+    computed: {
+      isLoggedIn () {
+        return this.$store.state.user.isLoggedIn
+      }
+    },
+    components: { Editor, Sidebar, Login },
     methods: {
       open (link) {
         this.$electron.shell.openExternal(link)
