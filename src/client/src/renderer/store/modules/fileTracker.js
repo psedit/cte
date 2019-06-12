@@ -23,13 +23,8 @@ const mutations = {
       state.tabs = [...state.tabs, newTab]
     }
   },
-  /**
-   * Removes a tab from state
-   * @param {Object} state vuex state
-   * @param {Tab} tabToRemove the tab that needs to be removed
-   */
   removeTab (state, tabToRemove) {
-    state.tabs.filter(x => x.filePath !== tabToRemove.filePath)
+    state.tabs = state.tabs.filter(x => x.filePath !== tabToRemove.filePath)
   },
   /**
    * Updates the filepaths
@@ -61,6 +56,23 @@ const actions = {
       }
       state.commit('updateCode', data)
     })
+  },
+  /**
+   * Removes a tab from state and switches to a new tab if the tab was opened.
+   * @param {Object} state vuex state
+   * @param {Tab} tabToRemove the tab that needs to be removed
+   */
+  removeTab (state, tabToRemove) {
+    console.log(state.fileTracker.openFile)
+    if (tabToRemove.filePath === state.openFile) {
+      if (state.tabs.length === 1) {
+        console.log('test')
+      } else {
+        const i = state.tabs.indexOf(tabToRemove)
+        state.dispatch('openFile', (state.tabs[(i - 1) % state.tabs.length].filePath))
+      }
+    }
+    state.commit('removeTab', tabToRemove)
   },
   updateCodeAction (state, newCode) {
     state.commit('updateCode', newCode)

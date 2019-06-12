@@ -28,7 +28,7 @@
       },
       tabRemove (tab) {
         console.log('test')
-        this.$store.commit('removeTab', tab)
+        this.$store.dispatch('removeTab', tab)
       },
       isActive (filePath) {
         return this.openFile === filePath
