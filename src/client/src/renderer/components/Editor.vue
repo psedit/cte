@@ -10,6 +10,7 @@
 
 <script>
   import CodeMirror from './Editor/CodeMirror'
+  import connector from '../../main/connector.js'
 
   export default {
     name: 'Editor',
@@ -49,7 +50,23 @@
         }
 
         setTimeout(step1, 1000)
+      },
+
+      socket_init () {
+        console.log('fdjsfs')
+        connector.addEventListener('open', () => {
+          console.log('Hello')
+
+          connector.listenToMsg('file-lock-change-broadcast', (content) => {
+            console.log(content)
+          })
+
+          connector.request('file-lock-request', 'file-lock-respond', { file_path: 'file.txt', start: 0, length: -1 }).then((content) => {
+            console.log(content)
+          })
+        })
       }
+
     },
 
     computed: {
@@ -59,6 +76,8 @@
     },
 
     mounted () {
+      this.socket_init()
+
       // Add fake demo cursor
       const cm = this.$refs.codemirror
       cm.addShadowCursor(1, 3, 'Martijn')
