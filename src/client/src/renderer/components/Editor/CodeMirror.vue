@@ -69,6 +69,7 @@
           }
         })
 
+        /* Decide whether to keep changes. */
         this.codemirror.on('beforeChange', (cm, change) => {
           console.log(change)
           const line = change.to.line
@@ -133,13 +134,17 @@
 
       lock (start, end) {
         for (let line = start; line <= end; line++) {
-          this.cminstance.addLineClass(line, 'wrap', 'lock')
+          if (this.cminstance.wrapClass !== 'lock') {
+            this.cminstance.addLineClass(line, 'wrap', 'lock')
+          }
         }
       },
 
       unlock (start, end) {
         for (let line = start; line <= end; line++) {
-          this.cminstance.removeLineClass(line, 'wrap', 'lock')
+          if (this.cminstance.wrapClass === 'lock') {
+            this.cminstance.removeLineClass(line, 'wrap', 'lock')
+          }
         }
       },
 
