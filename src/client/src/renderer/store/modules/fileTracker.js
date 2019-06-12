@@ -43,7 +43,7 @@ const actions = {
   /**
    * Opens a file from the root of the project, and updates the code.
    * Also changes the openedFile state. Add the file to the tabs.
-   * @param {Object} store vuex state
+   * @param {Object} store vuex store
    * @param {string} filePath the file path to document to be opened
    */
   openFile (store, filePath) {
