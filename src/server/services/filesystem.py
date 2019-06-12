@@ -129,7 +129,7 @@ class Filesystem(Service):
 
         file = self.file_dict[path]
 
-        if not self._is_joined(address, file_path):
+        if not self._is_joined(address, path):
             return
 
         file.move_cursor(address, row, column)
@@ -158,7 +158,6 @@ class Filesystem(Service):
             return
 
         curs_f = self.file_dict[path].get_cursors()
-        print(curs_f)
         cursors = [[self.usernames[c]] + curs_f[c] for c in curs_f.keys()]
 
         self._send_message_client("cursor-list-response",
@@ -199,21 +198,24 @@ class Filesystem(Service):
         """
         content = msg["content"]
 
-        file = content["file_path"]
+        path = content["file_path"]
         force = content["force_exit"]
         address = msg["sender"][0]
 
-        if (not force and self.file_dict[file].client_count() == 1
-                and self.file_dict[file].saved_status() is False):
+        if path not in self.file_dict.keys():
+            return
+
+        if (not force and self.file_dict[path].client_count() == 1
+                and self.file_dict[path].saved_status() is False):
             # TODO: send exception to client
             # "First save the file or resend request with force_exit = 1"
             return
 
-        self.file_dict[file].drop_client(address)
+        self.file_dict[path].drop_client(address)
 
         # Remove the file from RAM if necessary.
         if self.file_dict[file].client_count() == 0:
-            self.file_dict.pop(file)
+            del self.file_dict[path]
 
     @message_type("file-lock-request")
     def _file_add_lock(self, msg) -> None:
@@ -224,18 +226,75 @@ class Filesystem(Service):
         start = content["start"]
         length = content["length"]
 
-        if not self._is_joined(address, file_path):
+        if not self._is_joined(address, path):
+            _send_lock_response(path, False, 0, address)
             return
 
-        new_content = content
-
-        block_id = self.file_dict[file_path].add_lock(Address, start, length)
+        block_id = self.file_dict[path].add_lock(Address, start, length)
 
         if block_id is None:
-            pass
+            _send_lock_response(path, False, 0, address)
+        else:
+            self._send_lock_response(path, True, block_id, address)
+            self._send_lock_broadcast(username, block_id, True, path,
+                                      start, length, address)
 
+    @message_type("file-unlock-request")
+    def _file_remove_lock(self, msg) -> None:
+        content = msg["content"]
+        address, username = msg["sender"]
 
+        path = content["file_path"]
+        block_id = content["lock_id"]
 
+        if not self._is_joined(address, path):
+            return
+
+        self.file_dict[path].remove_lock(address, block_id)
+
+        self._send_lock_broadcast(username, block_id, False, path,
+                                  0, 0, address)
+
+    def _send_lock_response(self, file_path: str, success: bool,
+                            lock_id: int, client: Address) -> None:
+        self._send_message_client("cursor-lock-response",
+                                  { "file_path": file_path,
+                                    "success": success,
+                                    "lock_id": lock_id },
+                                  client)
+
+    def _send_lock_broadcast(self, username: str, lock_id: int, is_locked: bool,
+                             file_path: str, start: int, length: int,
+                             excl: Address) -> None:
+        file = self.file_dict[path]
+
+        content = { "username": username,
+                    "lock_id": lock_id,
+                    "is_locked": is_locked,
+                    "file_path": file_path,
+                    "start": start,
+                    "length": lock_id }
+
+        self._send_message_client("cursor-lock-change-broadcast", content,
+                                  *file.get_clients(exclude=[excl]))
+
+    @message_type("file-lock-list-request")
+    def _file_send_lock_list(self, msg) -> None:
+        content = msg["content"]
+        address, username = msg["sender"]
+
+        path = content["file_path"]
+
+        if not self._is_joined(address, path):
+            # TODO: send exception
+            return
+
+        lock_list = self.file_dict[path].get_lock_list()
+        lock_list = list(map(list, lock_list))
+        self._send_message_client("file-lock-list-response",
+                                  {"file_path": path,
+                                   "lock_list": lock_list},
+                                  address)
 
 if __name__ == "__main__":
     Filesystem.start()
