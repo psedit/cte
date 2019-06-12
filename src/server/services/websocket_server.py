@@ -19,6 +19,8 @@ class WSServer(Service):
         self.clients: Dict[Address, websockets.WebSocketClientProtocol] = {}
         self.messages_to_send: asyncio.Queue = asyncio.Queue()
 
+        self.usernames: Dict[Address, str] = {}
+
     @classmethod
     def start(cls):
         """
@@ -104,8 +106,15 @@ class WSServer(Service):
                 if 'type' not in data or 'content' not in data:
                     print("Unacceptable message (missing type or content)")
                     continue
+
                 new_type = data['type']
-                client_info = (websocket.remote_address, "uname")
+
+                if data['type'] == 'net-send':
+                    return  # close the connection.
+
+                uname = self.usernames.get(websocket.remote_address) or "uname"
+                client_info = (websocket.remote_address, uname)
+
                 print(f"Received message: {data}")
                 self._send_message_from_client(new_type, data['content'],
                                                client_info)
@@ -118,10 +127,8 @@ class WSServer(Service):
         """
         Handle an event on a Pyro fd.
         """
-        print("Started Pyro event handling.")
         self._pyro_daemon.events([socket])
-        print("Finished Pyro event handling.")
-        print("Started Pyro socket registration")
+
         for sock in self._pyro_daemon.sockets:
             if sock not in self._known_pyro_socks:
                 self._known_pyro_socks.append(sock)
@@ -130,8 +137,28 @@ class WSServer(Service):
                     )
 
     @message_type("net-send")
-    def send_message(self, msg):
-        asyncio.create_task(self.messages_to_send.put(msg))
+    async def send_message(self, msg):
+        asyncio.run_coroutine_threadsafe(self.messages_to_send.put(msg),
+                                         self._asio_event_loop)
+
+    @message_type("login-request")
+    async def _register_user(self, msg):
+        self.usernames[msg["sender"][0]] = msg["content"]["username"]
+
+        self._send_message_client("login-response",
+                                  {"succeed": True},
+                                  msg["sender"][0])
+
+    @message_type("client-list-request")
+    async def _send_client_list(self, msg):
+        clients = self.clients.keys()
+
+        content = {
+            "client_list": clients
+        }
+
+        self._send_message("client-list-response", content,
+                           resp_uuid=msg["uuid"])
 
 
 if __name__ == '__main__':

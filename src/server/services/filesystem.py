@@ -3,6 +3,7 @@ from typedefs import Address
 from typing import Dict, List
 from service import Service, message_type
 import os
+import shutil
 import Pyro4
 
 
@@ -75,7 +76,7 @@ class Filesystem(Service):
             raise ValueError("File is not present in file system RAM.")
 
     @message_type("file-content-request")
-    def _process_file_content_request(self, msg) -> None:
+    async def _process_file_content_request(self, msg) -> None:
         """
         Take the file content request message and construct the appropriate
         response, sending the block via a new 'file-content-response' message.
@@ -104,18 +105,19 @@ class Filesystem(Service):
                                       address)
 
     @message_type("file-list-request")
-    def _send_file_list(self, msg) -> None:
-        content = msg["content"]
+    async def _send_file_list(self, msg) -> None:
         address = msg["sender"][0]
 
         net_msg = {
             "root_tree": self.root_tree
         }
 
+        print("Je bent een plakje kaas.")
+
         self._send_message_client("file-list-response", net_msg, address)
 
     @message_type("cursor-move")
-    def _move_cursor(self, msg) -> None:
+    async def _move_cursor(self, msg) -> None:
         address, username = msg["sender"]
         content = msg["content"]
 
@@ -144,7 +146,7 @@ class Filesystem(Service):
                                   *file.get_clients(exclude=[address]))
 
     @message_type("cursor-list-request")
-    def _send_cursor_list(self, msg):
+    async def _send_cursor_list(self, msg):
         address = msg["sender"][0]
         content = msg["content"]
 
@@ -156,7 +158,6 @@ class Filesystem(Service):
             return
 
         curs_f = self.file_dict[path].get_cursors()
-        print(curs_f)
         cursors = [[self.usernames[c]] + curs_f[c] for c in curs_f.keys()]
 
         self._send_message_client("cursor-list-response",
@@ -164,7 +165,7 @@ class Filesystem(Service):
                                   address)
 
     @message_type("file-join")
-    def _file_add_client(self, msg) -> None:
+    async def _file_add_client(self, msg) -> None:
         """
         Add the client from the file specified in the message.
         Add the file to RAM if necessary.
@@ -190,7 +191,7 @@ class Filesystem(Service):
         self.file_dict[file].move_cursor(address, 0, 0)
 
     @message_type("file-leave")
-    def _file_remove_client(self, msg) -> None:
+    async def _file_remove_client(self, msg) -> None:
         """
         Remove the client from the file specified in the message.
         Remove the file from RAM if no clients are connected within the file.
@@ -203,7 +204,8 @@ class Filesystem(Service):
 
         if (not force and self.file_dict[file].client_count() == 1
                 and self.file_dict[file].saved_status() is False):
-            # TODO: send exception to client
+            # TODO: send exception to client NOTE: this could also be done
+            # client side:
             # "First save the file or resend request with force_exit = 1"
             return
 
@@ -212,6 +214,101 @@ class Filesystem(Service):
         # Remove the file from RAM if necessary.
         if self.file_dict[file].client_count() == 0:
             self.file_dict.pop(file)
+
+    def _isdir(self, path: str) -> bool:
+        """
+        Checks if the given path is a directory, although it does not
+        necessarily need to have been created yet.
+        """
+        # Would use os.path.isdir, but that checks whether the path
+        # actually exists, rather than whether it would be a directory
+        # if it existed.
+        return f"{os.path.dirname(path)}{os.sep}" == path
+
+    def _rename_file(self, old_path: str, new_path: str) -> None:
+        """
+        Renames the file or directory 'old_path' to 'new_path', both paths
+        relative to the root directory. Also updates ServerFile classes and
+        dictionary in case they are currently in memory.
+        """
+        old_abs = os.path.join(self.root_dir, old_path)
+        new_abs = os.path.join(self.root_dir, new_path)
+
+        os.makedirs(os.path.dirname(new_abs), exist_ok=True)
+        os.rename(old_abs, new_abs)
+
+        # Update the file paths within memory.
+        if self._isdir(old_path):
+            for p in self.file_dict.keys():
+                if p.startswith(old_path):
+                    p_new = p.replace(old_path, new_path, 1)
+
+                    self.file_dict[p].change_file_path(p_new)
+                    self.file_dict[p_new] = self.file_dict[p]
+                    del self.file_dict[p]
+        else:
+            if old_path in self.file_dict.keys():
+                self.file_dict[old_path].change_file_path(new_path)
+                self.file_dict[new_path] = self.file_dict[old_path]
+                del self.file_dict[old_path]
+
+    def _remove_file(self, old_path: str) -> None:
+        """
+        Removes the specified file from disk, and updates the ServerFile dict.
+        """
+        old_abs = os.path.join(self.root_dir, old_path)
+
+        if self._isdir(old_path):
+            shutil.rmtree(old_abs)
+
+            for p in self.file_dict.keys():
+                if p.startswith(old_path):
+                    del self.file_dict[p]
+        else:
+            os.remove(old_abs)
+
+            if old_path in self.file_dict.keys():
+                del self.file_dict[old_path]
+
+    def _add_file(self, new_path: str, file_content: str) -> None:
+        """
+        Create the specified file and required directories on disk, with the
+        given file contents.
+        """
+        new_abs = os.path.join(self.root_dir, new_path)
+
+        os.makedirs(os.path.dirname(new_abs), exist_ok=True)
+
+        if not self._isdir(new_path):
+            with open(new_abs, 'w') as f:
+                f.write(file_content)
+
+    @message_type("file-change")
+    async def _change_file(self, msg):
+        """
+        Creates the file in the server root directory.
+        Overwrites file if it is already present.
+        """
+        content = msg["content"]
+        address = msg["sender"]
+        old_path = content["old_path"]
+        new_path = content["new_path"]
+
+        if new_path and old_path:
+            self._rename_file(old_path, new_path)
+        elif old_path:
+            self._remove_file(old_path)
+        elif new_path:
+            self._add_file(new_path, content["file_content"])
+
+        self.root_tree = self.parse_walk(list(os.walk(self.root_dir)),
+                                         self.root_dir)
+
+        c_msg = self._send_message("client-list-request", {})
+        resp = await self._wait_for_response(c_msg["uuid"])
+
+        self._send_message_client("file-change-broadcast", content,
+                                  *resp["content"]["client_list"])
 
 
 if __name__ == "__main__":

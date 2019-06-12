@@ -1,9 +1,14 @@
+import threading
 import inspect
 import Pyro4
 from typing import Dict, Any, Callable, List, Tuple
 import uuid
 from typedefs import Address
 import traceback
+import time
+import asyncio
+from functools import partial
+from collections import defaultdict
 from mixins import LoggerMixin
 
 
@@ -52,6 +57,45 @@ class Service(LoggerMixin):
                 self, predicate=lambda x: hasattr(x, "_msg_type")):
             self._type_map[func._msg_type] = func
 
+        self._waiting: Dict[str, List[types.CoroutineType]] = defaultdict(list)
+
+        self._loop = asyncio.new_event_loop()
+        self._msg_queue = asyncio.Queue(loop=self._loop)
+        self._async_thread = threading.Thread(target=self._start_async_thread)
+        self._async_thread.daemon = True
+        self._async_thread.start()
+
+    def _start_async_thread(self):
+        asyncio.set_event_loop(self._loop)
+        self._loop.run_until_complete(self._async_read_loop())
+
+    async def _async_read_loop(self):
+        while True:
+            msg = await self._msg_queue.get()
+
+            handled_future = False
+
+            for future in self._waiting.get(msg.get('response_uuid'), []):
+                self._info("Setting result for future.")
+                handled_future = True
+                future.set_result(msg)
+
+            func = self._type_map.get(msg["type"], False)
+
+            if not func and not handled_future:
+                return self._warning(f"Message type {msg['type']} not accepted"
+                                     "by service {self.__class__.__name__}")
+
+            if func:
+                coro = func(msg)
+                asyncio.create_task(coro)
+
+    async def _wait_for_response(self, uuid: str):
+        # should be called from a message handler (i.e. using await)
+        fut = asyncio.get_event_loop().create_future()
+        self._waiting[uuid].append(fut)
+        return await fut
+
     @staticmethod
     def _wait_for_services(ns):
         while not ('service.MessageBus' in ns.list()
@@ -59,7 +103,7 @@ class Service(LoggerMixin):
             time.sleep(0.05)
 
     @classmethod
-    def start(cls):
+    def start(cls, start_request_loop=True):
         """
         Starting routine for the service.
 
@@ -79,7 +123,8 @@ class Service(LoggerMixin):
 
         # Start request loop
         print(f"{cls.__name__} service running")
-        inst_d.requestLoop()
+        if start_request_loop:
+            inst_d.requestLoop()
 
     def get_wanted_messages(self):
         """
@@ -93,39 +138,36 @@ class Service(LoggerMixin):
         service method based on the the received message's type and
         this type's mapping in _type_map.
         """
-        try:
-            func = self._type_map[msg["type"]]
-        except KeyError:
-            print(f"Message type {msg['type']} not accepted"
-                  "by service {self.__class__.__name__}")
-        else:
-            try:
-                func(msg)
-            except BaseException:
-                traceback.print_exc()
+        self._info(f"Received message: {msg}")
+        coro = self._msg_queue.put(msg)
+        asyncio.run_coroutine_threadsafe(coro, self._loop)
 
     def _construct_message(self, msg_type: str, content: Any,
                            pref_dest: str = None,
+                           resp_uuid: str = None,
                            client_info: Tuple[Address, str] = None):
         msg_uuid = str(uuid.uuid4())
+
+        sender = f"service.{self.__class__.__name__}"
+
         msg = {"type": msg_type,
                "uuid": msg_uuid,
-               "sender": self.__class__.__name__,
+               "response_uuid": resp_uuid,
+               "sender": client_info if client_info else sender,
                "pref_dest": pref_dest,
                "content": content}
-        if client_info:
-            msg["sender"] = client_info
         return msg
 
     def _send_message(self,
                       msg_type: str,
                       content: Any,
-                      pref_dest: str = None):
+                      pref_dest: str = None,
+                      resp_uuid: str = None):
         """
         Assembles all message components and puts the combined message
         on the message bus.
         """
-        msg = self._construct_message(msg_type, content, pref_dest)
+        msg = self._construct_message(msg_type, content, pref_dest, resp_uuid)
         self._msg_bus.put_message(msg)
         return msg
 
@@ -148,6 +190,9 @@ class Service(LoggerMixin):
                                   msg_type: str,
                                   content: Any,
                                   client_info):
-        msg = self._construct_message(msg_type, content, None, client_info)
+        msg = self._construct_message(msg_type,
+                                      content,
+                                      None,
+                                      client_info=client_info)
         self._msg_bus.put_message(msg)
         return msg
