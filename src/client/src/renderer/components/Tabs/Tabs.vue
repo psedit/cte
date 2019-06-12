@@ -2,7 +2,7 @@
   <div>
     <ul id="tab-list" @wheel="scroll()">
       <li v-for="tab in tabs" class="tab" @click="tabClick(tab.filePath)" :class="{ 'active': isActive(tab.filePath) }">
-        {{ tab.fileName }}
+        {{ tab.fileName }} <div class="close-tab" @click="tabRemove(tab)">X</div>
       </li>
     </ul>
   </div>
@@ -25,6 +25,10 @@
       },
       tabClick (fileName) {
         this.$store.dispatch('openFile', fileName)
+      },
+      tabRemove (tab) {
+        console.log('test')
+        this.$store.commit('removeTab', tab)
       },
       isActive (filePath) {
         return this.openFile === filePath
@@ -59,11 +63,25 @@
   }
 
   .active {
+    background-color: #777;
+  }
+
+  li:hover:not(.active) {
+    cursor: pointer;
     background-color: #111;
   }
 
-  li:hover {
+  li:hover div {
+    display: inline;
+  }
+
+  .close-tab {
     cursor: pointer;
+    display: none;
+    float: right;
+    padding: 2px 6px;
+    background-color: black;
+    border-radius: 2px;
   }
 
 </style>
