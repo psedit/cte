@@ -1,5 +1,6 @@
 const fs = require('fs')
 const state = {
+  // Text in the editor
   code: '',
   openedFile: '',
   filePaths: [],
@@ -7,6 +8,11 @@ const state = {
 }
 
 const mutations = {
+  /** Changes the code/text in the editor 
+   * 
+   * @param {Object} state vuex state
+   * @param {string} newCode new text
+   */
   updateCode (state, newCode) {
     state.code = newCode
   },
@@ -52,6 +58,11 @@ const actions = {
       state.commit('updateCode', data)
     })
   },
+  /** Updadates the text in the editor.
+   * 
+   * @param {Object} state vuex state 
+   * @param {string} newCode 
+   */
   updateCodeAction (state, newCode) {
     state.commit('updateCode', newCode)
   },
