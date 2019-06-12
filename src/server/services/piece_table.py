@@ -119,7 +119,7 @@ class PieceTable:
 
         return lines
 
-    def get_locked_block_info(self, block_id: str) -> Tuple[int, int]:
+    def get_locked_block_info(self, block_id: str) -> List[int]:
         """
         If the given block is locked, returns the current block length
         and starting location within the file.
@@ -128,7 +128,7 @@ class PieceTable:
         cur_pos = 0
         for piece in self.table:
             if piece[0] is block_id:
-                return (cur_pos, piece[2])
+                return [cur_pos, piece[2]]
             else:
                 cur_pos += piece[2]
         return None

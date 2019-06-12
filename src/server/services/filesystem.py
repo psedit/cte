@@ -30,7 +30,7 @@ class Filesystem(Service):
         directory.
         """
 
-        if file_path not in self.file_dict.keys():
+        if file_path not in self.file_dict:
             self.file_dict[file_path] = ServerFile(self.root_dir, file_path)
 
     def list_files(self) -> List[str]:
@@ -69,13 +69,13 @@ class Filesystem(Service):
         start -- Line number indicating start position
         length -- Amount of lines to return, -1 indicates until the last line.
         """
-        if path in self.file_dict.keys():
+        if path in self.file_dict:
             return self.file_dict[path].retrieve_block(start, length)
         else:
             raise ValueError("File is not present in file system RAM.")
 
     def _is_joined(self, address, file_path) -> bool:
-        if file_path not in self.file_dict.keys():
+        if file_path not in self.file_dict:
             # TODO: send exception to client
             # "File is not in system RAM. Join the file to load it to memory."
             return False
@@ -135,11 +135,11 @@ class Filesystem(Service):
         file.move_cursor(address, row, column)
 
         new_content = {
-            "username": username,
-            "file_path": path,
-            "row": row,
-            "column": column
-        }
+                "username": username,
+                "file_path": path,
+                "row": row,
+                "column": column
+            }
 
         self._send_message_client("cursor-move-broadcast",
                                   new_content,
@@ -152,13 +152,13 @@ class Filesystem(Service):
 
         path = content["file_path"]
 
-        if not file.is_joined(address):
+        if not self._is_joined(address, path):
             # TODO: send exception to client
             # "Please join the file first before requesting cursor locations."
             return
 
         curs_f = self.file_dict[path].get_cursors()
-        cursors = [[self.usernames[c]] + curs_f[c] for c in curs_f.keys()]
+        cursors = [[self.usernames[c]] + curs_f[c] for c in curs_f]
 
         self._send_message_client("cursor-list-response",
                                   {"cursor_list": cursors},
@@ -172,23 +172,23 @@ class Filesystem(Service):
         """
         content = msg["content"]
 
-        file = content["file_path"]
+        path = content["file_path"]
         address, username = msg["sender"]
 
-        # TODO: this should go via the database
+        # TODO: this should go via the pyro
         self.usernames[address] = username
 
-        if not os.path.isfile(os.path.join(self.root_dir, file)):
+        if not os.path.isfile(os.path.join(self.root_dir, path)):
             # TODO: send exception to client
             # "This file is not present on the server."
             return
 
         # Add the file to RAM if necessary.
-        if file not in self.file_dict.keys():
-            self.file_dict[file] = ServerFile(self.root_dir, file)
+        if path not in self.file_dict:
+            self.file_dict[path] = ServerFile(self.root_dir, path)
 
         # Add the file to the client list in the ServerFile class.
-        self.file_dict[file].move_cursor(address, 0, 0)
+        self.file_dict[path].move_cursor(address, 0, 0)
 
     @message_type("file-leave")
     def _file_remove_client(self, msg) -> None:
@@ -202,7 +202,7 @@ class Filesystem(Service):
         force = content["force_exit"]
         address = msg["sender"][0]
 
-        if path not in self.file_dict.keys():
+        if path not in self.file_dict:
             return
 
         if (not force and self.file_dict[path].client_count() == 1
@@ -219,6 +219,12 @@ class Filesystem(Service):
 
     @message_type("file-lock-request")
     def _file_add_lock(self, msg) -> None:
+        """
+        If possible, creates a lock in the specified file for the client,
+        and sends a response with the give lock id. If locking was not
+        successful, sets te 'success' flag in the response to false.
+        Afterwards, broadcasts the changes to all other clients.
+        """
         content = msg["content"]
         address, username = msg["sender"]
 
@@ -227,10 +233,10 @@ class Filesystem(Service):
         length = content["length"]
 
         if not self._is_joined(address, path):
-            _send_lock_response(path, False, 0, address)
+            self._send_lock_response(path, False, 0, address)
             return
 
-        block_id = self.file_dict[path].add_lock(Address, start, length)
+        block_id = self.file_dict[path].add_lock(address, start, length)
 
         if block_id is None:
             _send_lock_response(path, False, 0, address)
@@ -241,6 +247,10 @@ class Filesystem(Service):
 
     @message_type("file-unlock-request")
     def _file_remove_lock(self, msg) -> None:
+        """
+        Remove the client's lock from the specified file, and broadcasts
+        the changes to all other clients.
+        """
         content = msg["content"]
         address, username = msg["sender"]
 
@@ -257,29 +267,40 @@ class Filesystem(Service):
 
     def _send_lock_response(self, file_path: str, success: bool,
                             lock_id: int, client: Address) -> None:
-        self._send_message_client("cursor-lock-response",
+        """
+        Send the curser-lock-response message.
+        """
+        self._send_message_client("file-lock-response",
                                   { "file_path": file_path,
                                     "success": success,
                                     "lock_id": lock_id },
                                   client)
 
-    def _send_lock_broadcast(self, username: str, lock_id: int, is_locked: bool,
+    def _send_lock_broadcast(self, username: str, lock_id: int, locked: bool,
                              file_path: str, start: int, length: int,
                              excl: Address) -> None:
-        file = self.file_dict[path]
+        """
+        Send the curser-lock-change-broadcast message to all clients within
+        the file.
+        """
+        file_path = self.file_dict[file_path]
 
         content = { "username": username,
-                    "lock_id": lock_id,
-                    "is_locked": is_locked,
+                    "lock_id": id,
+                    "is_locked": locked,
                     "file_path": file_path,
                     "start": start,
                     "length": lock_id }
 
-        self._send_message_client("cursor-lock-change-broadcast", content,
+        self._send_message_client("file-lock-change-broadcast", content,
                                   *file.get_clients(exclude=[excl]))
 
     @message_type("file-lock-list-request")
     def _file_send_lock_list(self, msg) -> None:
+        """
+        Sends the lock list of the specified file to the client that
+        requests it.
+        """
         content = msg["content"]
         address, username = msg["sender"]
 
@@ -289,8 +310,8 @@ class Filesystem(Service):
             # TODO: send exception
             return
 
-        lock_list = self.file_dict[path].get_lock_list()
-        lock_list = list(map(list, lock_list))
+        print(self.usernames)
+        lock_list = self.file_dict[path].get_lock_list(self.usernames)
         self._send_message_client("file-lock-list-response",
                                   {"file_path": path,
                                    "lock_list": lock_list},

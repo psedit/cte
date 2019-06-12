@@ -88,13 +88,14 @@ class ServerFile:
             if self.locks[client] is []:
                 del self.locks[client]
 
-    def get_lock_list(self) -> List[Tuple[Address, int, int, int]]:
+    def get_lock_list(self, usernames: Dict[Address, str]) -> List[List[Any]]:
         """
         Returns a list of all locked blocks within the file, in
-        the form [address, block_id, start, length].
+        the form [username of the address, block_id, start, length].
         """
-        return [(addr, b_id) + self.file_pt.get_locked_block_info(b_id)
-                for addr in self.locks.keys() for b_id in self.locks[addr]]
+        return [[usernames[addr], b] + self.file_pt.get_locked_block_info(b)
+                 for addr in self.locks.keys() for b in self.locks[addr]]
+
 
     def get_lock_info(self, client: Address, block_id: int) -> Tuple[int, int]:
         if client in self.locks.keys() and block_id in self.locks[client]:
