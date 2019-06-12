@@ -7,10 +7,11 @@ import threading
 from typedefs import UUID, ServiceAddress
 
 from handler_code import HandlerCode
+from mixins import LoggerMixin
 
 
 @Pyro4.expose
-class MessageBus:
+class MessageBus(LoggerMixin):
     """
     Passes messages between different services.
 
@@ -26,6 +27,18 @@ class MessageBus:
 
         self.response_map: Dict[UUID, ServiceAddress] = {}
 
+        # Name server service detection stuff
+        self._ns = Pyro4.locateNS()
+        self._known_services: Dict[str, str] = {}
+
+        while 'meta.Logger' not in self._ns.list():
+            time.sleep(0.05)
+
+        logger = Pyro4.Proxy('PYRONAME:meta.Logger')
+
+        super().__init__(logger)
+        self._logname = "service.MessageBus"
+
         # type -> URI handler map.
         # Can be edited by multiple threads, so there's a lock here.
         self._handler_lock = threading.Lock()
@@ -39,10 +52,6 @@ class MessageBus:
         self._handler_thread = threading.Thread(target=self._handle_messages)
         self._handler_thread.daemon = True
         self._handler_thread.start()
-
-        # Name server service detection stuff
-        self._ns = Pyro4.locateNS()
-        self._known_services: Dict[str, str] = {}
 
         # A thread which polls the nameserver
         # every second for new services.
@@ -71,6 +80,9 @@ class MessageBus:
         if isinstance(msg['sender'], str) and msg['type'].endswith('request'):
             print(f"Request sent with uuid: {msg['uuid']}")
             self.response_map[msg['uuid']] = msg['sender']
+
+        if msg['type'].endswith('response'):
+            self._info(f"Response received to uuid {msg.get('response_uuid')}")
 
         self.mqueue.put(msg)
         return True
@@ -121,6 +133,7 @@ class MessageBus:
         if not request_sender:
             return False
 
+        self._info(f"Sending response to uuid {response_uuid}")
         self._proxies[request_sender].handle_message(message)
         del self.response_map[response_uuid]
         return True
