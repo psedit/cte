@@ -40,6 +40,9 @@
         'sidebar editor';
     grid-template-columns: 15em 1fr;
     grid-template-rows: auto 1fr;
+
+    // Ensure no scroll bars on landing page
+    overflow: hidden;
   }
   #sidebar {
     grid-area: sidebar;
