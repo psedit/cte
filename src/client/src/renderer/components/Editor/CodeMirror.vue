@@ -39,7 +39,7 @@
     watch: {
       value (newVal, oldVal) { // watch it
         this.cminstance.setValue(this.value)
-        console.log('Prop changed: ', newVal, ' | was: ', oldVal)
+        // console.log('Prop changed: ', newVal, ' | was: ', oldVal)
       }
     },
 
@@ -61,7 +61,7 @@
         // setup event handlers
         this.codemirror.on('gutterClick', (cm, line) => {
           const info = cm.lineInfo(line)
-          console.log(info.wrapClass)
+          // console.log(info.wrapClass)
           if (info.wrapClass === 'lock') {
             this.unlock(line, line)
           } else {
@@ -71,7 +71,7 @@
 
         /* Decide whether to keep changes. */
         this.codemirror.on('beforeChange', (cm, change) => {
-          console.log(change)
+          // console.log(change)
           const line = change.to.line
           const info = cm.lineInfo(line)
           /* Cancel change if it was initiated by a user outside of their

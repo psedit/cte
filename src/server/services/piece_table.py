@@ -27,21 +27,14 @@ class PieceTable:
         """
         Returns the length of the stitched file according to the piece table.
         """
-        length: int = 0
-
-        for i in range(len(self.table)):
-            length += self.table[i][2]
-
-        return length
+        return sum(entry[2] for entry in self.table)
 
     def __str__(self) -> str:
         fmt = "{:>10}"*4
-        str_table = ""
+        str_table = fmt.format("Block ID", "Start", "Length", "Open") + "\n"
 
-        str_table += fmt.format("Block ID", "Start", "Length", "Open") + "\n"
-        for item in self.table:
-            str_table += fmt.format(item[0], item[1], item[2],
-                                    self.blocks[item[0]].is_open()) + "\n"
+        for i in self.table:
+            str_table += fmt.format(*i, self.blocks[i[0]].is_open()) + "\n"
 
         return str_table
 
@@ -51,9 +44,8 @@ class PieceTable:
         for a given file line.
         """
         piece_start: int = 0
-        i: int
-        for i in range(len(self.table)):
-            piece_length: int = self.table[i][2]
+        for i, entry in enumerate(self.table):
+            piece_length: int = entry[2]
 
             if line >= piece_start and line < piece_start + piece_length:
                 return i, line - piece_start
@@ -66,11 +58,7 @@ class PieceTable:
         Returns the line at which the given piece (table index) begins within
         the stitched file.
         """
-        line: int = 0
-        for i in range(piece_index):
-            line += self.table[i][2]
-
-        return line
+        return sum(entry[2] for entry in self.table[:piece_index])
 
     def get_piece_range(self, start: int, length: int) -> Tuple[int, int]:
         """
@@ -104,10 +92,8 @@ class PieceTable:
 
         for i in range(first, last + 1):
             tab_ent = self.table[i]
-            block = self.blocks[tab_ent[0]]
-
-            line_s = tab_ent[1]
-            line_c = tab_ent[2]
+            block_idx, line_s, line_c = tab_ent
+            block = self.blocks[block_idx]
 
             if i == first:
                 line_s += offset
@@ -194,7 +180,7 @@ class PieceTable:
         # Check if block creation is allowed
         range_start, range_end = self.get_piece_range(start, length)
         for piece_index in range(range_start, range_end + 1):
-            if self.blocks[self.table[piece_index][0]].is_open() is True:
+            if self.blocks[self.table[piece_index][0]].is_open():
                 raise ValueError("Illegal block request")
 
         if start + length > len(self):

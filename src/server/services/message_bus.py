@@ -1,15 +1,17 @@
 import Pyro4
 import time
 from collections import defaultdict
-from typing import Callable, Dict, List
+from typing import Dict, List
 import queue
 import threading
+from typedefs import UUID, ServiceAddress
 
 from handler_code import HandlerCode
+from mixins import LoggerMixin
 
 
 @Pyro4.expose
-class MessageBus:
+class MessageBus(LoggerMixin):
     """
     Passes messages between different services.
 
@@ -22,6 +24,20 @@ class MessageBus:
     def __init__(self) -> None:
         # The message queue
         self.mqueue: queue.Queue = queue.Queue()
+
+        self.response_map: Dict[UUID, ServiceAddress] = {}
+
+        # Name server service detection stuff
+        self._ns = Pyro4.locateNS()
+        self._known_services: Dict[str, str] = {}
+
+        while 'meta.Logger' not in self._ns.list():
+            time.sleep(0.05)
+
+        logger = Pyro4.Proxy('PYRONAME:meta.Logger')
+
+        super().__init__(logger)
+        self._logname = "service.MessageBus"
 
         # type -> URI handler map.
         # Can be edited by multiple threads, so there's a lock here.
@@ -36,10 +52,6 @@ class MessageBus:
         self._handler_thread = threading.Thread(target=self._handle_messages)
         self._handler_thread.daemon = True
         self._handler_thread.start()
-
-        # Name server service detection stuff
-        self._ns = Pyro4.locateNS()
-        self._known_services: Dict[str, str] = {}
 
         # A thread which polls the nameserver
         # every second for new services.
@@ -60,11 +72,19 @@ class MessageBus:
                 self._proxies[name] = Pyro4.Proxy(to_uri)
                 return self._proxies[name]
 
-    def put_message(self, message: dict):
+    def put_message(self, msg: dict):
         """ Put a message on the message queue. """
-        if 'type' not in message:
+        if 'type' not in msg:
             return False
-        self.mqueue.put(message)
+
+        if isinstance(msg['sender'], str) and msg['type'].endswith('request'):
+            print(f"Request sent with uuid: {msg['uuid']}")
+            self.response_map[msg['uuid']] = msg['sender']
+
+        if msg['type'].endswith('response'):
+            self._info(f"Response received to uuid {msg.get('response_uuid')}")
+
+        self.mqueue.put(msg)
         return True
 
     def _poll_ns(self):
@@ -103,14 +123,31 @@ class MessageBus:
             for mtype in proxy.get_wanted_messages():
                 self.handlers[mtype].append(uri)
 
+    def _try_handle_response(self, message):
+        if not message['type'].endswith('response'):
+            return False
+
+        response_uuid = message.get('response_uuid')
+
+        request_sender = self.response_map.get(response_uuid)
+        if not request_sender:
+            return False
+
+        self._info(f"Sending response to uuid {response_uuid}")
+        self._proxies[request_sender].handle_message(message)
+        del self.response_map[response_uuid]
+        return True
+
     def _handle_messages(self):
         """ Waits for new messages in the message queue. """
         while True:
             message = self.mqueue.get()
-            print(f"Attempting to handle message {message}")
-            handled = False
+            handled = self._try_handle_response(message)
+
             with self._handler_lock:
                 handlers = self.handlers[message["type"]]
+                if handlers:
+                    print(f"Calling handlers for message {message}")
                 for uri in handlers:
                     print(f"Calling handle_message on URI {uri}")
                     handled = True

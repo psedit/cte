@@ -11,4 +11,4 @@ class Client():
         self.conn_time = datetime.now()
 
     def __str__(self):
-        return f"{addr} - {uname}"
+        return f"{self.addr} - {self.uname}"

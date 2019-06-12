@@ -3,6 +3,7 @@
     <sidebar id="sidebar" v-if="isLoggedIn"/>
     <editor id="editor" v-if="isLoggedIn"/>
     <login id="login" v-if="!isLoggedIn"/>
+    <tabs id="tabs"/>
   </div>
 </template>
 
@@ -11,6 +12,7 @@
   import Editor from './Editor'
   import Sidebar from './Sidebar'
   import Login from './Login'
+  import Tabs from './Tabs/Tabs'
 
   export default {
     name: 'landing-page',
@@ -19,7 +21,7 @@
         return this.$store.state.user.isLoggedIn
       }
     },
-    components: { Editor, Sidebar, Login },
+    components: { Editor, Sidebar, Login, Tabs },
     methods: {
       open (link) {
         this.$electron.shell.openExternal(link)
@@ -40,16 +42,19 @@
     height: 100vh;
     width: 100vw;
     display: grid;
-    grid-template-areas: 'sidebar editor';
+    grid-template-areas:
+        'sidebar tabs'
+        'sidebar editor';
     grid-template-columns: 15em 1fr;
-    grid-template-rows: 1fr;
+    grid-template-rows: auto 1fr;
   }
-
   #sidebar {
     grid-area: sidebar;
   }
-
   #editor {
     grid-area: editor;
+  }
+  #tabs {
+    grid-area: tabs;
   }
 </style>
