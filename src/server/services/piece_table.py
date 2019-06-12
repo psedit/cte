@@ -41,7 +41,7 @@ class PieceTable:
         str_table += fmt.format("Block ID", "Start", "Length", "Open") + "\n"
         for item in self.table:
             str_table += fmt.format(item[0], item[1], item[2],
-                                    self.blocks[item[0]].status()) + "\n"
+                                    self.blocks[item[0]].is_open()) + "\n"
 
         return str_table
 
@@ -119,6 +119,20 @@ class PieceTable:
 
         return lines
 
+    def get_locked_block_info(self, block_id: str) -> Tuple[int, int]:
+        """
+        If the given block is locked, returns the current block length
+        and starting location within the file.
+        Unlocked block_id's return wrong results.
+        """
+        cur_pos = 0
+        for piece in self.table:
+            if piece[0] is block_id:
+                return (cur_pos, piece[2])
+            else:
+                cur_pos += piece[2]
+        return None
+
     def stitch(self) -> List[str]:
         """
         Returns the new stitched file according to the piece table.
@@ -165,7 +179,7 @@ class PieceTable:
         # Remove the closed blocks from memory
         for block_id in self.blocks.keys():
             if not self.blocks[block_id].is_open():
-                self.blocks.pop(block_id)
+                del self.blocks[block_id]
 
         return stitched_file
 
@@ -180,7 +194,7 @@ class PieceTable:
         # Check if block creation is allowed
         range_start, range_end = self.get_piece_range(start, length)
         for piece_index in range(range_start, range_end + 1):
-            if self.blocks[self.table[piece_index][0]].status() is True:
+            if self.blocks[self.table[piece_index][0]].is_open() is True:
                 raise ValueError("Illegal block request")
 
         if start + length > len(self):
@@ -218,7 +232,7 @@ class PieceTable:
 
                 if length_rem > piece_len:
                     length_rem -= piece_len
-                    self.table.pop(cur_piece_index)
+                    del self.table[cur_piece_index]
                 else:
                     self.table[cur_piece_index][1] += length_rem
                     self.table[cur_piece_index][2] -= length_rem

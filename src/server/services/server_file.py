@@ -14,7 +14,7 @@ class ServerFile:
         # Clients and their location (row, column, is_idle)
         self.clients: Dict[Address, List[Any]] = {}
         # Clients and their locks (as an index), sorted by id
-        self.locks: Dict[Address, Dict[int, int]] = {}
+        self.locks: Dict[Address, List[int]] = {}
         self.lock_id_count: int = 0
         self.is_saved: bool
 
@@ -70,7 +70,7 @@ class ServerFile:
         except ValueError:
             return None
 
-        if not clients in self.locks.keys():
+        if not client in self.locks.keys():
             self.locks[client] = [block_id]
         else:
             self.locks[client].append(block_id)
@@ -83,10 +83,24 @@ class ServerFile:
         """
         if client in self.locks.keys() and block_id in self.locks[client]:
             self.file_pt.close_block(block_id)
-            self.locks[client].pop(block_id)
+            self.locks[client].remove(block_id)
 
             if self.locks[client] is []:
-                self.locks.pop(client)
+                del self.locks[client]
+
+    def get_lock_list(self) -> List[Tuple[Address, int, int, int]]:
+        """
+        Returns a list of all locked blocks within the file, in
+        the form [address, block_id, start, length].
+        """
+        return [(addr, b_id) + self.file_pt.get_locked_block_info(b_id)
+                for addr in self.locks.keys() for b_id in self.locks[addr]]
+
+    def get_lock_info(self, client: Address, block_id: int) -> Tuple[int, int]:
+        if client in self.locks.keys() and block_id in self.locks[client]:
+            return self.file_pt[block_id].get_locked_block_info(block_id)
+        else:
+            return None
 
     def move_cursor(self, client: Address, row: int, column: int) -> None:
         self.clients[client] = [row, column, True]
