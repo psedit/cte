@@ -10,7 +10,7 @@
 <script>
   import Editor from './Editor'
   import Sidebar from './Sidebar'
-  import Tabs from './Tabs'
+  import Tabs from './Tabs/Tabs'
 
   export default {
     name: 'landing-page',

@@ -1,8 +1,8 @@
 <template>
   <div>
     <ul id="tab-list" @wheel="scroll()">
-      <li v-for="file in filePaths" class="tab" @click="tabClick(file)">
-        {{ file }}
+      <li v-for="tab in tabs" class="tab" @click="tabClick(tab.filePath)" :class="{ 'active': isActive(tab.filePath) }">
+        {{ tab.fileName }}
       </li>
     </ul>
   </div>
@@ -11,22 +11,23 @@
 <script>
   export default {
     name: 'tabs',
-    data () {
-      return {
-        current_file: 'package.json'
-      }
-    },
     computed: {
-      filePaths () {
+      tabs () {
         return this.$store.state.fileTracker.tabs
+      },
+      openFile  () {
+        return this.$store.state.fileTracker.openFile
       }
     },
     methods: {
       scroll (e) {
         console.log('scrolling')
       },
-      tabClick (file) {
-        this.$store.dispatch('openFile', file)
+      tabClick (fileName) {
+        this.$store.dispatch('openFile', fileName)
+      },
+      isActive (filePath) {
+        return this.openFile === filePath
       }
     }
   }
@@ -57,8 +58,12 @@
     min-width: 200px;
   }
 
-  li:hover {
+  .active {
     background-color: #111;
+  }
+
+  li:hover {
+    cursor: pointer;
   }
 
 </style>
