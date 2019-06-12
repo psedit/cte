@@ -81,7 +81,7 @@
 
 <style scoped>
   .editor{
-      width: 100vh;
+      width: 100%;
       height: calc(100vh - 50px);
   }
 
