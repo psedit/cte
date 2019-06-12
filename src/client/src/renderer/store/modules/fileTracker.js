@@ -70,7 +70,7 @@ const actions = {
         store.commit('updateCode', 'Fix even pls dat de editor verdwijnt. (v-if)')
       } else {
         const i = store.state.tabs.indexOf(tabToRemove)
-        store.dispatch('openFile', store.state.tabs[(i - 1) % store.state.tabs.length].filePath)
+        store.dispatch('openFile', store.state.tabs[(i + 1) % store.state.tabs.length].filePath)
       }
     }
     store.commit('removeTab', tabToRemove)
