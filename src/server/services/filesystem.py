@@ -74,6 +74,18 @@ class Filesystem(Service):
         else:
             raise ValueError("File is not present in file system RAM.")
 
+    def _is_joined(self, address, file_path) -> bool:
+        if file_path not in self.file_dict.keys():
+            # TODO: send exception to client
+            # "File is not in system RAM. Join the file to load it to memory."
+            return False
+        elif not self.file_dict[file_path].is_joined(address):
+            # TODO: send exception to client
+            # "Please join the file before requesting its contents."
+            return False
+        else:
+            return True
+
     @message_type("file-content-request")
     def _process_file_content_request(self, msg) -> None:
         """
@@ -87,15 +99,7 @@ class Filesystem(Service):
         length = content["length"]
         file_path = content["file_path"]
 
-        if file_path not in self.file_dict.keys():
-            # TODO: send exception to client
-            # "File is not in system RAM. Join the file to load it to memory."
-            pass
-        elif not self.file_dict[file_path].is_joined(address):
-            # TODO: send exception to client
-            # "Please join the file before requesting its contents."
-            pass
-        else:
+        if self._is_joined(address, file_path):
             block = self.get_block(file_path, start, length)
 
             response_content = {"file_content": block, "address": address}
@@ -125,9 +129,7 @@ class Filesystem(Service):
 
         file = self.file_dict[path]
 
-        if not file.is_joined(address):
-            # TODO: send exception to client
-            # "Please join the file first before moving within it."
+        if not self._is_joined(address, file_path):
             return
 
         file.move_cursor(address, row, column)
@@ -212,6 +214,27 @@ class Filesystem(Service):
         # Remove the file from RAM if necessary.
         if self.file_dict[file].client_count() == 0:
             self.file_dict.pop(file)
+
+    @message_type("file-lock-request")
+    def _file_add_lock(self, msg) -> None:
+        content = msg["content"]
+        address, username = msg["sender"]
+
+        path = content["file_path"]
+        start = content["start"]
+        length = content["length"]
+
+        if not self._is_joined(address, file_path):
+            return
+
+        new_content = content
+
+        block_id = self.file_dict[file_path].add_lock(Address, start, length)
+
+        if block_id is None:
+            pass
+
+
 
 
 if __name__ == "__main__":
