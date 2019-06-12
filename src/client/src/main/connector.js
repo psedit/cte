@@ -9,6 +9,7 @@ const path = new URL('ws://bami.party:12345')
  * @typedef {Object} Message
  * @property {string} type - The type of message
  * @property {string} uuid - The unique id of the message
+ * @property {string} response_uuid
  * @property {string} sender - sender service or sender client address
  * @property {string} pref_dest - sender service or sender client address
  * @property {Object} content - the payload of the message
@@ -148,6 +149,7 @@ class Connector {
    * @param {Object} content - The payload of the message.
    * @param {string} [sender = CLIENT] - The identifier of the sender.
    * @param {string} [prefDest = null] - The destination where the message should preferable go.
+   * @return {Object} - The sent object
    */
   send (type, content, sender = 'CLIENT', prefDest = null) {
     const payload = {
@@ -159,6 +161,7 @@ class Connector {
     }
 
     this.ws.send(JSON.stringify(payload))
+    return payload
   }
 
   /**
@@ -172,12 +175,12 @@ class Connector {
    * @returns {Promise<Object>} - A promise with the response content
    */
   request (requestType, responseType, content, timeout = 3000) {
-    this.send(requestType, content)
+    const sendObj = this.send(requestType, content)
 
     return new Promise((resolve, reject) => {
       const messageHandler = (response) => {
         const responseObj = JSON.parse(response)
-        if (responseObj.type === responseType) {
+        if (responseObj.type === responseType && responseObj.response_uuid === sendObj.uuid) {
           this.ws.removeEventListener('message', messageHandler)
           resolve(responseObj.content)
         }
