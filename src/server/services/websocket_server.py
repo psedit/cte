@@ -77,9 +77,14 @@ class WSServer(Service):
             recipients = msg["content"]["response_addrs"]
             self._info("Sending message %r to clients %r", msg, recipients)
             for recipient in recipients:
-                await self.clients[recipient].send(
-                        json.dumps(msg["content"]["msg"])
-                    )
+                try:
+                    await self.clients[recipient].send(
+                            json.dumps(msg["content"]["msg"])
+                        )
+                except Exception:
+                    self._warning("Websocket %r unexpectedly disconnected!",
+                                  recipient)
+                    traceback.print_exc()
             self.messages_to_send.task_done()
 
     async def ws_read_loop(self, websocket, path):
@@ -89,7 +94,13 @@ class WSServer(Service):
         self._info("Connection accepted from %r", websocket.remote_address)
         try:
             async for message in websocket:
-                data = json.loads(message)
+                try:
+                    data = json.loads(message)
+                except json.decoder.JSONDecodeError as e:
+                    if 'quote' in e.msg:
+                        await websocket.send("Double quotes. Niet single.")
+                        continue
+
                 if 'type' not in data or 'content' not in data:
                     print("Unacceptable message (missing type or content)")
                     continue
@@ -98,6 +109,8 @@ class WSServer(Service):
                 print(f"Received message: {data}")
                 self._send_message_from_client(new_type, data['content'],
                                                client_info)
+        except websockets.exceptions.ConnectionClosed:
+            print(f'Websocket {websocket} unexpectedly closed connection.')
         finally:
             del self.clients[websocket.remote_address]
 
