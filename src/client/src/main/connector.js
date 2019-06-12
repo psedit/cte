@@ -168,12 +168,13 @@ class Connector {
    * @param {string} requestType - The type of the message send.
    * @param {string} responseType - The type of the message to receive.
    * @param {Object} content - The payload to send.
-   * @returns {Promise<Object>} - A promise with the response content/
+   * @param {number} [timeout = 3000] - Time in milliseconds to wait till rejecting the request if no response is given.
+   * @returns {Promise<Object>} - A promise with the response content
    */
-  request (requestType, responseType, content) {
+  request (requestType, responseType, content, timeout = 3000) {
     this.send(requestType, content)
 
-    return new Promise(resolve => {
+    return new Promise((resolve, reject) => {
       const messageHandler = (response) => {
         const responseObj = JSON.parse(response)
         if (responseObj.type === responseType) {
@@ -182,6 +183,7 @@ class Connector {
         }
       }
       this.ws.on('message', messageHandler)
+      setTimeout(() => { reject(new Error('Timeout')) }, timeout)
     })
   }
 
