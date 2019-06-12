@@ -26,10 +26,6 @@
     methods: {
       /** Updates the code that is viewed by the editor. */
       updateCode () {
-<<<<<<< HEAD
-=======
-        // console.log('hey', this.$store.state)
->>>>>>> 9aa4421cf37291e1f29d09d53b324d3361a83563
         this.code = this.$store.state.fileTracker.code
       },
       startFakeMovement () {
