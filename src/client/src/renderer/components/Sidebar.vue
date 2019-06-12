@@ -22,7 +22,7 @@
   import BackIcon from 'vue-material-design-icons/ArrowLeft'
   import FolderIcon from 'vue-material-design-icons/Folder'
   import FileIcon from 'vue-material-design-icons/File'
-  import connector from 'path/to/connector'
+  import connector from '../../main/connector'
 
   export default {
     name: 'sidebar',
@@ -31,7 +31,7 @@
         /* The variable currFolder is relative to the root of the server. */
         currFolder: './',
         /* The variable currFiles contains all files in currFolder. */
-        currFiles: [],
+        currFiles: ['./', []],
         dirTree: []
       }
     },
@@ -49,6 +49,9 @@
        */
       files () {
         // currFiles = [currFolder, [<bestanden>]]
+        if (currFiles.length == 0) {
+
+        }
         let files
         let currFiles = this.currFiles
         let currFolder = this.currFolder
@@ -107,22 +110,32 @@
       /** When clicking on a file, show the content of the directory or
        *  open the file in the editor. If the clicked file is a directory,
        *  then also update currFiles.
+       * 
+       *  @param {Object} file - object with members name, type (dir or file) and path.
        */
       fileClick (file) {
         if (file.type === 'dir') {
           let currFiles = this.currFiles
           this.currFolder = file.path
 
-          /*  */
-          for (let i = 0; i < currFiles.length; i++) {
-            let currFile = currFiles[1][i]
+          /* Search for the directory that is clicked on, and update
+           * currFiles to be the list of files inside that directory.
+           */
+          let currFilesLength = currFiles[1].length
+          for (let i = 0; i < currFilesLength; i++) {
+            let files = currFiles[1][i]
 
             /* Extract file name from the file path. */
-            let lastIndex = file.path.lastIndexOf('/')
-            let fileName = file.path.substring(lastIndex, -1)
+            let fileTrimmed = file.path.slice(0, -1)
+            let lastIndex = fileTrimmed.lastIndexOf('/')
+            let fileName = fileTrimmed.substring(lastIndex + 1, fileTrimmed.length)
 
-            if (typeof (currFile) !== 'string' && currFile[0] === fileName) {
-              this.currFiles = currFile
+            /* Check if currFile is a directory and has the same name as
+             * file that is clicked on.
+             */
+            if (typeof (files) !== 'string' && files[0] === fileName) {
+              this.currFiles = files
+              break
             }
           }
         } else {
