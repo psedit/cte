@@ -111,12 +111,16 @@
         if (file.type === 'dir') {
           let currFiles = this.currFiles
           this.currFolder = file.path
-          
-          // TODO: Rekening houden met dubbele namen?
+
+          /*  */
           for (let i = 0; i < currFiles.length; i++) {
-            currFile = currFiles[1][i]
-            // TODO: file.path = "./data/src/.../foo/" regex ==> "foo"
-            if (typeof (currFile) !== 'string' && currFile[0] === file.path) {
+            let currFile = currFiles[1][i]
+
+            /* Extract file name from the file path. */
+            let lastIndex = file.path.lastIndexOf('/')
+            let fileName = file.path.substring(lastIndex, -1)
+
+            if (typeof (currFile) !== 'string' && currFile[0] === fileName) {
               this.currFiles = currFile
             }
           }
