@@ -51,13 +51,22 @@
        */
       files () {
         // currFiles = [currFolder, [<bestanden>]]
-        let files
+        let files = []
+        console.log(this.currFiles.length + ' is length of currFiles in files()') // TODO: remove
+        if (this.currFiles[1].length === 0) {
+          console.log('Connecting to server (in files)...')
+          this.openSocketUpdateTree()
+          // FIXME: deze log wordt aangeroepen voordat openSocketUpdateTree()
+          // klaar is met runnen.
+          console.log(this.dirTree + ' in files()')
+          this.currFiles = this.dirTree.slice()
+        }
+
         let currFiles = this.currFiles
         let currFolder = this.currFolder
-        if (currFiles.length === 0) {
-          console.log('Empty file, this shouldnt happen')
-          return []
-        }
+        console.log('CURRFILES in files: ')
+        // console.log(this.currFiles, this)
+        console.log(currFiles[0], currFiles[1])
 
         /*  For sorting purposes, first push all directories
          *  and then all other files.
@@ -122,7 +131,28 @@
           this.$store.dispatch('updateFilesAction', content.root_tree)
           console.log('Receiving root_tree: ', content.root_tree)
           // TODO: Eventueel nog ergens anders naar fileTracker luisteren.
-          this.dirTree = this.$store.state.fileTracker.dirTree
+          this.dirTree = this.$store.state.fileTracker.filePaths.slice()
+          console.log(this.dirTree + ' in updateFileTree()')
+        })
+      },
+      /** Open a new web socket en update the file tree. */
+      openSocketUpdateTree () {
+        connector.addEventListener('open', () => {
+          console.log('Connecting in open socket....')
+          // connector.listenToMsg('file-list-broadcast', (content) => {
+          //   this.$store.dispatch('updateFilesAction', content.root_tree)
+          //   console.log('Receiving root_tree: ', content.root_tree)
+          //   // TODO: Eventueel nog ergens anders naar fileTracker luisteren.
+          //   this.dirTree = this.$store.state.fileTracker.dirTree
+          // })
+
+          this.updateFileTree()
+          /* When there is a change in the file structure,
+          * update the file tree.
+          */
+          connector.listenToMsg('file-change-broadcast', (content) => {
+            this.updateFileTree()
+          })
         })
       },
       /** When clicking on a file, show the content of the directory or
@@ -162,23 +192,7 @@
       }
     },
     mounted () {
-      connector.addEventListener('open', () => {
-        console.log('Connecting....')
-        // connector.listenToMsg('file-list-broadcast', (content) => {
-        //   this.$store.dispatch('updateFilesAction', content.root_tree)
-        //   console.log('Receiving root_tree: ', content.root_tree)
-        //   // TODO: Eventueel nog ergens anders naar fileTracker luisteren.
-        //   this.dirTree = this.$store.state.fileTracker.dirTree
-        // })
-
-        this.updateFileTree()
-        /* When there is a change in the file structure,
-         * update the file tree.
-         */
-        connector.listenToMsg('file-change-broadcast', (content) => {
-          this.updateFileTree()
-        })
-      })
+      this.openSocketUpdateTree()
     }
   }
 </script>
