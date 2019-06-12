@@ -50,7 +50,7 @@ class PieceTable:
             if line >= piece_start and line < piece_start + piece_length:
                 return i, line - piece_start
 
-            piece_start += block_length
+            piece_start += piece_length
         raise ValueError("Invalid line number")
 
     def get_piece_start(self, piece_index: int) -> int:
