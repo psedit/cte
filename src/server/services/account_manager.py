@@ -12,9 +12,10 @@ class AccountManager(Service):
     Handles: login, logout, account registration, account deletion,
     account management (nomen est omen) and permission-related requests.
     """
-    def __init__(self, msg_bus):
-        super().__init__(msg_bus)
-        self._msg_pass = msg_pass
+    def __init__(self, *super_args):
+        super().__init__(*super_args)
+
+        self.usernames: Dict[Address, str] = {}
 
     @message_type("account-login")
     def login(self, msg):
