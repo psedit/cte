@@ -36,6 +36,7 @@
       FolderIcon,
       FileIcon
     },
+    // FIXME: use the data from vuex
     computed: {
       files () {
         /* Create list of all files in current folder. */
@@ -63,6 +64,7 @@
           }
         })
 
+        this.$store.commit('updateFiles', files)
         return files
       }
     },
@@ -98,22 +100,7 @@
         if (file.type === 'dir') {
           this.currFolder = file.path
         } else {
-          const store = this.$store
-          const fs = require('fs')
-
-          console.log('test1!!!!!')
-          fs.readFile(file.path.substring(0, file.path.length - 1), 'utf8', (err, data) => {
-            console.log('EINDELIJK')
-            if (err) {
-              throw err
-            }
-            console.log('NIEUWE CODE LALALA: ' + data)
-            store.dispatch('updateCodeAction', data)
-          })
-          console.log('test2!!!!!')
-          // const file = ev.target.files[0]
-          // const reader = new FileReader()
-          // reader.readAsText(file)
+          this.$store.dispatch('openFile', file.path)
         }
       }
     }
@@ -127,7 +114,8 @@
     background-color: #111;
     display: grid;
     grid-template-rows: auto 1fr;
-    height: 100vh;
+    height: 100%;
+    border-right: 1px solid #000;
   }
 
   .curr-folder {
@@ -143,6 +131,7 @@
     display: grid;
     grid-template-columns: 1fr auto auto;
     grid-gap: 0.5em;
+    height: 50px;
   }
 
   #file-list {

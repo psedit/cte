@@ -25,7 +25,7 @@
     },
     methods: {
       updateCode () {
-        console.log('hey', this.$store.state)
+        // console.log('hey', this.$store.state)
         this.code = this.$store.state.fileTracker.code
       },
       startFakeMovement () {
@@ -72,8 +72,8 @@
         if (mutation.type === 'updateCode') {
           this.updateCode()
         }
-        console.log(mutation.type)
-        console.log(mutation.payload)
+        // console.log(mutation.type)
+        // console.log(mutation.payload)
       })
     }
   }
@@ -82,12 +82,13 @@
 <style scoped>
   .editor{
       width: 100%;
-      height: 100vh;
+      height: calc(100vh - 50px);
   }
 
   #placeholder{
     font-size: 3em;
-    height: 100%;
+    height: 100vh;
+    width: 100vh;
     line-height: 100vh;
     color: #555;
     text-align: center;
