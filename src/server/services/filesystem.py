@@ -12,8 +12,8 @@ class Filesystem(Service):
     """
 
     """
-    def __init__(self, msg_bus) -> None:
-        super().__init__(msg_bus)
+    def __init__(self, *super_args) -> None:
+        super().__init__(*super_args)
         # Check server config for root directory
         # TODO: retrieve from server
         self.root_dir: str = os.path.realpath('../test/')

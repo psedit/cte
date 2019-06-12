@@ -13,10 +13,8 @@ class WSServer(Service):
     """
     WebSocket server which is also available over Pyro.
     """
-    _wanted_msg_types = ["net-send"]
-
-    def __init__(self, msg_bus):
-        super().__init__(msg_bus)
+    def __init__(self, *super_args):
+        super().__init__(*super_args)
 
         self.clients: Dict[Address, websockets.WebSocketClientProtocol] = {}
         self.messages_to_send: asyncio.Queue = asyncio.Queue()
@@ -26,14 +24,14 @@ class WSServer(Service):
         """
         Starts the WebSocket server, hooking Pyro into the asyncio event loop.
         """
-        try:
-            msg_bus = Pyro4.Proxy("PYRONAME:service.MessageBus")
-        except Exception as e:
-            return print("Message bus not available.")
-
-        inst = cls(msg_bus)
-        inst_d = Pyro4.Daemon()
         ns = Pyro4.locateNS()
+        cls._wait_for_services(ns)
+
+        msg_bus = Pyro4.Proxy("PYRONAME:service.MessageBus")
+        logger = Pyro4.Proxy("PYRONAME:meta.Logger")
+
+        inst = cls(msg_bus, logger)
+        inst_d = Pyro4.Daemon()
         inst_uri = inst_d.register(inst)
 
         ns.register("service.WSServer", inst_uri)
@@ -77,6 +75,7 @@ class WSServer(Service):
             msg = await self.messages_to_send.get()
             print(f"Got message: {msg}")
             recipients = msg["content"]["response_addrs"]
+            self._info("Sending message %r to clients %r", msg, recipients)
             for recipient in recipients:
                 await self.clients[recipient].send(
                         json.dumps(msg["content"]["msg"])
@@ -87,6 +86,7 @@ class WSServer(Service):
         """
         Read loop for websockets.
         """
+        self._info("Connection accepted from %r", websocket.remote_address)
         try:
             async for message in websocket:
                 data = json.loads(message)

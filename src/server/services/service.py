@@ -4,6 +4,7 @@ from typing import Dict, Any, Callable, List, Tuple
 import uuid
 from typedefs import Address
 import traceback
+from mixins import LoggerMixin
 
 
 def message_type(msg_type: str):
@@ -18,7 +19,7 @@ def message_type(msg_type: str):
 
 
 @Pyro4.expose
-class Service():
+class Service(LoggerMixin):
     """
     Super class for services.
 
@@ -30,25 +31,32 @@ class Service():
     including the outbound connection with the message bus.
     New services can be started using .start (duh).
 
-    Inheriting classes must call super().__init__(message_bus)
-    within their own __init__. This init must take the message
-    bus as its only argument (except for self, of course).
-
-    Inheriting classes can reassign the _wanted_msg_types variable
-    to include the various message types the service accepts.
+    Inheriting classes must call super().__init__(message_bus, logger)
+    within their own __init__.
 
     Inheriting classes can declare which message type a certain
     method accepts by adding the @message_type(<type>) decorator,
     where <type> is a string containing the message type name.
     """
 
-    def __init__(self, msg_bus):
+    def __init__(self, msg_bus, logger):
         self._msg_bus = msg_bus
+
+        super().__init__(logger)
+
+        self._logname = f"service.{self.__class__.__name__}"
+
         self._resp_cache: Dict[str, Any] = {}
         self._type_map: Dict[str, Callable[[dict], None]] = {}
         for _, func in inspect.getmembers(
                 self, predicate=lambda x: hasattr(x, "_msg_type")):
             self._type_map[func._msg_type] = func
+
+    @staticmethod
+    def _wait_for_services(ns):
+        while not ('service.MessageBus' in ns.list()
+                   and 'meta.Logger' in ns.list()):
+            time.sleep(0.05)
 
     @classmethod
     def start(cls):
@@ -58,15 +66,14 @@ class Service():
         Establishes outbound connection to the message bus.
         """
         # Try to establish connection to the message bus
-        try:
-            msg_bus = Pyro4.Proxy("PYRONAME:service.MessageBus")
-        except Exception as e:
-            print("Message passer service not reachable")
+        ns = Pyro4.locateNS()
+        cls._wait_for_services(ns)
+        msg_bus = Pyro4.Proxy("PYRONAME:service.MessageBus")
+        logger = Pyro4.Proxy("PYRONAME:meta.Logger")
 
         # Register Pyro4 daemon
-        inst = cls(msg_bus)
+        inst = cls(msg_bus, logger)
         inst_d = Pyro4.Daemon()
-        ns = Pyro4.locateNS()
         inst_uri = inst_d.register(inst)
         ns.register(f"service.{cls.__name__}", inst_uri)
 
