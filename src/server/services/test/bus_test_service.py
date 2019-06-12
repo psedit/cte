@@ -18,7 +18,7 @@ if __name__ == '__main__':
     # Connect to message handler
     try:
         msg_bus = Pyro4.Proxy("PYRONAME:service.MessageBus")
-    except Exception as e:
+    except Exception:
         traceback.print_exc()
         print("Message passer service not reachable")
 

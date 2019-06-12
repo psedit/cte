@@ -3,9 +3,11 @@ from functools import partial
 import Pyro4
 import asyncio
 import json
+import traceback
 import websockets
 from typedefs import Address
 from service import Service, message_type
+from typing import Dict
 
 
 @Pyro4.expose

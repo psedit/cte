@@ -152,10 +152,10 @@ class Filesystem(Service):
 
         path = content["file_path"]
 
-        if not file.is_joined(address):
-            # TODO: send exception to client
-            # "Please join the file first before requesting cursor locations."
-            return
+        # if not file.is_joined(address):
+        # TODO: send exception to client
+        # "Please join the file first before requesting cursor locations."
+        # return
 
         curs_f = self.file_dict[path].get_cursors()
         cursors = [[self.usernames[c]] + curs_f[c] for c in curs_f.keys()]
@@ -290,7 +290,7 @@ class Filesystem(Service):
         Overwrites file if it is already present.
         """
         content = msg["content"]
-        address = msg["sender"]
+        # address = msg["sender"]
         old_path = content["old_path"]
         new_path = content["new_path"]
 

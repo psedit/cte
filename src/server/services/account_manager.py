@@ -1,7 +1,7 @@
 from service import Service, message_type
 from typedefs import Address
 import Pyro4
-from typing import Dict, List, Tuple
+from typing import Dict
 
 
 @Pyro4.expose

@@ -1,7 +1,8 @@
 import Pyro4
 import sys
 sys.path.append('.')
-from service import Service, message_type
+from service import Service, message_type  # noqa: E402
+
 
 @Pyro4.expose
 class B(Service):
@@ -11,13 +12,14 @@ class B(Service):
         self._info('Kaasverzoek aan het sturen.')
         req = self._send_message('kaas-request', {'opties': 'Gouda'})
 
-        resp = await self._wait_for_response(req['uuid'])
+        res = await self._wait_for_response(req['uuid'])
 
-        self._info('Kaasreactie ontvangen (keuze: %s)', resp['content']['kaas'])
+        self._info('Kaasreactie ontvangen (keuze: %s)', res['content']['kaas'])
 
-        self._send_message('voedsel-response', {'type': 'kaasplankje',
-                                                'kaas': resp['content']['kaas']},
-                                                resp_uuid=msg['uuid'])
+        self._send_message('voedsel-response',
+                           {'type': 'kaasplankje',
+                            'kaas': res['content']['kaas']},
+                           resp_uuid=msg['uuid'])
 
 
 B.start()

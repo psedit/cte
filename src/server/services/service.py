@@ -4,10 +4,9 @@ import Pyro4
 from typing import Dict, Any, Callable, List, Tuple
 import uuid
 from typedefs import Address
-import traceback
 import time
+import types
 import asyncio
-from functools import partial
 from collections import defaultdict
 from mixins import LoggerMixin
 
@@ -43,7 +42,6 @@ class Service(LoggerMixin):
     method accepts by adding the @message_type(<type>) decorator,
     where <type> is a string containing the message type name.
     """
-
     def __init__(self, msg_bus, logger):
         self._msg_bus = msg_bus
 

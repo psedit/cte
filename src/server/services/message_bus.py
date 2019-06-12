@@ -1,7 +1,7 @@
 import Pyro4
 import time
 from collections import defaultdict
-from typing import Callable, Dict, List
+from typing import Dict, List
 import queue
 import threading
 from typedefs import UUID, ServiceAddress
