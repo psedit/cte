@@ -23,6 +23,8 @@
   import FolderIcon from 'vue-material-design-icons/Folder'
   import FileIcon from 'vue-material-design-icons/File'
   import connector from '../../main/connector'
+  // import { connect } from 'net'
+  // import { constants } from 'fs'
 
   export default {
     name: 'sidebar',
@@ -49,12 +51,13 @@
        */
       files () {
         // currFiles = [currFolder, [<bestanden>]]
-        if (currFiles.length == 0) {
-
-        }
         let files
         let currFiles = this.currFiles
         let currFolder = this.currFolder
+        if (currFiles.length === 0) {
+          console.log('Empty file, this shouldnt happen')
+          return []
+        }
 
         /*  For sorting purposes, first push all directories
          *  and then all other files.
@@ -107,10 +110,25 @@
           path: './'
         })
       },
+      /**
+        * Updates the file tree by requesting file from server.
+        */
+      updateFileTree () {
+        connector.request(
+          'file-list-request',
+          'file-list-response',
+          {}
+        ).then((content) => {
+          this.$store.dispatch('updateFilesAction', content.root_tree)
+          console.log('Receiving root_tree: ', content.root_tree)
+          // TODO: Eventueel nog ergens anders naar fileTracker luisteren.
+          this.dirTree = this.$store.state.fileTracker.dirTree
+        })
+      },
       /** When clicking on a file, show the content of the directory or
        *  open the file in the editor. If the clicked file is a directory,
        *  then also update currFiles.
-       * 
+       *
        *  @param {Object} file - object with members name, type (dir or file) and path.
        */
       fileClick (file) {
@@ -145,12 +163,20 @@
     },
     mounted () {
       connector.addEventListener('open', () => {
-        connector.listenToMsg('file-list-broadcast', (content) => {
-          console.log(content.root_tree)
-          this.$store.dispatch('updateFilesAction', content.root_tree)
+        console.log('Connecting....')
+        // connector.listenToMsg('file-list-broadcast', (content) => {
+        //   this.$store.dispatch('updateFilesAction', content.root_tree)
+        //   console.log('Receiving root_tree: ', content.root_tree)
+        //   // TODO: Eventueel nog ergens anders naar fileTracker luisteren.
+        //   this.dirTree = this.$store.state.fileTracker.dirTree
+        // })
 
-          // TODO: Eventueel nog ergens anders naar fileTracker luisteren.
-          this.dirTree = this.$store.state.fileTracker.dirTree
+        this.updateFileTree()
+        /* When there is a change in the file structure,
+         * update the file tree.
+         */
+        connector.listenToMsg('file-change-broadcast', (content) => {
+          this.updateFileTree()
         })
       })
     }

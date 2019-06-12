@@ -8,8 +8,8 @@ const state = {
 }
 
 const mutations = {
-  /** Changes the code/text in the editor 
-   * 
+  /** Changes the code/text in the editor
+   *
    * @param {Object} state vuex state
    * @param {string} newCode new text
    */
@@ -59,9 +59,9 @@ const actions = {
     })
   },
   /** Updadates the text in the editor.
-   * 
-   * @param {Object} state vuex state 
-   * @param {string} newCode 
+   *
+   * @param {Object} state vuex state
+   * @param {string} newCode
    */
   updateCodeAction (state, newCode) {
     state.commit('updateCode', newCode)
