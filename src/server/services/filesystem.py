@@ -241,7 +241,7 @@ class Filesystem(Service):
         block_id = self.file_dict[path].add_lock(address, start, length)
 
         if block_id is None:
-            _send_lock_response(path, False, 0, address)
+            self._send_lock_response(path, False, 0, address)
         else:
             self._send_lock_response(path, True, block_id, address)
             self._send_lock_broadcast(username, block_id, True, path,
@@ -285,7 +285,7 @@ class Filesystem(Service):
         Send the curser-lock-change-broadcast message to all clients within
         the file.
         """
-        file_path = self.file_dict[file_path]
+        file = self.file_dict[file_path]
 
         content = { "username": username,
                     "lock_id": id,
