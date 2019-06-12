@@ -17,7 +17,6 @@
     components: {
       CodeMirror
     },
-
     data () {
       return {
         code: ''

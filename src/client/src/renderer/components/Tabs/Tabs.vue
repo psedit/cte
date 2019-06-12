@@ -1,7 +1,7 @@
 <template>
   <div>
     <ul id="tab-list" @wheel="scroll()">
-      <li v-for="tab in tabs" class="tab" @click="tabClick(tab.filePath)" :class="{ 'active': isActive(tab.filePath) }">
+      <li v-for="tab in tabs" class="tab" @click.self="tabClick(tab.filePath)" :class="{ 'active': isActive(tab.filePath) }">
         {{ tab.fileName }} <div class="close-tab" @click="tabRemove(tab)">X</div>
       </li>
     </ul>
@@ -66,18 +66,10 @@
     background-color: #777;
   }
 
-  li:hover:not(.active) {
-    cursor: pointer;
-    background-color: #111;
-  }
-
-  li:hover div {
-    display: inline;
-  }
-
   .close-tab {
     cursor: pointer;
-    display: none;
+    cursor: pointer;
+    display: inline;
     float: right;
     padding: 2px 6px;
     background-color: black;

@@ -43,36 +43,37 @@ const actions = {
   /**
    * Opens a file from the root of the project, and updates the code.
    * Also changes the openedFile state. Add the file to the tabs.
-   * @param {Object} state vuex state
+   * @param {Object} store vuex state
    * @param {string} filePath the file path to document to be opened
    */
-  openFile (state, filePath) {
-    state.commit('updateOpenFile', filePath)
-    state.commit('addTab', filePath)
+  openFile (store, filePath) {
+    store.commit('updateOpenFile', filePath)
+    store.commit('addTab', filePath)
     fs.readFile(filePath.substring(0, filePath.length - 1), 'utf8', (err, data) => {
       if (err) {
         console.error(err)
-        state.commit('updateCode', `Something went wrong: ${err}`)
+        store.commit('updateCode', `Something went wrong: ${err}`)
       }
-      state.commit('updateCode', data)
+      store.commit('updateCode', data)
     })
   },
   /**
    * Removes a tab from state and switches to a new tab if the tab was opened.
-   * @param {Object} state vuex state
+   * @param {Object} store vuex state
    * @param {Tab} tabToRemove the tab that needs to be removed
    */
-  removeTab (state, tabToRemove) {
-    console.log(state.fileTracker.openFile)
-    if (tabToRemove.filePath === state.openFile) {
-      if (state.tabs.length === 1) {
-        console.log('test')
+  removeTab (store, tabToRemove) {
+    if (tabToRemove.filePath === store.state.openFile) {
+      if (store.state.tabs.length === 1) {
+        store.commit('updateOpenFile', '')
+        // FIXME: hide the editor if last file is removed
+        store.commit('updateCode', 'Fix even pls dat de editor verdwijnt. (v-if)')
       } else {
-        const i = state.tabs.indexOf(tabToRemove)
-        state.dispatch('openFile', (state.tabs[(i - 1) % state.tabs.length].filePath))
+        const i = store.state.tabs.indexOf(tabToRemove)
+        store.dispatch('openFile', store.state.tabs[(i - 1) % store.state.tabs.length].filePath)
       }
     }
-    state.commit('removeTab', tabToRemove)
+    store.commit('removeTab', tabToRemove)
   },
   updateCodeAction (state, newCode) {
     state.commit('updateCode', newCode)
