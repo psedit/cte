@@ -1,8 +1,6 @@
 import Tab from '../../components/Tabs/tabType'
 import connector from '../../../main/connector'
 
-const fs = require('fs')
-
 const state = {
   code: '',
   openFile: '',
@@ -51,8 +49,6 @@ const actions = {
   openFile (store, filePath) {
     store.commit('updateOpenFile', filePath)
     store.commit('addTab', filePath)
-
-    filePath = filePath.substring(0, filePath.length - 1)
 
     connector.send(
       'file-join',
