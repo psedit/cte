@@ -2,9 +2,7 @@
   <div class="editor">
     <code-mirror v-show="this.ready" v-model="code" ref="codemirror"/>
 
-    <div id="placeholder" v-if="!this.ready">
-      ⇚ Select a file
-    </div>
+    <div id="placeholder" v-if="!this.ready">⇚ Select a file</div>
   </div>
 </template>
 
@@ -51,7 +49,7 @@
   }
 </script>
 
-<style scoped>
+<style scoped lang="scss">
   .editor{
       width: 100%;
       height: calc(100vh - 50px);
@@ -59,10 +57,17 @@
 
   #placeholder{
     font-size: 3em;
-    height: 100vh;
-    width: 100vh;
-    line-height: 100vh;
+    height: 100%;
+    width: 100%;
+    line-height: 100%;
     color: #555;
     text-align: center;
+
+    &:before {
+      content: "";
+      display: inline-block;
+      height: 100%;
+      vertical-align: middle;
+    }
   }
 </style>
