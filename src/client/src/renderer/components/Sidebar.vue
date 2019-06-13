@@ -65,6 +65,7 @@
       openFolder (name) {
         this.currPath.push(name)
       },
+
       /**
        * When clicking on a file, open file in editor.
        *
@@ -72,18 +73,23 @@
        */
       openFile (name) {
         let filePath = `./${[...this.currPath, name].join('/')}`
-        console.log(filePath)
         this.$store.dispatch('openFile', filePath)
       },
-      /** When clicking on a file, go inside directory or
-       *  render file and show its content on screen. */
+
+      /**
+       * Pop the last element from currPath.
+       */
       previous () {
         this.currPath.pop()
       },
-      /** Go to the root directory. */
+
+      /**
+       * Empty the currPath array.
+       */
       home () {
         this.currPath = []
       },
+
       /**
         * Updates the file tree by requesting file from server.
         */
@@ -93,60 +99,23 @@
           'file-list-response',
           {}
         ).then((content) => {
-          // this.$store.dispatch('updateFiles', content.root_tree)
-          console.log('Receiving root_tree: ', content.root_tree)
-          // TODO: Eventueel nog ergens anders naar fileTracker luisteren.
           this.completeTree = content.root_tree.slice()
-          console.log(this.completeTree + ' in updateFileTree()')
         })
       },
-      /** Open a new web socket en update the file tree. */
+
+      /**
+       * Open a new web socket and update the file tree.
+       */
       openSocketUpdateTree () {
         /* When there is a change in the file structure,
-        * update the file tree.
-        */
+         * update the file tree.
+         */
         connector.listenToMsg('file-change-broadcast', (content) => {
           this.updateFileTree()
         })
         connector.addEventListener('open', () => {
           this.updateFileTree()
         })
-      },
-      /** When clicking on a file, show the content of the directory or
-       *  open the file in the editor. If the clicked file is a directory,
-       *  then also update currFiles.
-       *
-       *  @param {Object} file - object with members name, type (dir or file) and path.
-       */
-      fileClick (file) {
-        if (file.type === 'dir') {
-          let currFiles = this.currFiles
-          this.currFolder = file.path
-
-          /* Search for the directory that is clicked on, and update
-           * currFiles to be the list of files inside that directory.
-           */
-          let currFilesLength = currFiles[1].length
-          for (let i = 0; i < currFilesLength; i++) {
-            let files = currFiles[1][i]
-
-            /* Extract file name from the file path. */
-            let fileTrimmed = file.path.slice(0, -1)
-            let lastIndex = fileTrimmed.lastIndexOf('/')
-            let fileName = fileTrimmed.substring(lastIndex + 1, fileTrimmed.length)
-
-            /* Check if currFile is a directory and has the same name as
-             * file that is clicked on.
-             */
-            if (typeof (files) !== 'string' && files[0] === fileName) {
-              this.currFiles = files
-              break
-            }
-          }
-        } else {
-          const filePath = file.path.substring(0, file.path.length - 1)
-          this.$store.dispatch('openFile', filePath)
-        }
       }
     },
     mounted () {

@@ -28,10 +28,16 @@
       }
     },
     computed: {
+      /**
+       * Check if item is a folder.
+       */
       isFolder () {
         return this.item instanceof Array
       },
 
+      /**
+       * Get the name of an item (file or directory).
+       */
       name () {
         if (this.isFolder) {
           return this.item[0]
@@ -40,6 +46,9 @@
         }
       },
 
+      /**
+       * Get the children of a folder.
+       */
       children () {
         if (this.isFolder) {
           return this.item[1]
@@ -50,11 +59,6 @@
 
     },
     methods: {
-    },
-    mounted () {
-      if (this.isFolder) {
-        console.log(this.children)
-      }
     }
   }
 </script>
