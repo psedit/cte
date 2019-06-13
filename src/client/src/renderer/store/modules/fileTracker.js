@@ -71,9 +71,9 @@ const actions = {
       }
     ).then((data) => {
       store.commit('updateCode', data.file_content)
-      fs.writeFile(filePath, data.file_content, (err) => {
-        if (err) console.error(err)
-      })
+      // fs.writeFile(filePath, data.file_content, (err) => {
+      //   if (err) console.error(err)
+      // })
     })
   },
   /**
