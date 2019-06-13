@@ -7,7 +7,7 @@ class TextBlock:
     previously locked edit-blocks created by clients.
     """
     def __init__(self, lines, is_open: bool = True) -> None:
-        self.is_open: bool = is_open
+        self.open: bool = is_open
         self.lines: List[str] = lines
 
     def __len__(self) -> int:
@@ -21,7 +21,7 @@ class TextBlock:
         return self.lines[start:start + length]
 
     def close(self) -> None:
-        self.is_open = False
+        self.open = False
 
-    def status(self) -> bool:
-        return self.is_open
+    def is_open(self) -> bool:
+        return self.open

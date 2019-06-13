@@ -1,77 +1,97 @@
-const fs = require('fs')
+import Tab from '../../components/Tabs/tabType'
+import connector from '../../../main/connector'
+
 const state = {
-  // Text in the editor
   code: '',
-  openedFile: '',
-  filePaths: [],
-  tabs: ['']
+  openFile: '',
+  filePaths: '',
+  tabs: []
 }
 
 const mutations = {
-  /** Changes the code/text in the editor
-   *
-   * @param {Object} state vuex state
-   * @param {string} newCode new text
-   */
   updateCode (state, newCode) {
     state.code = newCode
   },
-  /** Adds a tab to state
+  /**
+   * Adds a tab to state
    * @param {Object} state vuex state
-   * @param {string} newTab the tab that need to be added
+   * @param {string} filePath the filepath that needs to be added as tab
    */
-  addTab (state, newTab) {
-    if (!state.tabs.includes(newTab)) {
+  addTab (state, filePath) {
+    if (state.tabs.every(x => x.filePath !== filePath)) {
+      const newTab = new Tab(filePath)
       state.tabs = [...state.tabs, newTab]
     }
   },
-  /** Removes a tab from state
-   * @param {Object} state vuex state
-   * @param {string} tabToRemove the tab that needs to be removed
-   */
   removeTab (state, tabToRemove) {
-    state.tabs.filter(x => x !== tabToRemove)
+    state.tabs = state.tabs.filter(x => x.filePath !== tabToRemove.filePath)
   },
-  /** Updates the filepaths
+  /**
+   * Updates the filepaths
    * @param {Object} state
    * @param {Object[]} filePaths
    */
   updateFiles (state, filePaths) {
     state.filePaths = filePaths
+  },
+  updateOpenFile (state, filePath) {
+    state.openFile = filePath
   }
 }
 
 const actions = {
-  /** Opens a file from the root of the project, and updates the code.
+  /**
+   * Opens a file from the root of the project, and updates the code.
    * Also changes the openedFile state. Add the file to the tabs.
-   * @param {Object} state vuex state
+   * @param {Object} store vuex store
    * @param {string} filePath the file path to document to be opened
    */
-  openFile (state, filePath) {
-    state.openedFile = filePath
-    state.commit('addTab', filePath)
-    fs.readFile(filePath.substring(0, filePath.length), 'utf8', (err, data) => {
-      if (err) {
-        console.error(err)
-        state.commit('updateCode', `Something went wrong: ${err}`)
+  openFile (store, filePath) {
+    store.commit('updateOpenFile', filePath)
+    store.commit('addTab', filePath)
+
+    connector.send(
+      'file-join',
+      {
+        'file_path': filePath
       }
-      state.commit('updateCode', data)
+    )
+
+    connector.request(
+      'file-content-request',
+      'file-content-response',
+      {
+        'file_path': filePath,
+        'start': 0,
+        'length': -1
+      }
+    ).then((data) => {
+      store.commit('updateCode', data.file_content)
+      // fs.writeFile(filePath, data.file_content, (err) => {
+      //   if (err) console.error(err)
+      // })
     })
   },
-  /** Updadates the text in the editor.
-   *
-   * @param {Object} state vuex state
-   * @param {string} newCode
+  /**
+   * Removes a tab from state and switches to a new tab if the tab was opened.
+   * @param {Object} store vuex store
+   * @param {Tab} tabToRemove the tab that needs to be removed
    */
+  removeTab (store, tabToRemove) {
+    if (tabToRemove.filePath === store.state.openFile) {
+      if (store.state.tabs.length === 1) {
+        store.commit('updateOpenFile', '')
+        // FIXME: hide the editor if last file is removed
+        store.commit('updateCode', 'Fix even pls dat de editor verdwijnt. (v-if)')
+      } else {
+        const i = store.state.tabs.indexOf(tabToRemove)
+        store.dispatch('openFile', store.state.tabs[(i + 1) % store.state.tabs.length].filePath)
+      }
+    }
+    store.commit('removeTab', tabToRemove)
+  },
   updateCodeAction (state, newCode) {
     state.commit('updateCode', newCode)
-  },
-  /** Updates the filepaths
-   * @param {Object} state
-   * @param {Object[]} filePaths
-   */
-  updateFilesAction (state, filePaths) {
-    state.commit('updateFiles', filePaths)
   }
 }
 
@@ -80,21 +100,3 @@ export default {
   mutations,
   actions
 }
-// readLocalDirTree (root) {
-//   /* Loop over all files in current directory and add
-//    * object to files array, storing the name and type
-//    * (either directory or file) of the file.
-//    * For sorting purposes, first push all directories
-//    * and then all other files. */
-//   fs.readdirSync(currFolder).forEach(file => {
-//     if (fs.lstatSync(currFolder + file).isDirectory()) {
-//       files.push({name: file, type: 'dir', path: `${currFolder}${file}/`})
-//     }
-//   })
-//
-//   fs.readdirSync(currFolder).forEach(file => {
-//     if (!fs.lstatSync(currFolder + file).isDirectory()) {
-//       files.push({name: file, type: 'file', path: `${currFolder}${file}/`})
-//     }
-//   })
-// }

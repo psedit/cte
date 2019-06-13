@@ -90,3 +90,6 @@ class ServerFile:
 
     def saved_status(self) -> bool:
         return self.is_saved
+
+    def change_file_path(self, new_path: str) -> None:
+        self.file_path_relative = new_path

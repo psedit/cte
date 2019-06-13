@@ -93,10 +93,10 @@
           'file-list-response',
           {}
         ).then((content) => {
-          this.$store.dispatch('updateFilesAction', content.root_tree)
+          // this.$store.dispatch('updateFiles', content.root_tree)
           console.log('Receiving root_tree: ', content.root_tree)
           // TODO: Eventueel nog ergens anders naar fileTracker luisteren.
-          this.completeTree = this.$store.state.fileTracker.filePaths.slice()
+          this.completeTree = content.root_tree.slice()
           console.log(this.completeTree + ' in updateFileTree()')
         })
       },
@@ -144,7 +144,8 @@
             }
           }
         } else {
-          this.$store.dispatch('openFile', file.path)
+          const filePath = file.path.substring(0, file.path.length - 1)
+          this.$store.dispatch('openFile', filePath)
         }
       }
     },

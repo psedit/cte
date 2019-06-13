@@ -10,7 +10,7 @@
 <script>
   import Editor from './Editor'
   import Sidebar from './Sidebar'
-  import Tabs from './Tabs'
+  import Tabs from './Tabs/Tabs'
 
   export default {
     name: 'landing-page',
@@ -40,6 +40,9 @@
         'sidebar editor';
     grid-template-columns: 15em 1fr;
     grid-template-rows: auto 1fr;
+
+    // Ensure no scroll bars on landing page
+    overflow: hidden;
   }
   #sidebar {
     grid-area: sidebar;
