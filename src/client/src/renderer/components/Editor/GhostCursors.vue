@@ -1,12 +1,12 @@
 <template>
   <div id="ghost-cursors">
-    <ghost-cursor v-for="cursor in cursors"
+    <ghost-cursor v-for="(cursor, index) in cursors"
                  :filepath="cursor.filepath"
                  :username="cursor.username"
                  :line="cursor.line"
                  :ch="cursor.ch"
                  :cminstance="cminstance"
-                 :key="cursor.filepath + cursor.username"/>
+                 :key="index"/>
   </div>
 </template>
 
@@ -77,5 +77,9 @@
 </script>
 
 <style scoped>
-
+  #ghost-cursors {
+    position: absolute;
+    top: 0;
+    z-index: 4;
+  }
 </style>

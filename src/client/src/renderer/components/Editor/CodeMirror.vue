@@ -93,7 +93,7 @@
 
       initializeGhostCursors () {
         // debugger
-        const wrapper = this.cminstance.display.cursorDiv.parentElement
+        const wrapper = this.cminstance.getScrollerElement()
         const GhostCursorClass = Vue.extend(GhostCursors)
         this.ghostCursors = new GhostCursorClass({
           propsData: {
