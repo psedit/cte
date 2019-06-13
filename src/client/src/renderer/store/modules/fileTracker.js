@@ -1,5 +1,5 @@
 import Tab from '../../components/Tabs/tabType'
-const fs = require('fs')
+import connector from '../../../main/connector'
 
 const state = {
   code: '',
@@ -49,12 +49,27 @@ const actions = {
   openFile (store, filePath) {
     store.commit('updateOpenFile', filePath)
     store.commit('addTab', filePath)
-    fs.readFile(filePath.substring(0, filePath.length - 1), 'utf8', (err, data) => {
-      if (err) {
-        console.error(err)
-        store.commit('updateCode', `Something went wrong: ${err}`)
+
+    connector.send(
+      'file-join',
+      {
+        'file_path': filePath
       }
-      store.commit('updateCode', data)
+    )
+
+    connector.request(
+      'file-content-request',
+      'file-content-response',
+      {
+        'file_path': filePath,
+        'start': 0,
+        'length': -1
+      }
+    ).then((data) => {
+      store.commit('updateCode', data.file_content)
+      // fs.writeFile(filePath, data.file_content, (err) => {
+      //   if (err) console.error(err)
+      // })
     })
   },
   /**

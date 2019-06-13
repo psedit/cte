@@ -28,7 +28,6 @@
         cursors: []
       }
     },
-
     mounted () {
       Connector.addEventListener('open', this.initializeListeners)
     },
@@ -37,15 +36,6 @@
       initializeListeners () {
         Connector.listenToMsg('cursor-move-broadcast', ({content}) => {
           this.moveCursor(content.username, content.file_path, content.row, content.column)
-        })
-
-        this.cminstance.on('cursorActivity', (cm) => {
-          const cursorPos = cm.doc.getCursor()
-          Connector.send('cursor-move', {
-            file_path: 'path',
-            row: cursorPos.line,
-            column: cursorPos.ch
-          })
         })
       },
 
