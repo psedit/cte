@@ -52,6 +52,7 @@
             return
           }
         }
+        this.addCursor(username, filepath, row, column)
       },
 
       changeFilepath (path) {
