@@ -1,6 +1,6 @@
 <template>
   <ul class="fileTree">
-    <file-tree-item v-for="(item, index) in fileList" :item="item" :key="index"/>
+    <file-tree-item v-for="(item, index) in fileList" :item="item" :key="index" @click="fileClick"/>
   </ul>
 </template>
 
@@ -31,6 +31,18 @@
       }
     },
     methods: {
+      /**
+       * When user clicks on file, either emit openFolder or openFile.
+       *
+       * @param {Object} data object consisting of name and isFolder boolean
+       */
+      fileClick (data) {
+        if (data.isFolder) {
+          this.$emit('openFolder', data.name)
+        } else {
+          this.$emit('openFile', data.name)
+        }
+      },
       isFolder (item) {
         return item instanceof Array
       },

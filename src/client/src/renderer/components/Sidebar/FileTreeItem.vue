@@ -1,9 +1,9 @@
 <template>
-  <li :class="{file:isFolder}" @click="toggle()">
+  <li class="filetreeitem" :class="{file:!isFolder, dir:isFolder}" @click="$emit('click', {name, isFolder})">
     <folder-icon v-if="isFolder"/>
     <file-icon v-else />
     <span>{{ name }}</span>
-    <!--<file-tree v-if="isFolder" :file-list="children"/>-->
+    <!-- <file-tree v-if="isFolder" :file-list="children"/> -->
   </li>
 </template>
 
@@ -59,6 +59,11 @@
   }
 </script>
 
-<style scoped>
-
+<style lang="scss" scoped>
+.filetreeitem {
+  cursor:pointer;
+  &:hover{
+    color: #0E4
+  }
+}
 </style>

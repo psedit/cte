@@ -1,13 +1,13 @@
 <template>
   <div class="sidenav">
     <div id="toolbar">
-      <span class="curr-folder">{{this.currFolder}}</span>
+      <span class="curr-folder">./{{this.currPath.join('/')}}</span>
       <back-icon title="Go to previous folder" class="button" @click="previous"/>
       <home-icon title="Go to home folder" class="button" @click="home"/>
     </div>
 
 
-    <file-tree id="file-list" :file-list="dirTree" :start-open="true" />
+    <file-tree id="file-list" :file-list="currItems" @openFolder="openFolder" @openFile="openFile"/>
   </div>
 </template>
 
@@ -16,18 +16,13 @@
   import BackIcon from 'vue-material-design-icons/ArrowLeft'
   import connector from '../../main/connector'
   import FileTree from './Sidebar/FileTree'
-  // import { connect } from 'net'
-  // import { constants } from 'fs'
 
   export default {
     name: 'sidebar',
     data () {
       return {
-        /* The variable currFolder is relative to the root of the server. */
-        currFolder: './',
-        /* The variable currFiles contains all files in currFolder. */
-        currFiles: ['./', []],
-        dirTree: []
+        currPath: [],
+        completeTree: []
       }
     },
     components: {
@@ -35,44 +30,59 @@
       HomeIcon,
       BackIcon
     },
-    // FIXME: use the data from vuex
     computed: {
-      /** Loop over all files in current directory and add
-       *  object to files array, storing the name and type
-       *  (either directory or file) of the file.
+      /**
+       *  Use completeTree to get all items in the current folder.
        */
+      currItems () {
+        let items = this.completeTree
+
+        /* For all folders in the current path (meaning, all parents)
+         * search for the corresponding element in the completeTree and
+         * save the content of the corrseponding file.
+         */
+        for (const folder of this.currPath) {
+          for (const item of items) {
+            if (!(item instanceof Array)) {
+              continue
+            }
+
+            if (folder === item[0]) {
+              items = item[1]
+              break
+            }
+          }
+        }
+        return items
+      }
     },
     methods: {
-      /** Update the directory tree (by getting it from store). */
-      // updateDirTree () {
-      //     this.dirTree = this.$store.state.fileTracker.dirTree
-      // },
-
+      /**
+       * When clicking on a folder, push the folder name to currPath.
+       *
+       * @param {string} name name of folder that is clicked on
+       */
+      openFolder (name) {
+        this.currPath.push(name)
+      },
+      /**
+       * When clicking on a file, open file in editor.
+       *
+       * @param {string} name name of folder that is clicked on
+       */
+      openFile (name) {
+        let filePath = `./${[...this.currPath, name].join('/')}`
+        console.log(filePath)
+        this.$store.dispatch('openFile', filePath)
+      },
       /** When clicking on a file, go inside directory or
        *  render file and show its content on screen. */
       previous () {
-        let parentFolder
-        /* Get path of parent folder, used for the back button. */
-        if (this.currFolder === './') {
-          parentFolder = './'
-        } else {
-          let currTrimmed = this.currFolder.slice(0, -1)
-          let lastIndex = currTrimmed.lastIndexOf('/')
-          parentFolder = this.currFolder.substring(0, lastIndex + 1)
-        }
-        this.fileClick({
-          // name: parentFolder,
-          type: 'dir',
-          path: parentFolder
-        })
+        this.currPath.pop()
       },
       /** Go to the root directory. */
       home () {
-        this.fileClick({
-          // name: parentFolder,
-          type: 'dir',
-          path: './'
-        })
+        this.currPath = []
       },
       /**
         * Updates the file tree by requesting file from server.
@@ -86,8 +96,8 @@
           this.$store.dispatch('updateFilesAction', content.root_tree)
           console.log('Receiving root_tree: ', content.root_tree)
           // TODO: Eventueel nog ergens anders naar fileTracker luisteren.
-          this.dirTree = this.$store.state.fileTracker.filePaths.slice()
-          console.log(this.dirTree + ' in updateFileTree()')
+          this.completeTree = this.$store.state.fileTracker.filePaths.slice()
+          console.log(this.completeTree + ' in updateFileTree()')
         })
       },
       /** Open a new web socket en update the file tree. */

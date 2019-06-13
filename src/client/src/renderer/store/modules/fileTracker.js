@@ -50,7 +50,7 @@ const actions = {
   openFile (state, filePath) {
     state.openedFile = filePath
     state.commit('addTab', filePath)
-    fs.readFile(filePath.substring(0, filePath.length - 1), 'utf8', (err, data) => {
+    fs.readFile(filePath.substring(0, filePath.length), 'utf8', (err, data) => {
       if (err) {
         console.error(err)
         state.commit('updateCode', `Something went wrong: ${err}`)
