@@ -41,7 +41,7 @@
       this.$store.subscribe((mutation, state) => {
         if (mutation.type === 'updateCode') {
           this.updateCode()
-          cm.ghostCursors.changeFilepath('test.txt')
+          cm.ghostCursors.changeFilepath(this.$store.state.fileTracker.openFile)
         }
         // console.log(mutation.type)
         // console.log(mutation.payload)
