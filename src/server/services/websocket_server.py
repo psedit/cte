@@ -104,6 +104,8 @@ class WSServer(Service):
                     if 'quote' in e.msg:
                         await websocket.send("Double quotes. Niet single.")
                         continue
+                except:
+                    continue
 
                 if 'type' not in data or 'content' not in data:
                     print("Unacceptable message (missing type or content)")
