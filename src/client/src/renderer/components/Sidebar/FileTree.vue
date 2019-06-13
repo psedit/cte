@@ -34,29 +34,14 @@
       /**
        * When user clicks on file, either emit openFolder or openFile.
        *
-       * @param {Object} data object consisting of name and isFolder boolean
+       * @param {Object} file object consisting of name and isFolder boolean
        */
-      fileClick (data) {
-        if (data.isFolder) {
-          this.$emit('openFolder', data.name)
+      fileClick (file) {
+        if (file.isFolder) {
+          this.$emit('openFolder', file.name)
         } else {
-          this.$emit('openFile', data.name)
+          this.$emit('openFile', file.name)
         }
-      },
-      isFolder (item) {
-        return item instanceof Array
-      },
-
-      name (item) {
-        if (this.isFolder(item)) {
-          return item[0]
-        } else {
-          return item
-        }
-      },
-
-      children (item) {
-        return item[1]
       }
     }
   }
