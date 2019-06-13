@@ -1,116 +1,131 @@
 <template>
   <div class="sidenav">
     <div id="toolbar">
-      <span class="curr-folder">{{this.currFolder}}</span>
+      <span class="curr-folder">./{{this.currPath.join('/')}}</span>
       <back-icon title="Go to previous folder" class="button" @click="previous"/>
       <home-icon title="Go to home folder" class="button" @click="home"/>
     </div>
 
 
-    <ul id="file-list">
-      <li v-for="file in files" :class="file.type" @click="fileClick(file)">
-        <folder-icon v-if="file.type === 'dir'" />
-        <file-icon v-if="file.type === 'file'" />
-        {{ file.name }}
-      </li>
-    </ul>
+    <file-tree id="file-list" :file-list="currItems" @openFolder="openFolder" @openFile="openFile"/>
   </div>
 </template>
 
 <script>
   import HomeIcon from 'vue-material-design-icons/Home'
   import BackIcon from 'vue-material-design-icons/ArrowLeft'
-  import FolderIcon from 'vue-material-design-icons/Folder'
-  import FileIcon from 'vue-material-design-icons/File'
+  import connector from '../../main/connector'
+  import FileTree from './Sidebar/FileTree'
 
   export default {
     name: 'sidebar',
     data () {
       return {
-        currFolder: './'
+        currPath: [],
+        completeTree: []
       }
     },
     components: {
+      FileTree,
       HomeIcon,
-      BackIcon,
-      FolderIcon,
-      FileIcon
+      BackIcon
     },
-    // FIXME: use the data from vuex
     computed: {
-      files () {
-        /* Create list of all files in current folder. */
-        const fs = require('fs')
-        const currFolder = this.currFolder
+      /**
+       *  Use completeTree to get all items in the current folder.
+       */
+      currItems () {
+        let items = this.completeTree
 
-        // let files = [{name: '\ud83d\udd19', type: 'dir', path: parentFolder},
-        //   {name: 'HOME', type: 'dir', path: `./`}]
-        let files = []
+        /* For all folders in the current path (meaning, all parents)
+         * search for the corresponding element in the completeTree and
+         * save the content of the corrseponding file.
+         */
+        for (const folder of this.currPath) {
+          for (const item of items) {
+            if (!(item instanceof Array)) {
+              continue
+            }
 
-        /* Loop over all files in current directory and add
-         * object to files array, storing the name and type
-         * (either directory or file) of the file.
-         * For sorting purposes, first push all directories
-         * and then all other files. */
-        fs.readdirSync(currFolder).forEach(file => {
-          if (fs.lstatSync(currFolder + file).isDirectory()) {
-            files.push({name: file, type: 'dir', path: `${currFolder}${file}/`})
+            if (folder === item[0]) {
+              items = item[1]
+              break
+            }
           }
-        })
-
-        fs.readdirSync(currFolder).forEach(file => {
-          if (!fs.lstatSync(currFolder + file).isDirectory()) {
-            files.push({name: file, type: 'file', path: `${currFolder}${file}/`})
-          }
-        })
-
-        this.$store.commit('updateFiles', files)
-        return files
+        }
+        return items
       }
     },
     methods: {
-      /* When clicking on a file, go inside directory or
-       * render file and show its content on screen. */
+      /**
+       * When clicking on a folder, push the folder name to currPath.
+       *
+       * @param {string} name name of folder that is clicked on
+       */
+      openFolder (name) {
+        this.currPath.push(name)
+      },
+
+      /**
+       * When clicking on a file, open file in editor.
+       *
+       * @param {string} name name of folder that is clicked on
+       */
+      openFile (name) {
+        let filePath = `./${[...this.currPath, name].join('/')}`
+        this.$store.dispatch('openFile', filePath)
+      },
+
+      /**
+       * Pop the last element from currPath.
+       */
       previous () {
-        let parentFolder
-        /* Get path of parent folder, used for the back button. */
-        if (this.currFolder === './') {
-          parentFolder = './'
-        } else {
-          let currTrimmed = this.currFolder.slice(0, -1)
-          let lastIndex = currTrimmed.lastIndexOf('/')
-          parentFolder = this.currFolder.substring(0, lastIndex + 1)
-        }
-        this.fileClick({
-          // name: parentFolder,
-          type: 'dir',
-          path: parentFolder
-        })
+        this.currPath.pop()
       },
 
+      /**
+       * Empty the currPath array.
+       */
       home () {
-        this.fileClick({
-          // name: parentFolder,
-          type: 'dir',
-          path: './'
+        this.currPath = []
+      },
+
+      /**
+        * Updates the file tree by requesting file from server.
+        */
+      updateFileTree () {
+        connector.request(
+          'file-list-request',
+          'file-list-response',
+          {}
+        ).then((content) => {
+          this.completeTree = content.root_tree.slice()
         })
       },
 
-      fileClick (file) {
-        if (file.type === 'dir') {
-          this.currFolder = file.path
-        } else {
-          const filePath = file.path.substring(0, file.path.length - 1)
-          this.$store.dispatch('openFile', filePath)
-        }
+      /**
+       * Open a new web socket and update the file tree.
+       */
+      openSocketUpdateTree () {
+        /* When there is a change in the file structure,
+         * update the file tree.
+         */
+        connector.listenToMsg('file-change-broadcast', (content) => {
+          this.updateFileTree()
+        })
+        connector.addEventListener('open', () => {
+          this.updateFileTree()
+        })
       }
+    },
+    mounted () {
+      this.openSocketUpdateTree()
     }
   }
 </script>
 
 <style scoped lang="scss">
   $padding: 1em;
-
   .sidenav {
     background-color: #111;
     display: grid;
@@ -118,12 +133,10 @@
     height: 100%;
     border-right: 1px solid #000;
   }
-
   .curr-folder {
     color: #ccc;
     font-size: 0.8em;
   }
-
   #toolbar {
     background-color: #333;
     color: #fff;
@@ -134,50 +147,40 @@
     grid-gap: 0.5em;
     height: 50px;
   }
-
   #file-list {
     overflow-y: auto;
     padding: 0 1em;
     margin-top: .5em;
     list-style-type: none;
   }
-
   .button {
     cursor: pointer;
     :hover {
       color: #fff;
     }
   }
-
   .dir {
     color: #ccc;
     cursor:pointer;
-
     &:hover {
       color: rgb(102, 15, 102);
     }
   }
-
   .file {
     color: #fff;
-
     &:hover {
       color: rgb(102, 15, 102);
       cursor: pointer;
     }
   }
-
-
   .sidenav a {
     /*padding: 6px 8px 6px 16px;*/
     text-decoration: none; /* No underline in links. */
     font-size: 25px;
     color: #818181;
     display: block;
-
     &:hover {
       color: #f1f1f1;
-
     }
   }
 </style>
