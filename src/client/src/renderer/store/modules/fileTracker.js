@@ -71,14 +71,7 @@ const actions = {
       console.log(data)
       store.commit('updateCode', data.file_content)
     })
-
-    // fs.readFile(filePath, 'utf8', (err, data) => {
-    //   if (err) {
-    //     console.error(err)
-    //     store.commit('updateCode', `Something went wrong: ${err}`)
-    //   }
-    //   store.commit('updateCode', data)
-    // })
+    
   },
   /**
    * Removes a tab from state and switches to a new tab if the tab was opened.
