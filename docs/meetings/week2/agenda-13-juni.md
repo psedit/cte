@@ -6,8 +6,8 @@
 4. Vaststellen vorige notulen
 5. Actiepunten
 6. Agenda
-    * Doel teams vandaag
     * Wat moet nog af voor demo
+    * Doel teams vandaag
     * Voorbereiding demo
 7. W.V.T.T.K
 8. Doornemen nieuwe actiepunten
