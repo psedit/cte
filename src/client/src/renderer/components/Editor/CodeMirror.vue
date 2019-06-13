@@ -7,6 +7,11 @@
   import 'codemirror/lib/codemirror.css'
   import 'codemirror/theme/cobalt.css'
   import 'codemirror/mode/javascript/javascript'
+
+  import Vue from 'vue'
+  import GhostCursors from './GhostCursors'
+
+  import Connector from '../../../main/connector'
   // import 'codemirror/keymap/vim'
 
   export default {
@@ -27,8 +32,7 @@
           showCursorWhenSelecting: true,
           gutters: ['locker', 'CodeMirror-linenumbers']
         },
-        ghostCursorWrapper: null,
-        ghostCursors: []
+        ghostCursors: null
       }
     },
 
@@ -50,11 +54,7 @@
         this.cminstance.setValue(this.value)
 
         // add ghost cursor
-        const wrapper = this.cminstance.display.wrapper
-        const cursorsWrapper = document.createElement('div')
-        cursorsWrapper.classList.add('shadowCursors')
-        wrapper.appendChild(cursorsWrapper)
-        this.ghostCursorWrapper = cursorsWrapper
+        this.initializeGhostCursors()
 
         this.$emit('ready', this.codemirror)
 
@@ -81,55 +81,31 @@
           }
         })
 
-        this.codemirror.on('update', () => {
-          this.updateCursors()
+        this.codemirror.on('cursorActivity', (cm) => {
+          const cursorPos = cm.doc.getCursor()
+          Connector.send('cursor-move', {
+            file_path: this.$store.state.fileTracker.openFile,
+            row: cursorPos.line,
+            column: cursorPos.ch
+          })
         })
 
         // prevents funky dynamic rendering
         this.refresh()
       },
 
-      updateCursors () {
-        for (let cursor of this.ghostCursors) {
-          const line = cursor.dataset.line
-          const ch = cursor.dataset.ch
-          const id = cursor.dataset.id
-          this.updateShadowCursorLocation(Number(id), line, ch)
-        }
-      },
+      initializeGhostCursors () {
+        // debugger
+        const wrapper = this.cminstance.display.cursorDiv.parentElement
+        const GhostCursorClass = Vue.extend(GhostCursors)
+        this.ghostCursors = new GhostCursorClass({
+          propsData: {
+            cminstance: this.cminstance
+          }
+        })
 
-      addShadowCursor (line, ch, userName) {
-        const cursorElm = document.createElement('div')
-        cursorElm.classList.add('shadow-cursor')
-
-        cursorElm.dataset.line = line
-        cursorElm.dataset.ch = ch
-        cursorElm.dataset.username = userName
-        cursorElm.dataset.id = this.ghostCursors.length.toString()
-
-        cursorElm.style.height = this.cminstance.display.cachedTextHeight + 'px'
-
-        const hue = this.ghostCursors.length * 70
-        cursorElm.style.setProperty('--hue-color', hue)
-        cursorElm.style.setProperty('--user-name', `'${userName}'`)
-        cursorElm.style.borderLeftColor = `hsl(${hue},90%,50%)`
-
-        this.ghostCursors.push(cursorElm)
-        this.cminstance.addWidget({line, ch}, cursorElm, false)
-
-        // return an id
-        return this.ghostCursors.length - 1
-      },
-
-      updateShadowCursorLocation (id, line, ch) {
-        const cursorElm = this.ghostCursors[id]
-
-        const {left, top, bottom} = this.cminstance.charCoords({line, ch})
-        const {x} = this.cminstance.display.lineSpace.getBoundingClientRect()
-
-        cursorElm.style.left = left - x + 'px'
-        cursorElm.style.top = top + 'px'
-        cursorElm.style.height = bottom - top + 'px'
+        this.ghostCursors.$mount()
+        wrapper.appendChild(this.ghostCursors.$el)
       },
 
       lock (start, end) {
@@ -174,25 +150,6 @@
 </script>
 
 <style lang="scss">
-  .shadow-cursor {
-    --hue-color: 180;
-    --user-name: 'no';
-    position: absolute !important;
-    width: 2px;
-    background-color: hsl(var(--hue-color), 100%, 50%);
-
-    &:after {
-      content: var(--user-name);
-      position: absolute;
-      display: block;
-      height: 1em;
-      font-size: 0.8em;
-      padding: 0 2px;
-      margin-top: -.3em;
-      z-index: 100;
-      background-color: hsl(var(--hue-color), 90%, 40%);
-    }
-  }
 
   .codemirror-wrapper, .CodeMirror{
     height: 100%;

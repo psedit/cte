@@ -101,7 +101,8 @@
         if (file.type === 'dir') {
           this.currFolder = file.path
         } else {
-          this.$store.dispatch('openFile', file.path)
+          const filePath = file.path.substring(0, file.path.length - 1)
+          this.$store.dispatch('openFile', filePath)
         }
       }
     }

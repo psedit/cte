@@ -1,6 +1,5 @@
 import Tab from '../../components/Tabs/tabType'
 import connector from '../../../main/connector'
-// const fs = require('fs')
 
 const state = {
   code: '',
@@ -48,19 +47,29 @@ const actions = {
    * @param {string} filePath the file path to document to be opened
    */
   openFile (store, filePath) {
-    // store.commit('updateOpenFile', filePath)
-    // store.commit('addTab', filePath)
-    // fs.readFile(filePath.substring(0, filePath.length - 1), 'utf8', (err, data) => {
-    //   if (err) {
-    //     console.error(err)
-    //     store.commit('updateCode', `Something went wrong: ${err}`)
-    //   }
-    //   store.commit('updateCode', data)
-    // })
-    connector.send('file-join', {file_path: 'file.txt'})
-    console.log('join request sent')
-    connector.request('file-content-request', 'file-content-response', {file_path: 'file.txt', start: 0, length: -1}).then((response) => {
-      store.commit('updateCode', response.file_content.join(" "))
+    store.commit('updateOpenFile', filePath)
+    store.commit('addTab', filePath)
+
+    connector.send(
+      'file-join',
+      {
+        'file_path': filePath
+      }
+    )
+
+    connector.request(
+      'file-content-request',
+      'file-content-response',
+      {
+        'file_path': filePath,
+        'start': 0,
+        'length': -1
+      }
+    ).then((data) => {
+      store.commit('updateCode', data.file_content)
+      // fs.writeFile(filePath, data.file_content, (err) => {
+      //   if (err) console.error(err)
+      // })
     })
   },
   /**
@@ -76,7 +85,7 @@ const actions = {
         store.commit('updateCode', 'Fix even pls dat de editor verdwijnt. (v-if)')
       } else {
         const i = store.state.tabs.indexOf(tabToRemove)
-        store.dispatch('openFile', store.state.tabs[(i - 1) % store.state.tabs.length].filePath)
+        store.dispatch('openFile', store.state.tabs[(i + 1) % store.state.tabs.length].filePath)
       }
     }
     store.commit('removeTab', tabToRemove)
