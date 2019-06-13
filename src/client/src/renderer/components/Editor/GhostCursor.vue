@@ -4,6 +4,7 @@
 
 <script>
   import Color from 'color'
+  // import CodeMirror from 'codemirror/lib/codemirror'
 
   const pearsonTable = [...new Array(360)].map((_, i) => i).sort(() => 0.5 - Math.random())
 
@@ -15,6 +16,12 @@
       line: Number,
       ch: Number,
       cminstance: Object
+    },
+    data () {
+      return {
+        top: 0,
+        left: 0
+      }
     },
 
     computed: {
@@ -32,15 +39,34 @@
       },
 
       style () {
-        const {top, left} = this.cminstance.charCoords({line: this.line, ch: this.ch}, 'local')
         return {
-          left: left + 'px',
-          top: top + 'px',
+          left: this.left + 'px',
+          top: this.top + 'px',
           '--user-name': `'${this.username}'`,
           backgroundColor: this.backgroundColor.string(),
           color: this.color
         }
+      },
+
+      gutterWidth () {
+        return this.cminstance.getGutterElement().getBoundingClientRect().width
       }
+    },
+    methods: {
+      updateCoords () {
+        const pos = this.cminstance.charCoords({line: this.line, ch: this.ch}, 'local')
+        this.left = pos.left + this.gutterWidth
+        this.top = pos.top
+      }
+    },
+    watch: {
+      line () { this.updateCoords() },
+      ch () { this.updateCoords() }
+    },
+    mounted () {
+      console.log()
+      this.cminstance.on('update', this.updateCoords)
+      this.updateCoords()
     }
   }
 </script>
@@ -48,6 +74,7 @@
 <style lang="scss" scoped>
   .ghostCursor {
     position: absolute;
+    pointer-events: none;
     height: 1em;
     --hue-color: 170;
     --user-name: 'no';
