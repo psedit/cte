@@ -7,22 +7,15 @@
     </div>
 
 
-    <ul id="file-list">
-      <li v-for="file in files" :class="file.type" @click="fileClick(file)">
-        <folder-icon v-if="file.type === 'dir'" />
-        <file-icon v-if="file.type === 'file'" />
-        {{ file.name }}
-      </li>
-    </ul>
+    <file-tree id="file-list" :file-list="dirTree" :start-open="true" />
   </div>
 </template>
 
 <script>
   import HomeIcon from 'vue-material-design-icons/Home'
   import BackIcon from 'vue-material-design-icons/ArrowLeft'
-  import FolderIcon from 'vue-material-design-icons/Folder'
-  import FileIcon from 'vue-material-design-icons/File'
   import connector from '../../main/connector'
+  import FileTree from './Sidebar/FileTree'
   // import { connect } from 'net'
   // import { constants } from 'fs'
 
@@ -38,10 +31,9 @@
       }
     },
     components: {
+      FileTree,
       HomeIcon,
-      BackIcon,
-      FolderIcon,
-      FileIcon
+      BackIcon
     },
     // FIXME: use the data from vuex
     computed: {
@@ -49,43 +41,6 @@
        *  object to files array, storing the name and type
        *  (either directory or file) of the file.
        */
-      files () {
-        // currFiles = [currFolder, [<bestanden>]]
-        let files = []
-        console.log(this.currFiles.length + ' is length of currFiles in files()') // TODO: remove
-        if (this.currFiles[1].length === 0) {
-          console.log('Connecting to server (in files)...')
-          this.openSocketUpdateTree()
-          // FIXME: deze log wordt aangeroepen voordat openSocketUpdateTree()
-          // klaar is met runnen.
-          console.log(this.dirTree + ' in files()')
-          this.currFiles = this.dirTree.slice()
-        }
-
-        let currFiles = this.currFiles
-        let currFolder = this.currFolder
-        console.log('CURRFILES in files: ')
-        // console.log(this.currFiles, this)
-        console.log(currFiles[0], currFiles[1])
-
-        /*  For sorting purposes, first push all directories
-         *  and then all other files.
-         */
-        currFiles[1].forEach(file => {
-          if (typeof (file) !== 'string') {
-            files.push({name: file, type: 'dir', path: `${currFolder}${file}/`})
-          }
-        })
-
-        currFiles[1].forEach(file => {
-          if (typeof (file) === 'string') {
-            files.push({name: file, type: 'file', path: `${currFolder}${file}/`})
-          }
-        })
-
-        this.$store.commit('updateFiles', files)
-        return files
-      }
     },
     methods: {
       /** Update the directory tree (by getting it from store). */
@@ -137,22 +92,14 @@
       },
       /** Open a new web socket en update the file tree. */
       openSocketUpdateTree () {
-        connector.addEventListener('open', () => {
-          console.log('Connecting in open socket....')
-          // connector.listenToMsg('file-list-broadcast', (content) => {
-          //   this.$store.dispatch('updateFilesAction', content.root_tree)
-          //   console.log('Receiving root_tree: ', content.root_tree)
-          //   // TODO: Eventueel nog ergens anders naar fileTracker luisteren.
-          //   this.dirTree = this.$store.state.fileTracker.dirTree
-          // })
-
+        /* When there is a change in the file structure,
+        * update the file tree.
+        */
+        connector.listenToMsg('file-change-broadcast', (content) => {
           this.updateFileTree()
-          /* When there is a change in the file structure,
-          * update the file tree.
-          */
-          connector.listenToMsg('file-change-broadcast', (content) => {
-            this.updateFileTree()
-          })
+        })
+        connector.addEventListener('open', () => {
+          this.updateFileTree()
         })
       },
       /** When clicking on a file, show the content of the directory or
