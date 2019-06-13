@@ -27,7 +27,6 @@
         this.$store.dispatch('openFile', fileName)
       },
       tabRemove (tab) {
-        console.log('test')
         this.$store.dispatch('removeTab', tab)
       },
       isActive (filePath) {

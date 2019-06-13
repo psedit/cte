@@ -79,7 +79,6 @@
         })
 
         this.codemirror.on('cursorActivity', (cm) => {
-          console.log(this.$store.state.fileTracker.openFile)
           const cursorPos = cm.doc.getCursor()
           Connector.send('cursor-move', {
             file_path: this.$store.state.fileTracker.openFile,
