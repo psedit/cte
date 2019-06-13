@@ -10,6 +10,8 @@
 
   import Vue from 'vue'
   import GhostCursors from './GhostCursors'
+
+  import Connector from '../../../main/connector'
   // import 'codemirror/keymap/vim'
 
   export default {
@@ -74,6 +76,15 @@
           if (info.wrapClass === 'lock') {
             change.cancel()
           }
+        })
+
+        this.codemirror.on('cursorActivity', (cm) => {
+          const cursorPos = cm.doc.getCursor()
+          Connector.send('cursor-move', {
+            file_path: this.$store.state.fileTracker.openFile,
+            row: cursorPos.line,
+            column: cursorPos.ch
+          })
         })
 
         // prevents funky dynamic rendering
