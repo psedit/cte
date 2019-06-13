@@ -17,7 +17,7 @@ class Filesystem(Service):
         super().__init__(*super_args)
         # Check server config for root directory
         # TODO: retrieve from server
-        self.root_dir: str = os.path.realpath('../test/')
+        self.root_dir: str = os.path.realpath('../../client')
         self.usernames: Dict[Address, str] = {}
 
         # Files sorted by path relative to root dir
@@ -97,7 +97,7 @@ class Filesystem(Service):
             # "Please join the file before requesting its contents."
             pass
         else:
-            block = self.get_block(file_path, start, length)
+            block = ''.join(self.get_block(file_path, start, length))
 
             response_content = {"file_content": block, "address": address}
             self._send_message_client("file-content-response",
