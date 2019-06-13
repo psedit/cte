@@ -52,6 +52,7 @@
             return
           }
         }
+        this.addCursor(username, filepath, row, column)
       },
 
       changeFilepath (path) {
@@ -63,10 +64,10 @@
         ).then((response) => {
           for (const cursor of response.cursor_list) {
             this.addCursor(
-              cursor.username,
-              cursor.filepath,
-              cursor.row,
-              cursor.column
+              cursor[0],
+              path,
+              cursor[1],
+              cursor[2]
             )
           }
         })
