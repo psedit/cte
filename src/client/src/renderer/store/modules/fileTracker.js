@@ -56,22 +56,25 @@ const actions = {
 
     connector.send(
       'file-join',
-      {'file_path': filePath}
+      {
+        'file_path': filePath
+      }
     )
 
     connector.request(
       'file-content-request',
       'file-content-response',
       {
-        "file_path": filePath,
-        "start": 0,
-        "length": -1
+        'file_path': filePath,
+        'start': 0,
+        'length': -1
       }
     ).then((data) => {
-      console.log(data)
       store.commit('updateCode', data.file_content)
+      fs.writeFile(filePath, data.file_content, (err) => {
+        if (err) console.error(err)
+      })
     })
-    
   },
   /**
    * Removes a tab from state and switches to a new tab if the tab was opened.
