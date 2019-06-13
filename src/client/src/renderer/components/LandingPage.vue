@@ -12,9 +12,25 @@
   import Sidebar from './Sidebar'
   import Tabs from './Tabs/Tabs'
 
+  import connector from '../../main/connector.js'
+
   export default {
     name: 'landing-page',
     components: { Editor, Sidebar, Tabs },
+    mounted () {
+      const username = require('os').userInfo().username
+      connector.addEventListener('open', () => {
+        connector.request(
+          'login-request',
+          'login-response',
+          {username}
+        ).then(({succeed, error}) => {
+          if (!succeed) {
+            console.error(error)
+          }
+        })
+      })
+    },
     methods: {
       open (link) {
         this.$electron.shell.openExternal(link)
