@@ -10,12 +10,6 @@ PIDF=$!
 python3 websocket_server.py &
 PIDW=$1
 
-python3 test/response_test_a.py &
-python3 test/response_test_b.py &
 trap 'pkill python3' INT TERM QUIT
 
-wait $PIDL
-wait $PIDW
-wait $PIDF
-wait $PIDM
 wait $PIDN
