@@ -56,19 +56,22 @@
 
       changeFilepath (path) {
         this.cursors.splice(0, this.cursors.length)
-        Connector.request(
-          'cursor-list-request',
-          'cursor-list-response',
-          { file_path: path }
-        ).then((response) => {
-          for (const cursor of response.cursor_list) {
-            this.addCursor(
-              cursor.username,
-              cursor.filepath,
-              cursor.row,
-              cursor.column
-            )
-          }
+        console.log(path)
+        Connector.addEventListener('open', () => {
+          Connector.request(
+            'cursor-list-request',
+            'cursor-list-response',
+            { file_path: path }
+          ).then((response) => {
+            for (const cursor of response.cursor_list) {
+              this.addCursor(
+                cursor.username,
+                cursor.filepath,
+                cursor.row,
+                cursor.column
+              )
+            }
+          })
         })
       }
     }
