@@ -146,8 +146,6 @@ class MessageBus(LoggerMixin):
 
             with self._handler_lock:
                 handlers = self.handlers[message["type"]]
-                if handlers:
-                    print(f"Calling handlers for message {message}")
                 for uri in handlers:
                     print(f"Calling handle_message on URI {uri}")
                     handled = True
