@@ -141,11 +141,12 @@
     background-color: #333;
     color: #fff;
     font-size: 1.3em;
-    padding: .5em $padding;
+    padding: 0 $padding;
     display: grid;
     grid-template-columns: 1fr auto auto;
     grid-gap: 0.5em;
-    height: 50px;
+    align-items: center;
+    height: 2em;
   }
   #file-list {
     overflow-y: auto;
