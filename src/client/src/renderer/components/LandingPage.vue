@@ -3,6 +3,7 @@
     <tabs id="tabs"/>
     <sidebar id="sidebar"/>
     <editor id="editor"/>
+    <error-messenger id="error-messenger"/>
   </div>
 </template>
 
@@ -11,12 +12,12 @@
   import Editor from './Editor'
   import Sidebar from './Sidebar'
   import Tabs from './Tabs/Tabs'
-
+  import ErrorMessenger from './ErrorMessenger'
   import connector from '../../main/connector.js'
 
   export default {
     name: 'landing-page',
-    components: { Editor, Sidebar, Tabs },
+    components: { Editor, Sidebar, Tabs, ErrorMessenger },
     mounted () {
       const username = require('os').userInfo().username
       connector.addEventListener('open', () => {
