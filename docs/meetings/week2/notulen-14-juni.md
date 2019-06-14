@@ -23,7 +23,7 @@ We hebben de doelen voor de afgelopen sprint niet helemaal gehaald, het is nog d
 ## Over het vastzetten/locken van stukken code
 
 ### Wat is de piecetable?
-De piecetable is de representatie die we hebben voor een bestand en de locks in dat bestand. Van elk bestand wat op de server staat geeft de piecetable aan waar een bepaald gelocked stuk code in een bestand staat. Elke kolom van het tabel bevat een id van het lock, de startregel van de lock en de lengte van het lock. In de backend is al geregeld dat twee pieces gemerged kunnen worden.
+De piecetable is de representatie die we hebben voor een bestand en de locks in dat bestand. Van elk bestand wat op de server staat geeft de piecetable aan waar een bepaald gelocked stuk code in een bestand staat. Elke rij van het tabel bevat van een lock de id, de startregel en de regellengte van de code in het gelockte stuk. In de backend is al geregeld dat twee pieces gemerged kunnen worden.
 
 Hieronder staat een overzicht van alle dingen die voor dit issue/user story nog op de back- en frontend geimplementeerd moeten worden. We werken dit nu uit omdat dit het belangrijkste is wat er nog moet gebeuren voor het hele project en we het dus echt aankomende vrijdag af moeten hebben.
 
