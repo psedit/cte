@@ -57,7 +57,7 @@
 
       changeFilepath (path) {
         this.cursors.splice(0, this.cursors.length)
-        Connector.request(
+        return Connector.request(
           'cursor-list-request',
           'cursor-list-response',
           { file_path: path }
@@ -70,6 +70,7 @@
               cursor[2]
             )
           }
+          return this.cursors
         })
       }
     }

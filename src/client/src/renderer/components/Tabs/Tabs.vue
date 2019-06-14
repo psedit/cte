@@ -2,7 +2,7 @@
   <div>
     <ul id="tab-list" @wheel="scroll()">
       <li v-for="tab in tabs" class="tab" @click.self="tabClick(tab.filePath)" :class="{ 'active': isActive(tab.filePath) }">
-        {{ tab.fileName }} <close-icon class="close-tab" @click="tabRemove(tab)"/>
+        <span>{{ tab.fileName }}</span> <close-icon class="close-tab" @click="tabRemove(tab)"/>
       </li>
     </ul>
   </div>
@@ -54,14 +54,17 @@
     overflow: hidden;
   }
   li {
-    display: inline-block;
+    display: inline-grid;
+    grid-template-columns: 1fr auto;
+    grid-column-gap: 1em;
     color: white;
     text-align: center;
     border-right: 1px solid #000;
-    padding: 0 2em;
+    padding: 0 1em;
     text-decoration: none;
     height: 100%;
-    line-height: 2em;
+    font-size: 0.8em;
+    line-height: 2.5em;
     /*min-width: 200px;*/
   }
 

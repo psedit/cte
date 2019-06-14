@@ -3,11 +3,15 @@
     <code-mirror v-show="this.ready" v-model="code" ref="codemirror"/>
 
     <div id="placeholder" v-if="!this.ready">⇚ Select a file</div>
+    <div class="user-list">
+      <div class="user-list-item" v-for="user in activeUsers" :title="user.username" :style="userStyle(user)">{{ user.username[0].toUpperCase() }}</div>
+    </div>
   </div>
 </template>
 
 <script>
   import CodeMirror from './Editor/CodeMirror'
+  import {getRandomColor} from './Editor/RandomColor'
 
   export default {
     name: 'Editor',
@@ -17,13 +21,29 @@
     },
     data () {
       return {
-        code: ''
+        code: '',
+        activeUsers: []
       }
     },
     methods: {
       /** Updates the code that is viewed by the editor. */
       updateCode () {
         this.code = this.$store.state.fileTracker.code
+      },
+      updateUsers (cursors) {
+        this.activeUsers = cursors.map(cursor => {
+          return {
+            username: cursor.username,
+            line: cursor.line,
+            ch: cursor.ch,
+            color: getRandomColor(cursor.username)
+          }
+        })
+      },
+      userStyle (user) {
+        return {
+          backgroundColor: user.color
+        }
       }
     },
 
@@ -40,10 +60,11 @@
       this.$store.subscribe((mutation, state) => {
         if (mutation.type === 'updateCode') {
           this.updateCode()
-          cm.ghostCursors.changeFilepath(this.$store.state.fileTracker.openFile)
+          cm.ghostCursors.changeFilepath(this.$store.state.fileTracker.openFile).then(cursors => {
+            console.log(cursors)
+            this.updateUsers(cursors)
+          })
         }
-        // console.log(mutation.type)
-        // console.log(mutation.payload)
       })
     }
   }
@@ -68,6 +89,25 @@
       display: inline-block;
       height: 100%;
       vertical-align: middle;
+    }
+  }
+
+  .user-list {
+    position: fixed;
+    bottom: 1em;
+    right: 1em;
+
+    &-item {
+      display: inline-block;
+      width: 2em;
+      height: 2em;
+      border-radius: 1em;
+      margin-left: 0.5em;
+      line-height: 2em;
+      text-align: center;
+      background: black;
+      color: #fff;
+      cursor: pointer;
     }
   }
 </style>

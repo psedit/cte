@@ -3,10 +3,8 @@
 </template>
 
 <script>
-  import Color from 'color'
+  import {getRandomColor} from './RandomColor'
   // import CodeMirror from 'codemirror/lib/codemirror'
-
-  const pearsonTable = [...new Array(360)].map((_, i) => i).sort(() => 0.5 - Math.random())
 
   export default {
     name: 'GhostCursor',
@@ -26,11 +24,7 @@
 
     computed: {
       backgroundColor () {
-        // Peason hash to generate hue
-        const hue = this.username.split('').reduce((hash, char) => {
-          return pearsonTable[(hash + char.charCodeAt(0)) % (pearsonTable.length - 1)]
-        }, this.username.length % (pearsonTable.length - 1))
-        return Color.hsl(hue, 90, 50)
+        return getRandomColor(this.username)
       },
 
       color () {

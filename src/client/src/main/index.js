@@ -52,6 +52,9 @@ function createWindow () {
     }
   })
 
+  mainWindow.setFullScreenable(true)
+  mainWindow.setFullScreen(τρθε)
+
   mainWindow.loadURL(winURL)
 
   mainWindow.on('closed', () => {
