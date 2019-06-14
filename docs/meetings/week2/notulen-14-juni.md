@@ -1,5 +1,9 @@
 # Notulen 14 Juni
 
+Notulist: Sverre Kroesen
+
+Iedereen behalve Jorik was aanwezig, Jorik was bij de dokter.
+
 ## User stories
 Hier is een overzicht van de user stories waar we nu aan willen/moeten werken, en waar we nu over hebben gepokerd met een score van 1 t/m 5. We werden echter halverwege onderbroken toen Thomas en Ana Oprescu binnenkwamen, daarna hebben we besproken hoe de vorige sprint ging en we hebben een overzicht gemaakt van wat nog allemaal moet gebeuren voor het vastzetten/locken van berichten.
 
