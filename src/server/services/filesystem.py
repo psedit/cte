@@ -6,6 +6,11 @@ import os
 import shutil
 import Pyro4
 
+# TODO: dit is vast lelijk
+ERROR_FILE_NOT_IN_RAM = 1
+ERROR_FILE_NOT_JOINED = 2
+ERROR_FILE_NOT_PRESENT = 3
+
 
 @Pyro4.expose
 @Pyro4.behavior(instance_mode="single")
@@ -77,12 +82,19 @@ class Filesystem(Service):
 
     def _is_joined(self, address, file_path) -> bool:
         if file_path not in self.file_dict:
-            # TODO: send exception to client
-            # "File is not in system RAM. Join the file to load it to memory."
+            message = f"""File {file_path} is not in system RAM.
+                      Join the file to load it to memory."""
+            self._send_message_client("error-response",
+                                      { "message": message,
+                                        "error_code": ERROR_FILE_NOT_IN_RAM },
+                                      address)
             return False
         elif not self.file_dict[file_path].is_joined(address):
-            # TODO: send exception to client
-            # "Please join the file before requesting its contents."
+            message = f"Join the file {file_path} to gain access to it."
+            self._send_message_client("error-response",
+                                      { "message": message,
+                                        "error_code": ERROR_FILE_NOT_JOINED },
+                                      address)
             return False
         else:
             return True
@@ -112,12 +124,7 @@ class Filesystem(Service):
     async def _send_file_list(self, msg) -> None:
         address = msg["sender"][0]
 
-        net_msg = {
-            "root_tree": self.root_tree
-        }
-
-        print("Je bent een plakje kaas.")
-
+        net_msg = { "root_tree": self.root_tree }
         self._send_message_client("file-list-response", net_msg, address)
 
     @message_type("cursor-move")
@@ -155,11 +162,9 @@ class Filesystem(Service):
         path = content["file_path"]
 
         if not self._is_joined(address, path):
-            # TODO: send exception to client
-            # "Please join the file first before requesting cursor locations."
             return
 
-        curs_f = self.file_dict[path].get_cursors()
+        curs_f = self.file_dict[path].get_cursors([address])
         cursors = [[self.usernames[c]] + curs_f[c] for c in curs_f]
 
         self._send_message_client("cursor-list-response",
@@ -181,8 +186,11 @@ class Filesystem(Service):
         self.usernames[address] = username
 
         if not os.path.isfile(os.path.join(self.root_dir, path)):
-            # TODO: send exception to client
-            # "This file is not present on the server."
+            message = f"The file {path} is not present on the server."
+            self._send_message_client("error-response",
+                                      { "message": message,
+                                        "error_code": ERROR_FILE_NOT_PRESENT },
+                                      address)
             return
 
         # Add the file to RAM if necessary.
@@ -191,6 +199,9 @@ class Filesystem(Service):
 
         # Add the file to the client list in the ServerFile class.
         self.file_dict[path].move_cursor(address, 0, 0)
+
+        # Broadcast the change.
+        self._send_file_join_broadcast(path, address)
 
     @message_type("file-leave")
     async def _file_remove_client(self, msg) -> None:
@@ -209,8 +220,12 @@ class Filesystem(Service):
 
         if (not force and self.file_dict[path].client_count() == 1
                 and self.file_dict[path].saved_status() is False):
-            # TODO: send exception to client
-            # "First save the file or resend request with force_exit = 1"
+            message = f"""First save the file {path} or
+                      resend request with 'force_exit' = 1"""
+            self._send_message_client("error-response",
+                                      { "message": message,
+                                        "error_code": ERROR_FILE_NOT_PRESENT },
+                                      address)
             return
 
         self.file_dict[path].drop_client(address)
@@ -218,6 +233,38 @@ class Filesystem(Service):
         # Remove the file from RAM if necessary.
         if self.file_dict[file].client_count() == 0:
             del self.file_dict[path]
+
+        # Broadcast the change and remove the username
+        self._send_file_leave_broadcast(path, address)
+        del self.usernames[address]
+
+    @message_type("client-disconnect")
+    async def _remove_client(self, msg) -> None:
+        content = msg["content"]
+
+        address = content["address"]
+
+        for path, f in self.file_dict.items():
+            if f.is_joined(address):
+                f.drop_client(address)
+                self._send_file_leave_broadcast(path, address)
+
+        # Broadcast the change and remove the username
+        del self.usernames[address]
+
+    def _send_file_join_broadcast(self, file_path: str, client: Address):
+        file = self.file_dict[file_path]
+        self._send_message_client("file-join-broadcast",
+                                  { "username": self.usernames[client],
+                                    "file_path": file_path },
+                                  *file.get_clients(exclude=[client]))
+
+    def _send_file_leave_broadcast(self, file_path: str, client: Address):
+        file = self.file_dict[file_path]
+        self._send_message_client("file-leave-broadcast",
+                                  { "username": self.usernames[client],
+                                    "file_path": file_path },
+                                  *file.get_clients(exclude=[client]))
 
     @message_type("file-lock-request")
     async def _file_add_lock(self, msg) -> None:
@@ -312,7 +359,6 @@ class Filesystem(Service):
             # TODO: send exception
             return
 
-        print(self.usernames)
         lock_list = self.file_dict[path].get_lock_list(self.usernames)
         self._send_message_client("file-lock-list-response",
                                   {"file_path": path,
@@ -413,6 +459,7 @@ class Filesystem(Service):
 
         self._send_message_client("file-change-broadcast", content,
                                   *resp["content"]["client_list"])
+
 
 if __name__ == "__main__":
     Filesystem.start()
