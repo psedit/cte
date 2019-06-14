@@ -7,7 +7,11 @@
     </div>
 
 
-    <file-tree id="file-list" :file-list="currItems" @openFolder="openFolder" @openFile="openFile"/>
+    <file-tree id="file-list" :file-list="currItems" :cur-path="currPath" @openFolder="openFolder" @openFile="openFile"/>
+
+    <div>
+      <div>m</div>
+    </div>
   </div>
 </template>
 
@@ -22,7 +26,8 @@
     data () {
       return {
         currPath: [],
-        completeTree: []
+        completeTree: [],
+        onlineUsers: []
       }
     },
     components: {
@@ -115,7 +120,11 @@
         })
         connector.addEventListener('open', () => {
           this.updateFileTree()
+          this.loadUsers()
         })
+      },
+
+      loadUsers () {
       }
     },
     mounted () {

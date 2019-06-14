@@ -3,6 +3,7 @@
     <folder-icon v-if="isFolder"/>
     <file-icon v-else />
     <span>{{ name }}</span>
+    <span v-for="user in this.activeUsers" :title="user">{{ user[0] }}</span>
     <!-- <file-tree v-if="isFolder" :file-list="children"/> -->
   </li>
 </template>
@@ -10,6 +11,7 @@
 <script>
   import FolderIcon from 'vue-material-design-icons/Folder'
   import FileIcon from 'vue-material-design-icons/File'
+  import connector from '../../../main/connector'
   // import FileTree from './FileTree'
 
   export default {
@@ -20,11 +22,13 @@
       // FileTree: () => import('./FileTree.vue')
     },
     props: {
-      item: [Array, String]
+      item: [Array, String],
+      curPath: Array
     },
     data () {
       return {
-        isOpen: false
+        isOpen: false,
+        activeUsers: []
       }
     },
     computed: {
@@ -56,9 +60,35 @@
           return []
         }
       }
+    },
 
+    watch: {
+      item () {
+        this.loadUsers()
+      }
+      // curPath () {
+      //   this.loadUsers()
+      // }
+    },
+
+    mounted () {
+      if (!this.isFolder) {
+        this.loadUsers()
+      }
     },
     methods: {
+      loadUsers () {
+        const path = `./${[...this.curPath, this.item].join('/')}`
+        console.log(path)
+        connector.request(
+          'cursor-list-request',
+          'cursor-list-response',
+          { file_path: path }
+        ).then((response) => {
+          console.log(response)
+          this.activeUsers = response.cursor_list.map(cursor => cursor[0])
+        })
+      }
     }
   }
 </script>

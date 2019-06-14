@@ -1,6 +1,6 @@
 <template>
   <ul class="fileTree">
-    <file-tree-item v-for="(item, index) in fileList" :item="item" :key="index" @click="fileClick"/>
+    <file-tree-item v-for="(item, index) in fileList" :cur-path="curPath" :item="item" :key="index" @click="fileClick"/>
   </ul>
 </template>
 
@@ -21,7 +21,8 @@
       startOpen: {
         type: Boolean,
         default: false
-      }
+      },
+      curPath: Array
     },
     computed: {
     },
