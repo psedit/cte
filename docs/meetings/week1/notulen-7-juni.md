@@ -1,4 +1,4 @@
-# Notulen - 7 Juni
+# Notulen 7 Juni
 Notulist: Sverre Kroesen
 
 Iedereen is aanwezig, behalve Mark, want hij is in Wenen. Frederick ging halverwege de dag ook weg.
