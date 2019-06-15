@@ -6,7 +6,9 @@ import {
   lineToTableIndex,
   convert,
   getStart,
-  getRange
+  getRange,
+  getBLock,
+  stich
 } from '../../../src/main/pieceTable'
 
 const expected = {
@@ -21,8 +23,8 @@ const expected = {
 
 const table = [
   { pieceID: '5', blockID: '0', start: 0, length: 5 },
-  { pieceID: '5', blockID: '0', start: 0, length: 7 },
-  { pieceID: '5', blockID: '0', start: 0, length: 19 }
+  { pieceID: '5', blockID: '0', start: 5, length: 7 },
+  { pieceID: '5', blockID: '0', start: 12, length: 19 }
 ]
 
 describe('create', function () {
@@ -39,8 +41,7 @@ describe('create', function () {
   })
 
   it('should generate an UUID', function () {
-    const e = ''
-    expect(create(e).table[0].pieceID.length).to.equal(36)
+    expect(create('').table[0].pieceID.length).to.equal(36)
   })
 })
 
@@ -118,3 +119,73 @@ describe('getRange', function () {
     })
   })
 })
+
+const largePieceTable = {
+  textBlocks: {
+    '0': {
+      open: false,
+      lines: ['abc ', ' 123 ', ' 😀']
+    },
+    '1': {
+      open: false,
+      lines: ['xabc ', ' 2123 ', ' g😀', 'dfsasdfasdfasd']
+    },
+    '2': {
+      open: false,
+      lines: ['fabc ']
+    }
+  },
+  table: [
+    { pieceID: '1', blockID: '0', start: 0, length: 3 },
+    { pieceID: '2', blockID: '1', start: 3, length: 3 },
+    { pieceID: '3', blockID: '2', start: 6, length: 1 }
+  ]
+}
+
+describe('getBlock', function () {
+  it('should given an pieceID return the corresponding block', function () {
+    expect(getBLock(largePieceTable, '2')).to.deep.equal({
+      open: false,
+      lines: ['xabc ', ' 2123 ', ' g😀', 'dfsasdfasdfasd']
+    })
+  })
+})
+
+describe('stich', function () {
+  it('should return the complete document in the correct order', function () {
+    expect(stich(largePieceTable)).to.deep.equal([
+      'abc ',
+      ' 123 ',
+      ' 😀',
+      'xabc ',
+      ' 2123 ',
+      ' g😀',
+      'dfsasdfasdfasd',
+      'fabc '
+    ])
+  })
+})
+
+// describe('getLines', function () {
+//   const result = [
+//     ' 2123 ',
+//     ' g😀',
+//     'dfsasdfasdfasd',
+//     'fabc '
+//   ]
+//   console.log(getLines(largePieceTable, '0', 2, 4))
+
+//   it('should get  list with the requested lines assembled from the piece present in the piece table', function () {
+//     expect(getLines(largePieceTable, 1, 9)).to.deep.equal(result)
+//   })
+//   it('should get the first line if requested', function () {
+//     expect(getLines(expected, 0, 1)).to.deep.equal(['abc '])
+//   })
+//   it('should return all lines until the last line, if length is -1', function () {
+//     expect(getLines(largePieceTable, 4, -1)).to.deep.equal(result)
+//   })
+// })
+
+// describe('stich', function () {
+
+// })

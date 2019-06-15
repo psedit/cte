@@ -1,5 +1,3 @@
-import { stringify } from 'querystring'
-
 const uuid = require('uuid/v4')
 
 /**
@@ -91,7 +89,7 @@ export function convert ({ textBlocks, table }) {
 /**
  * Returns the length of the stitched file according to the table.
  * @param {Piece[]} table
- * @returns {number} the length
+ * @returns {number} the length of the table
  */
 export function len (table) {
   return table.reduce((total, curr) => total + curr.length, 0)
@@ -156,9 +154,55 @@ export function getRange (table, lineNumber, length) {
 }
 
 /**
- *
- * @param {Piece[]} table
- * @param {*} start
- * @param {*} length
+ * @param {pieceTable} pieceTable
+ * @param {string} pieceID
+ * @returns {TextBlock} the corresponding TextBlock
  */
-export function getLines (table, start, length) {}
+export function getBLock ({ textBlocks, table }, pieceID) {
+  const piece = table.find(x => {
+    return x.pieceID === pieceID
+  })
+  return textBlocks[piece.blockID]
+}
+
+/**
+ * Returns the new stitched file according to the piece table.
+ * @param {PieceTable} pieceTable
+ * @returns {string[]} the stiched file
+ */
+export function stich ({ textBlocks, table }) {
+  return [].concat(...table.map(({ blockID }) => textBlocks[blockID].lines))
+}
+
+// export function getLines (pieceTable, pieceID, offset, length) {}
+
+// /**
+//  * Returns a list with the requested lines assembled
+//  * from the piece present in the piece table.
+//  * When length is -1, returns until the last line.
+//  * @param {PieceTable} pieceTable
+//  * @param {number} pieceIndex the index for the piece
+//  * @param {number} length the length of the requested text
+//  * @returns {string[]} a list with the requested lines assembled
+//  */
+// export function getLines ({ textBlocks, table }, pieceIndex, length) {
+//   let rest = length < 0 ? len(table) : length
+//   let lines = []
+//   const { offset } = lineToTableIndex(table, pieceIndex)
+//   const r = getRange(table, pieceIndex, rest)
+
+//   for (let i = r.start; i < r.end + 1; i++) {
+//     let { blockID, start, length } = table[i]
+//     const block = textBlocks[blockID]
+
+//     if (i === r.start) {
+//       start += offset
+//       length -= offset
+//     }
+
+//     lines = [...lines, ...block.lines.slice(start, start + Math.min(rest, length))]
+//     rest -= length
+//   }
+
+//   return lines
+// }

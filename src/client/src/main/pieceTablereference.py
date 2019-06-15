@@ -28,7 +28,7 @@ class PieceTable:
         """
         Returns the length of the stitched file according to the piece table.
         """
-        return sum(entry[2] for entry in self.table)
+        return sum(entry[3] for entry in self.table)
 
     def __str__(self) -> str:
         fmt = "{:>38}" + "{:>10}"*4
@@ -90,6 +90,7 @@ class PieceTable:
         """
         if length < 0:
             length = len(self)
+        print(length)
 
         lines: List[str] = []
         length_rem: int = length
@@ -264,4 +265,8 @@ class PieceTable:
         for piece in self.table:
             if piece[0] is piece_id:
                 self.blocks[piece[1]].close()
-
+if __name__ == "__main__":
+    table = PieceTable()
+    # print(len(table))
+    # print(table.get_lines(0, -1))
+    table.

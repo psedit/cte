@@ -24,3 +24,4 @@ class TextBlock:
         self.open = False
 
     def is_open(self) -> bool:
+        return self.open
