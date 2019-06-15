@@ -21,6 +21,9 @@ class PieceTable:
 
         orig_piece = TextBlock(lines, False)
         orig_piece_id = str(uuid.uuid4())
+        print("###########################")
+        print(orig_piece_id)
+        print("###########################")
         self.blocks: Dict[int, TextBlock] = {0: orig_piece}
         self.table: List[List[Any]] = [[orig_piece_id, 0, 0, len(lines)]]
 
@@ -28,7 +31,7 @@ class PieceTable:
         """
         Returns the length of the stitched file according to the piece table.
         """
-        return sum(entry[2] for entry in self.table)
+        return sum(entry[3] for entry in self.table)
 
     def __str__(self) -> str:
         fmt = "{:>38}" + "{:>10}"*4
@@ -61,7 +64,7 @@ class PieceTable:
         """
         cur_loc: int = 0
         for piece in self.table:
-            if piece[0] is piece_id:
+            if piece[0] == piece_id:
                 return cur_loc
             cur_loc += piece[3]
         return -1
@@ -118,11 +121,31 @@ class PieceTable:
         # TODO
         cur_pos = 0
         for piece in self.table:
-            if piece[0] is piece_id:
+            if piece[0] == piece_id:
                 return [cur_pos, piece[3]]
             else:
                 cur_pos += piece[3]
         return []
+
+    def get_piece_content(self, piece_id: str) -> List[str]:
+        """
+        Returns the content of a single piece in the table.
+        """
+        for p_id, block_id, start, length in self.table:
+            if p_id == piece_id:
+                return self.blocks[block_id].get_lines(start, length)
+
+        return []
+
+    def get_piece_block_id(self, piece_id: str) -> int:
+        """
+        Returns the block id of a single piece in the table.
+        """
+        for p_id, block_id, _, _ in self.table:
+            if p_id == piece_id:
+                return block_id
+
+        return -1
 
     def stitch(self) -> List[str]:
         """
@@ -187,7 +210,8 @@ class PieceTable:
         of file boundaries.
 
         Returns the piece uuid of the created block when successful, and an
-        exception describing the occurred error otherwise.
+        exception describing the occurred error otherwise. Also updates the
+        uuid's of all affected blocks.
         """
         # Get the starting position of the piece
         piece_start = self.get_piece_start(piece_id)
@@ -217,6 +241,7 @@ class PieceTable:
         # Find and shrink previous containing block.
         index, offset = self.line_to_table_index(start)
         prev_len: int = self.table[index][2]
+        self.table[index][0] = str(uuid.uuid4())
         self.table[index][2] = offset
 
         # Insert the new block in the table
@@ -262,6 +287,5 @@ class PieceTable:
         anymore.
         """
         for piece in self.table:
-            if piece[0] is piece_id:
+            if piece[0] == piece_id:
                 self.blocks[piece[1]].close()
-

@@ -3,6 +3,7 @@ from functools import partial
 import Pyro4
 import asyncio
 import json
+import re
 import traceback
 import websockets
 from typedefs import Address
@@ -71,6 +72,11 @@ class WSServer(Service):
         done, pending = await asyncio.wait([read_task, write_task],
                                            return_when=asyncio.FIRST_COMPLETED)
 
+    def _disconnect_ws(self, client_address):
+        del self.clients[client_address]
+        del self.usernames[client_address]
+        self._send_message("client-disconnect", {"address": client_address})
+
     async def ws_write_loop(self):
         """
         Write loop for websockets.
@@ -88,7 +94,9 @@ class WSServer(Service):
                 except Exception:
                     self._warning("Websocket %r unexpectedly disconnected!",
                                   recipient)
-                    traceback.print_exc()
+
+                    self._disconnect_ws(recipient)
+
             self.messages_to_send.task_done()
 
     async def ws_read_loop(self, websocket, path):
@@ -125,7 +133,7 @@ class WSServer(Service):
         except websockets.exceptions.ConnectionClosed:
             print(f'Websocket {websocket} unexpectedly closed connection.')
         finally:
-            del self.clients[websocket.remote_address]
+            self._disconnect_ws(websocket.remote_address)
 
     def handle_pyro_event(self, socket):
         """
@@ -147,11 +155,32 @@ class WSServer(Service):
 
     @message_type("login-request")
     async def _register_user(self, msg):
-        self.usernames[msg["sender"][0]] = msg["content"]["username"]
+        uname = msg["content"]["username"]
+        addr = msg["sender"][0]
+
+        if self.usernames.get(addr):
+            self._send_message_client("login-response",
+                                      {
+                                          "succeed": False,
+                                      },
+                                      addr)
+
+        uname_list = [u for u in self.usernames.values() if u.rsplit("_", 1)[0] == uname]
+        if uname_list:
+            nums = [int(n.rsplit("_", 1)[-1]) for n in uname_list if not n.rsplit("_", 1)[-1] == uname]
+            if not nums:
+                uname = f"{uname}_{1}"
+            else:
+                uname = f"{uname}_{max(nums) + 1}"
+
+        self.usernames[addr] = uname
 
         self._send_message_client("login-response",
-                                  {"succeed": True},
-                                  msg["sender"][0])
+                                  {
+                                      "succeed": True,
+                                      "new_username": uname
+                                  },
+                                  addr)
 
     @message_type("client-list-request")
     async def _send_client_list(self, msg):

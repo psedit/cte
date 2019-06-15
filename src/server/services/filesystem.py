@@ -10,6 +10,7 @@ import Pyro4
 ERROR_FILE_NOT_IN_RAM = 1
 ERROR_FILE_NOT_JOINED = 2
 ERROR_FILE_NOT_PRESENT = 3
+ERROR_FILE_ILLEGAL_LOCK = 4
 
 
 @Pyro4.expose
@@ -22,7 +23,7 @@ class Filesystem(Service):
         super().__init__(*super_args)
         # Check server config for root directory
         # TODO: retrieve from server
-        self.root_dir: str = os.path.realpath('../../client')
+        self.root_dir: str = os.path.realpath('../test')
         self.usernames: Dict[Address, str] = {}
 
         # Files sorted by path relative to root dir
@@ -62,24 +63,6 @@ class Filesystem(Service):
 
         return tree
 
-    def get_block(self,
-                  path: str,
-                  start: int = 0,
-                  length: int = -1) -> List[str]:
-        """
-        Returns all 'length' lines starting from 'start', of the specified file
-        within the file system.
-
-        Keyword arguments:
-        path -- Path to the file relative to the root directory.
-        start -- Line number indicating start position
-        length -- Amount of lines to return, -1 indicates until the last line.
-        """
-        if path in self.file_dict:
-            return self.file_dict[path].retrieve_block(start, length)
-        else:
-            raise ValueError("File is not present in file system RAM.")
-
     def _is_joined(self, address, file_path) -> bool:
         if file_path not in self.file_dict:
             message = f"""File {file_path} is not in system RAM.
@@ -108,17 +91,24 @@ class Filesystem(Service):
         address = msg["sender"][0]
         content = msg["content"]
 
-        start = content["start"]
-        length = content["length"]
         file_path = content["file_path"]
 
         if self._is_joined(address, file_path):
-            block = ''.join(self.get_block(file_path, start, length))
+            file = self.file_dict[file_path]
+            block_list = []
 
-            response_content = {"file_content": block, "address": address}
+            for b_id, block in file.file_pt.blocks.items():
+                block_list.append((b_id, block.is_open(), block.lines))
+
+            response_content = {"piece_table": file.file_pt.table,
+                                "block_list": block_list}
+
             self._send_message_client("file-content-response",
                                       response_content,
                                       address)
+        else:
+            pass
+            # File not joined error
 
     @message_type("file-list-request")
     async def _send_file_list(self, msg) -> None:
@@ -133,7 +123,8 @@ class Filesystem(Service):
         content = msg["content"]
 
         path = content["file_path"]
-        row = content["row"]
+        piece_id = content["piece_id"]
+        offset = content["offset"]
         column = content["column"]
 
         file = self.file_dict[path]
@@ -141,13 +132,14 @@ class Filesystem(Service):
         if not self._is_joined(address, path):
             return
 
-        file.move_cursor(address, row, column)
+        file.move_cursor(address, piece_id, offset, column)
 
         new_content = {
                 "username": username,
                 "file_path": path,
-                "row": row,
-                "column": column
+                "piece_id": piece_id,
+                "offset": offset,
+                "column": column,
             }
 
         self._send_message_client("cursor-move-broadcast",
@@ -198,7 +190,7 @@ class Filesystem(Service):
             self.file_dict[path] = ServerFile(self.root_dir, path)
 
         # Add the file to the client list in the ServerFile class.
-        self.file_dict[path].move_cursor(address, 0, 0)
+        self.file_dict[path].join_file(address)
 
         # Broadcast the change.
         self._send_file_join_broadcast(path, address)
@@ -231,7 +223,7 @@ class Filesystem(Service):
         self.file_dict[path].drop_client(address)
 
         # Remove the file from RAM if necessary.
-        if self.file_dict[file].client_count() == 0:
+        if self.file_dict[path].client_count() == 0:
             del self.file_dict[path]
 
         # Broadcast the change and remove the username
@@ -278,21 +270,30 @@ class Filesystem(Service):
         address, username = msg["sender"]
 
         path = content["file_path"]
-        start = content["start"]
+        piece_id = content["piece_uuid"]
+        offset = content["offset"]
         length = content["length"]
 
         if not self._is_joined(address, path):
-            self._send_lock_response(path, False, 0, address)
+            self._send_lock_response(path, False, "", address)
             return
 
-        block_id = self.file_dict[path].add_lock(address, start, length)
+        try:
+            lock_id = self.file_dict[path].add_lock(address, piece_id,
+                                                    offset, length)
+        except ValueError as e:
+            self._send_message_client("error-response",
+                                      {
+                                          "message": str(e),
+                                          "error_code": ERROR_FILE_ILLEGAL_LOCK
+                                      },
+                                      address)
 
-        if block_id is None:
-            self._send_lock_response(path, False, 0, address)
-        else:
-            self._send_lock_response(path, True, block_id, address)
-            self._send_lock_broadcast(username, block_id, True, path,
-                                      start, length, address)
+            self._send_lock_response(path, False, "", address)
+            return
+
+        self._send_lock_response(path, True, lock_id, address)
+        self._send_piece_table_change_broadcast(path, lock_id, True)
 
     @message_type("file-unlock-request")
     async def _file_remove_lock(self, msg) -> None:
@@ -304,20 +305,18 @@ class Filesystem(Service):
         address, username = msg["sender"]
 
         path = content["file_path"]
-        block_id = content["lock_id"]
+        lock_id = content["lock_id"]
 
         if not self._is_joined(address, path):
             return
 
-        self.file_dict[path].remove_lock(address, block_id)
-
-        self._send_lock_broadcast(username, block_id, False, path,
-                                  0, 0, address)
+        self.file_dict[path].remove_lock(address, lock_id)
+        self._send_piece_table_change_broadcast(path, lock_id, False)
 
     def _send_lock_response(self, file_path: str, success: bool,
-                            lock_id: int, client: Address) -> None:
+                            lock_id: str, client: Address) -> None:
         """
-        Send the curser-lock-response message.
+        Send the file-lock-response message.
         """
         self._send_message_client("file-lock-response",
                                   { "file_path": file_path,
@@ -325,24 +324,24 @@ class Filesystem(Service):
                                     "lock_id": lock_id },
                                   client)
 
-    def _send_lock_broadcast(self, username: str, lock_id: int, locked: bool,
-                             file_path: str, start: int, length: int,
-                             excl: Address) -> None:
+    def _send_piece_table_change_broadcast(self,
+                                           file_path: str,
+                                           lock_id: str,
+                                           is_locked: bool) -> None:
         """
-        Send the curser-lock-change-broadcast message to all clients within
-        the file.
+        Send the new table from the piece table to all clients within the file.
         """
         file = self.file_dict[file_path]
 
-        content = { "username": username,
-                    "lock_id": id,
-                    "is_locked": locked,
+        lines = file.file_pt.get_piece_content(lock_id)
+        block_id = file.file_pt.get_piece_block_id(lock_id)
+        content = {
                     "file_path": file_path,
-                    "start": start,
-                    "length": lock_id }
-
-        self._send_message_client("file-lock-change-broadcast", content,
-                                  *file.get_clients(exclude=[excl]))
+                    "piece_table": file.file_pt.table,
+                    "changed_block": [block_id, is_locked, lines]
+                  }
+        self._send_message_client("file-piece-table-change-broadcast", content,
+                                  *file.get_clients())
 
     @message_type("file-lock-list-request")
     async def _file_send_lock_list(self, msg) -> None:
@@ -356,7 +355,6 @@ class Filesystem(Service):
         path = content["file_path"]
 
         if not self._is_joined(address, path):
-            # TODO: send exception
             return
 
         lock_list = self.file_dict[path].get_lock_list(self.usernames)
