@@ -4,7 +4,8 @@ import {
   _create,
   len,
   lineToTableIndex,
-  convert,
+  convertToJS,
+  convertToPy,
   getStart,
   getRange,
   getBLock,
@@ -18,17 +19,22 @@ const expected = {
       lines: ['abc ', ' 123 ', ' 😀']
     }
   },
-  table: [{ pieceID: '5', blockID: '0', start: 0, length: 3 }]
+  table: [{ pieceID: 'kat', blockID: 0, start: 0, length: 3 }]
+}
+
+const expectedPy = {
+  block_list: [[0, true, expected.textBlocks[0].lines]],
+  piece_table: [['kat', 0, 0, 3]]
 }
 
 const table = [
-  { pieceID: '5', blockID: '0', start: 0, length: 5 },
-  { pieceID: '5', blockID: '0', start: 5, length: 7 },
-  { pieceID: '5', blockID: '0', start: 12, length: 19 }
+  { pieceID: '5', blockID: 0, start: 0, length: 5 },
+  { pieceID: '5', blockID: 0, start: 5, length: 7 },
+  { pieceID: '5', blockID: 0, start: 12, length: 19 }
 ]
 
 describe('create', function () {
-  const UUID = () => '5'
+  const UUID = () => 'kat'
   const c = _create(UUID)
   it('should create a new Piece Table given a string', () => {
     const testString = 'abc \n 123 \n 😀'
@@ -45,14 +51,19 @@ describe('create', function () {
   })
 })
 
-describe('convert', function () {
+describe('convertToJS', function () {
   it('should convert the python representation of the piece table to the js represenation', function () {
     expect(
-      convert({
-        ...expected,
-        table: [['5', 0, 0, 3]]
-      })
+      convertToJS(expectedPy)
     ).to.deep.equal(expected)
+  })
+})
+
+describe('convertToPy', function () {
+  it('should convert the javascript representation of the piece table to the py represenation', function () {
+    expect(
+      convertToPy(expected)
+    ).to.deep.equal(expectedPy)
   })
 })
 

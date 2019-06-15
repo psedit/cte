@@ -10,7 +10,7 @@ const uuid = require('uuid/v4')
 /**
  * @typedef {Object} Piece
  * @property {string} pieceID
- * @property {string} blockID
+ * @property {string|number} blockID
  * @property {number} start
  * @property {number} length
  */
@@ -21,7 +21,7 @@ const uuid = require('uuid/v4')
  * so-called "edit-blocks" (see the TextBlock class), for which a table is
  * used to couple these seperate blocks into one single file.
  * @typedef {Object} PieceTable
- * @property {TextBlock[]} textBlocks
+ * @property {Object.<string, TextBlock>} textBlocks
  * @property {Piece[]} table
  */
 
@@ -56,9 +56,7 @@ export function _create (UUID) {
           lines: lines
         }
       },
-      table: [
-        { pieceID: UUID(), blockID: '0', start: 0, length: lines.length }
-      ]
+      table: [{ pieceID: UUID(), blockID: 0, start: 0, length: lines.length }]
     }
   }
 }
@@ -69,21 +67,79 @@ export let create = _create(uuid)
  * Converts the python representation of the piece table to the js
  * represenation.
  * @param {Object} pyPiece
- * @param {TextBlock[]} pyPiece.textBlocks
- * @param {any[][]} pyPiece.table
+ * @returns {PieceTable} a pieceTable
  */
-export function convert ({ textBlocks, table }) {
+export function convertToJS (pyPieceTable) {
   return {
-    textBlocks,
-    table: table.map(([pieceID, blockID, start, length]) => {
-      return {
-        pieceID,
-        blockID: blockID.toString(),
-        start,
-        length
-      }
-    })
+    textBlocks: pyPieceTable['block_list'].reduce(convertBlockToJS, {}),
+    table: pyPieceTable['piece_table'].map(convertTableTojs)
   }
+}
+
+/**
+ * @param {Object.<string, TextBlock>} [obj = {}]
+ * @param {any[]} block
+ * @returns {Object.<string, TextBlock>} text blocks
+ */
+export function convertBlockToJS (obj = {}, [blockID, closed, lines]) {
+  obj[blockID] = {
+    open: !closed,
+    lines
+  }
+  return obj
+}
+
+/**
+ * @param {any[]} piece
+ * @returns {Piece}
+ */
+export function convertTableTojs ([pieceID, blockID, start, length]) {
+  return {
+    pieceID,
+    blockID,
+    start,
+    length
+  }
+}
+
+/**
+ * @param {PieceTable} pieceTable
+ * @returns {Object} an python piece table to send over our sockets
+ */
+export function convertToPy ({ textBlocks, table }) {
+  return {
+    block_list: convertTextBlocksToPy({ textBlocks, table }),
+    piece_table: table.map(convertPieceToPy)
+  }
+}
+
+/**
+ * @param {PieceTable} pieceTable
+ * @returns {any[]} a block list
+ */
+export function convertTextBlocksToPy ({ textBlocks, table }) {
+  return table.map(({ blockID }) => {
+    console.log(convertTextBlockToPy(textBlocks, blockID))
+    return convertTextBlockToPy(textBlocks, blockID)
+  })
+}
+
+/**
+ * @param {Object.<string, TextBlock>} textBlocks
+ * @param {number} blockID
+ * @return {any[]} a block
+ */
+export function convertTextBlockToPy (textBlocks, blockID) {
+  const { open, lines } = textBlocks[blockID]
+  return [blockID, !open, lines]
+}
+
+/**
+ * @param {Piece} piece
+ * @returns {any[]} piece
+ */
+export function convertPieceToPy ({ pieceID, blockID, start, length }) {
+  return [pieceID, blockID, start, length]
 }
 
 /**
