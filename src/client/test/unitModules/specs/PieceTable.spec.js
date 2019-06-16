@@ -161,9 +161,9 @@ const largePieceTable = {
     }
   },
   table: [
-    { pieceID: '1', blockID: '0', start: 0, length: 3 },
-    { pieceID: '2', blockID: '1', start: 3, length: 3 },
-    { pieceID: '3', blockID: '2', start: 6, length: 1 }
+    { pieceID: '1', blockID: '0', start: 1, length: 2 },
+    { pieceID: '2', blockID: '1', start: 2, length: 1 },
+    { pieceID: '3', blockID: '2', start: 0, length: 1 }
   ]
 }
 
@@ -179,13 +179,9 @@ describe('getBlock', function () {
 describe('stich', function () {
   it('should return the complete document in the correct order', function () {
     expect(stich(largePieceTable)).to.deep.equal([
-      'abc ',
       ' 123 ',
       ' 😀',
-      'xabc ',
-      ' 2123 ',
       ' g😀',
-      'dfsasdfasdfasd',
       'fabc '
     ])
   })
