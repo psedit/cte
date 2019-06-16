@@ -38,6 +38,13 @@ const uuid = require('uuid/v4')
  */
 
 /**
+ * @typedef {Object} Update
+ * @property {string} filePath
+ * @property {PieceTable} pieceTable the updated piece table
+ * @property {TextBlock} changedBlock the block that is changed
+ */
+
+/**
  * Returns a create function
  * @param {Function} UUID
  */
@@ -77,11 +84,12 @@ export function convertToJS (pyPieceTable) {
 }
 
 /**
- * @param {Object.<string, TextBlock>} [obj = {}]
+ * @param {Object.<string, TextBlock>} obj
  * @param {any[]} block
  * @returns {Object.<string, TextBlock>} text blocks
  */
-export function convertBlockToJS (obj = {}, [blockID, closed, lines]) {
+export function convertBlockToJS (obj, [blockID, closed, lines]) {
+  obj = { ...obj }
   obj[blockID] = {
     open: !closed,
     lines
@@ -103,8 +111,24 @@ export function convertTableTojs ([pieceID, blockID, start, length]) {
 }
 
 /**
+ * @param {Object.<string, TextBlock>} textBlocks
+ * @param {Object} update
+ * @returns {Update}
+ */
+export function convertChangeToJS (textBlocks, update) {
+  return {
+    filePath: update['file_path'],
+    pieceTable: {
+      textBlocks: convertBlockToJS(textBlocks, update['changed_block']),
+      table: update['piece_table'].map(convertTableTojs)
+    },
+    changedBlock: convertBlockToJS({}, update['changed_block'])
+  }
+}
+
+/**
  * @param {PieceTable} pieceTable
- * @returns {Object} an python piece table to send over our sockets
+ * @returns {Object} an python piece table to send over sockets
  */
 export function convertToPy ({ textBlocks, table }) {
   return {
@@ -119,7 +143,6 @@ export function convertToPy ({ textBlocks, table }) {
  */
 export function convertTextBlocksToPy ({ textBlocks, table }) {
   return table.map(({ blockID }) => {
-    console.log(convertTextBlockToPy(textBlocks, blockID))
     return convertTextBlockToPy(textBlocks, blockID)
   })
 }
@@ -229,36 +252,3 @@ export function getBLock ({ textBlocks, table }, pieceID) {
 export function stich ({ textBlocks, table }) {
   return [].concat(...table.map(({ blockID }) => textBlocks[blockID].lines))
 }
-
-// export function getLines (pieceTable, pieceID, offset, length) {}
-
-// /**
-//  * Returns a list with the requested lines assembled
-//  * from the piece present in the piece table.
-//  * When length is -1, returns until the last line.
-//  * @param {PieceTable} pieceTable
-//  * @param {number} pieceIndex the index for the piece
-//  * @param {number} length the length of the requested text
-//  * @returns {string[]} a list with the requested lines assembled
-//  */
-// export function getLines ({ textBlocks, table }, pieceIndex, length) {
-//   let rest = length < 0 ? len(table) : length
-//   let lines = []
-//   const { offset } = lineToTableIndex(table, pieceIndex)
-//   const r = getRange(table, pieceIndex, rest)
-
-//   for (let i = r.start; i < r.end + 1; i++) {
-//     let { blockID, start, length } = table[i]
-//     const block = textBlocks[blockID]
-
-//     if (i === r.start) {
-//       start += offset
-//       length -= offset
-//     }
-
-//     lines = [...lines, ...block.lines.slice(start, start + Math.min(rest, length))]
-//     rest -= length
-//   }
-
-//   return lines
-// }

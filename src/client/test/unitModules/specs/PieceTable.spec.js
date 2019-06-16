@@ -6,6 +6,7 @@ import {
   lineToTableIndex,
   convertToJS,
   convertToPy,
+  convertChangeToJS,
   getStart,
   getRange,
   getBLock,
@@ -64,6 +65,19 @@ describe('convertToPy', function () {
     expect(
       convertToPy(expected)
     ).to.deep.equal(expectedPy)
+  })
+})
+
+describe('convertChangeToJS', function () {
+  it('should convert the file-piece-table-change-broadcast to an update type', function () {
+    const res = convertChangeToJS({}, {
+      file_path: 'test.js',
+      piece_table: expectedPy['piece_table'],
+      changed_block: expectedPy['block_list'][0]
+    })
+    expect(res.filePath).to.equal('test.js')
+    expect(res.pieceTable).to.deep.equal(expected)
+    expect(res.changedBlock).to.deep.equal(expected['textBlocks'])
   })
 })
 
@@ -176,27 +190,3 @@ describe('stich', function () {
     ])
   })
 })
-
-// describe('getLines', function () {
-//   const result = [
-//     ' 2123 ',
-//     ' g😀',
-//     'dfsasdfasdfasd',
-//     'fabc '
-//   ]
-//   console.log(getLines(largePieceTable, '0', 2, 4))
-
-//   it('should get  list with the requested lines assembled from the piece present in the piece table', function () {
-//     expect(getLines(largePieceTable, 1, 9)).to.deep.equal(result)
-//   })
-//   it('should get the first line if requested', function () {
-//     expect(getLines(expected, 0, 1)).to.deep.equal(['abc '])
-//   })
-//   it('should return all lines until the last line, if length is -1', function () {
-//     expect(getLines(largePieceTable, 4, -1)).to.deep.equal(result)
-//   })
-// })
-
-// describe('stich', function () {
-
-// })
