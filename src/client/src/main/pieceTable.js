@@ -34,7 +34,7 @@ const uuid = require('uuid/v4')
 /**
  * @typedef {Object} Range
  * @property {number} start inclusive start
- * @property {number} end inclusive end
+ * @property {number} end exclusive end
  */
 
 /**
@@ -210,6 +210,20 @@ export function getStart (table, index) {
   return len(table.slice(0, index))
 }
 
+export function getIndexByBlockID (table, blockID) {
+  // eslint-disable-next-line
+  return table.findIndex(x => x.blockID == blockID)
+}
+
+export function getLineRange (table, blockID) {
+  const index = getIndexByBlockID(table, blockID)
+  const start = getStart(table, index)
+  return {
+    start,
+    end: start + table[index].length
+  }
+}
+
 /**
  * @param {Piece[]} table
  * @param {number} lineNumber
@@ -228,7 +242,7 @@ export function getRange (table, lineNumber, length) {
 
   return {
     start: index,
-    end: index + lastOff - 1
+    end: index + lastOff
   }
 }
 

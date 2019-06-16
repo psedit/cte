@@ -122,28 +122,28 @@ describe('getRange', function () {
   it('should return a range of pieces which cover the given line range', function () {
     expect(getRange(table, 1, 6)).to.deep.equal({
       start: 0,
-      end: 1
+      end: 2
     })
   })
 
   it('should return 0, 0 at index 0 length 0', function () {
     expect(getRange(table, 0, 0)).to.deep.equal({
       start: 0,
-      end: 0
+      end: 1
     })
   })
 
   it('should return all blocks if range is larger then piece range', function () {
     expect(getRange(table, 0, 100)).to.deep.equal({
       start: 0,
-      end: 2
+      end: 3
     })
   })
 
   it('should return all blocks if range is invalid', function () {
     expect(getRange(table, 100, 100)).to.deep.equal({
       start: 0,
-      end: 2
+      end: 3
     })
   })
 })
