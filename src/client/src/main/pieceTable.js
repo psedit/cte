@@ -296,4 +296,14 @@ export function getTextByPieceID ({ textBlocks, table }, pieceID) {
   return block.lines.slice(start, start + length)
 }
 
-// export function update ({}) {}
+export function updateTable (table, piece) {
+  return table.map(x => x.pieceID === piece.pieceID ? [...piece] : x)
+}
+
+export function update (source, target, changedBlock) {
+  target = { ...target }
+  target.textBlocks = { ...target.textBlocks, changedBlock }
+  const piece = getPieceByBlockID(source.table, changedBlock.blockID)
+  target.table = updateTable(target.table, piece)
+  return target
+}
