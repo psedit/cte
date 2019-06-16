@@ -10,7 +10,10 @@ import {
   getStart,
   getRange,
   getBLock,
-  stich
+  getPieceByBlockID,
+  stich,
+  getTextByBlockID,
+  getTextByPieceID
 } from '../../../src/main/pieceTable'
 
 const expected = {
@@ -173,6 +176,33 @@ describe('getBlock', function () {
       open: false,
       lines: ['xabc ', ' 2123 ', ' g😀', 'dfsasdfasdfasd']
     })
+  })
+})
+
+describe('getPieceByBlockID', function () {
+  it('should given an blockID return the corresponding piece', function () {
+    expect(getPieceByBlockID(largePieceTable.table, '2')).to.deep.equal({ pieceID: '3', blockID: '2', start: 0, length: 1 })
+  })
+  it('should given an number blockID return the corresponding piece', function () {
+    expect(getPieceByBlockID(largePieceTable.table, 2)).to.deep.equal({ pieceID: '3', blockID: '2', start: 0, length: 1 })
+  })
+})
+
+describe('getPieceByBlockID', function () {
+  it('should given an blockID return the corresponding piece', function () {
+    expect(getPieceByBlockID(largePieceTable.table, '2')).to.deep.equal({ pieceID: '3', blockID: '2', start: 0, length: 1 })
+  })
+  it('should given an number blockID return the corresponding piece', function () {
+    expect(getPieceByBlockID(largePieceTable.table, 2)).to.deep.equal({ pieceID: '3', blockID: '2', start: 0, length: 1 })
+  })
+})
+
+describe('getText', function () {
+  it('should return the text of the block given an blockID', function () {
+    expect(getTextByBlockID(largePieceTable, 1)).to.deep.equal([' g😀'])
+  })
+  it('should return the text of the block given an pieceID', function () {
+    expect(getTextByPieceID(largePieceTable, '1')).to.deep.equal([' 123 ', ' 😀'])
   })
 })
 

@@ -238,10 +238,27 @@ export function getRange (table, lineNumber, length) {
  * @returns {TextBlock} the corresponding TextBlock
  */
 export function getBLock ({ textBlocks, table }, pieceID) {
-  const piece = table.find(x => {
-    return x.pieceID === pieceID
-  })
+  const piece = getPieceByPieceID(table, pieceID)
   return textBlocks[piece.blockID]
+}
+
+/**
+ * @param {Piece[]} table
+ * @param {string} pieceID
+ * @returns {Piece}
+ */
+export function getPieceByPieceID (table, pieceID) {
+  return table.find(x => x.pieceID === pieceID)
+}
+
+/**
+ * @param {Piece[]} table
+ * @param {string|number} blockID
+ * @returns {Piece}
+ */
+export function getPieceByBlockID (table, blockID) {
+  // eslint-disable-next-line
+  return table.find(x => x.blockID == blockID)
 }
 
 /**
@@ -250,5 +267,33 @@ export function getBLock ({ textBlocks, table }, pieceID) {
  * @returns {string[]} the stiched file
  */
 export function stich ({ textBlocks, table }) {
-  return [].concat(...table.map(({ blockID, start, length }) => textBlocks[blockID].lines.slice(start, start + length)))
+  return [].concat(
+    ...table.map(({ blockID, start, length }) =>
+      textBlocks[blockID].lines.slice(start, start + length)
+    )
+  )
 }
+
+/**
+ * @param {PieceTable} pieceTable
+ * @param {string|number} blockID
+ * @returns {string[]} the text of the corresponding block
+ */
+export function getTextByBlockID ({ textBlocks, table }, blockID) {
+  const { start, length } = getPieceByBlockID(table, blockID)
+  const block = textBlocks[blockID]
+  return block.lines.slice(start, start + length)
+}
+
+/**
+ * @param {PieceTable} pieceTable
+ * @param {string} pieceID
+ * @returns {string[]} the text of the corresponding block
+ */
+export function getTextByPieceID ({ textBlocks, table }, pieceID) {
+  const { blockID, start, length } = getPieceByPieceID(table, pieceID)
+  const block = textBlocks[blockID]
+  return block.lines.slice(start, start + length)
+}
+
+// export function update ({}) {}
