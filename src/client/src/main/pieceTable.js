@@ -250,5 +250,5 @@ export function getBLock ({ textBlocks, table }, pieceID) {
  * @returns {string[]} the stiched file
  */
 export function stich ({ textBlocks, table }) {
-  return [].concat(...table.map(({ blockID }) => textBlocks[blockID].lines))
+  return [].concat(...table.map(({ blockID, start, length }) => textBlocks[blockID].lines.slice(start, start + length)))
 }
