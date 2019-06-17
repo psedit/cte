@@ -11,7 +11,8 @@ import {
   getRange,
   getBLock,
   stich,
-  getTextByPieceID
+  getTextByPieceID,
+  getFile
 } from '../../../src/main/pieceTable'
 
 const expected = {
@@ -55,27 +56,26 @@ describe('create', function () {
 
 describe('convertToJS', function () {
   it('should convert the python representation of the piece table to the js represenation', function () {
-    expect(
-      convertToJS(expectedPy)
-    ).to.deep.equal(expected)
+    expect(convertToJS(expectedPy)).to.deep.equal(expected)
   })
 })
 
 describe('convertToPy', function () {
   it('should convert the javascript representation of the piece table to the py represenation', function () {
-    expect(
-      convertToPy(expected)
-    ).to.deep.equal(expectedPy)
+    expect(convertToPy(expected)).to.deep.equal(expectedPy)
   })
 })
 
 describe('convertChangeToJS', function () {
   it('should convert the file-piece-table-change-broadcast to an update type', function () {
-    const res = convertChangeToJS({}, {
-      file_path: 'test.js',
-      piece_table: expectedPy['piece_table'],
-      changed_block: expectedPy['block_list'][0]
-    })
+    const res = convertChangeToJS(
+      {},
+      {
+        file_path: 'test.js',
+        piece_table: expectedPy['piece_table'],
+        changed_block: expectedPy['block_list'][0]
+      }
+    )
     expect(res.filePath).to.equal('test.js')
     expect(res.pieceTable).to.deep.equal(expected)
     expect(res.changedBlock).to.deep.equal(expected['textBlocks'])
@@ -179,7 +179,10 @@ describe('getBlock', function () {
 
 describe('getText', function () {
   it('should return the text of the block given an pieceID', function () {
-    expect(getTextByPieceID(largePieceTable, '1')).to.deep.equal([' 123 ', ' 😀'])
+    expect(getTextByPieceID(largePieceTable, '1')).to.deep.equal([
+      ' 123 ',
+      ' 😀'
+    ])
   })
 })
 
@@ -190,6 +193,16 @@ describe('stich', function () {
       ' 😀',
       ' g😀',
       'fabc '
+    ])
+  })
+})
+
+describe('getFile', function () {
+  it('should return the file', function () {
+    expect(getFile(largePieceTable)).to.deep.equal([
+      { pieceID: '1', text: [' 123 ', ' 😀'] },
+      { pieceID: '2', text: [' g😀'] },
+      { pieceID: '3', text: ['fabc '] }
     ])
   })
 })
