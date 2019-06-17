@@ -5,6 +5,9 @@
       <back-icon title="Go to previous folder" class="button" @click="previous"/>
       <home-icon title="Go to home folder" class="button" @click="home"/>
     </div>
+    <div class="file-tools">
+    <file-remove title="Remove file" class="button" @click="removeFile"/>
+    </div>
 
 
     <file-tree id="file-list" :file-list="currItems" @openFolder="openFolder" @openFile="openFile"/>
@@ -14,8 +17,11 @@
 <script>
   import HomeIcon from 'vue-material-design-icons/Home'
   import BackIcon from 'vue-material-design-icons/ArrowLeft'
+  import FileRemove from 'vue-material-design-icons/FileRemove'
   import connector from '../../main/connector'
   import FileTree from './Sidebar/FileTree'
+  import fileManager from './Sidebar/fileManager'
+  const { dialog } = require('electron').remote
 
   export default {
     name: 'sidebar',
@@ -28,7 +34,8 @@
     components: {
       FileTree,
       HomeIcon,
-      BackIcon
+      BackIcon,
+      FileRemove
     },
     computed: {
       /**
@@ -54,6 +61,10 @@
           }
         }
         return items
+      },
+      currPathString () {
+        // TODO: test this
+        return `./${this.currPath.join('/')}`
       }
     },
     methods: {
@@ -65,7 +76,30 @@
       openFolder (name) {
         this.currPath.push(name)
       },
-
+      removeFile () {
+        let items = this.currItems
+        /* Get all files
+         */
+        let files = items.filter((item) => {
+          return !(item instanceof Array)
+        })
+        files = ['cancel', ...files]
+        /* Options needed for the message box.
+         */
+        let options = {
+          type: 'question',
+          buttons: files,
+          defaultId: 0,
+          title: 'Delete file',
+          message: 'Select file to delete',
+          detail: 'This cannot be undone!'
+        }
+        dialog.showMessageBox(null, options, (response) => {
+          if (!(response === 0)) {
+            fileManager.removeFile(`${this.currPathString}/${files[response]}`)
+          }
+        })
+      },
       /**
        * When clicking on a file, open file in editor.
        *
@@ -129,7 +163,7 @@
   .sidenav {
     background-color: #111;
     display: grid;
-    grid-template-rows: auto 1fr;
+    grid-template-rows: auto auto 1fr;
     height: 100%;
     border-right: 1px solid #000;
   }
@@ -146,6 +180,14 @@
     grid-template-columns: 1fr auto auto;
     grid-gap: 0.5em;
     align-items: center;
+    height: 2em;
+  }
+  .file-tools {
+    background-color: #555;
+    display: grid;
+    color: #fff;
+    font-size: 1.3em;
+    padding: 0 $padding;
     height: 2em;
   }
   #file-list {
