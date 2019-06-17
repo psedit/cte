@@ -242,7 +242,9 @@ class Filesystem(Service):
                 self._send_file_leave_broadcast(path, address)
 
         # Broadcast the change and remove the username
-        del self.usernames[address]
+        if address in self.usernames:
+            self._send_file_leave_broadcast(path, address)
+            del self.usernames[address]
 
     def _send_file_join_broadcast(self, file_path: str, client: Address):
         file = self.file_dict[file_path]
