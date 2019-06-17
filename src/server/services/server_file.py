@@ -1,9 +1,10 @@
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List
 from client import Address
 from piece_table import PieceTable
 import os
-import uuid
 
+
+CursorMap = Dict[Address, List[Any]]
 
 
 class ServerFile:
@@ -59,10 +60,8 @@ class ServerFile:
         self.is_saved = False
         pass
 
-    def add_lock(self, client: Address,
-                       piece_id: str,
-                       offset: int,
-                       length: int) -> str:
+    def add_lock(self, client: Address, piece_id: str, offset: int,
+                 length: int) -> str:
         """
         Tries to create the block within the piece table.
         Returns the block ID of the created block when successful, None
@@ -72,7 +71,7 @@ class ServerFile:
 
         lock_id = self.file_pt.open_block(piece_id, offset, length)
 
-        if not client in self.locks:
+        if client not in self.locks:
             self.locks[client] = [lock_id]
         else:
             self.locks[client].append(lock_id)
@@ -98,15 +97,13 @@ class ServerFile:
         the form [username of the address, piece_id].
         """
         return [[usernames[addr], lock_id] for addr in self.locks
-                 for lock_id in self.locks[addr]]
+                for lock_id in self.locks[addr]]
 
     def join_file(self, client: Address) -> None:
         self.clients[client] = [self.file_pt.table[0][0], 0, 0, False]
 
-    def move_cursor(self, client: Address,
-                          piece_id: str,
-                          offset: int,
-                          column: int) -> None:
+    def move_cursor(self, client: Address, piece_id: str, offset: int,
+                    column: int) -> None:
         self.clients[client] = [piece_id, offset, column, False]
 
     def get_cursor(self, client: Address) -> List[Any]:
@@ -121,7 +118,7 @@ class ServerFile:
             cursors_rows[client] = self.file_pt.get_piece_start(p_id) + offset
         return cursors_rows
 
-    def get_cursors(self, exclude: List[Address] = []) -> Dict[Address, List[Any]]:
+    def get_cursors(self, exclude: List[Address] = []) -> CursorMap:
         c_list = self.clients.copy()
         for client in exclude:
             del c_list[client]

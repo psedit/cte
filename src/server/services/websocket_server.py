@@ -3,12 +3,11 @@ from functools import partial
 import Pyro4
 import asyncio
 import json
-import re
-import traceback
 import websockets
 from typedefs import Address
 from service import Service, message_type
 from typing import Dict
+from collections import defaultdict
 
 
 @Pyro4.expose
@@ -23,6 +22,7 @@ class WSServer(Service):
         self.messages_to_send: asyncio.Queue = asyncio.Queue()
 
         self.usernames: Dict[Address, str] = {}
+        self.username_counters: Dict[str, int] = defaultdict(int)
 
     @classmethod
     def start(cls):
@@ -112,7 +112,7 @@ class WSServer(Service):
                     if 'quote' in e.msg:
                         await websocket.send("Double quotes. Niet single.")
                         continue
-                except:
+                except Exception:
                     continue
 
                 if 'type' not in data or 'content' not in data:
@@ -159,26 +159,23 @@ class WSServer(Service):
         addr = msg["sender"][0]
 
         if self.usernames.get(addr):
-            self._send_message_client("login-response",
-                                      {
-                                          "succeed": False,
-                                      },
-                                      addr)
+            return self._send_message_client("login-response",
+                                             {"succeed": False},
+                                             addr)
 
-        uname_list = [u for u in self.usernames.values() if u.rsplit("_", 1)[0] == uname]
-        if uname_list:
-            nums = [int(n.rsplit("_", 1)[-1]) for n in uname_list if not n.rsplit("_", 1)[-1] == uname]
-            if not nums:
-                uname = f"{uname}_{1}"
-            else:
-                uname = f"{uname}_{max(nums) + 1}"
+        username_count = self.username_counters[uname]
+        if username_count:
+            new_uname = f"{uname}_{username_count}"
+        else:
+            new_uname = uname
 
-        self.usernames[addr] = uname
+        self.username_counters[uname] += 1
+        self.usernames[addr] = new_uname
 
         self._send_message_client("login-response",
                                   {
                                       "succeed": True,
-                                      "new_username": uname
+                                      "new_username": new_uname
                                   },
                                   addr)
 

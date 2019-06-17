@@ -2,6 +2,7 @@ from typing import List, Tuple, Dict, Any
 from text_block import TextBlock
 import uuid
 
+
 class PieceTable:
     """
     Text file data structure consisting of the original file together with
@@ -35,7 +36,8 @@ class PieceTable:
 
     def __str__(self) -> str:
         fmt = "{:>38}" + "{:>10}"*4
-        str_table = fmt.format("Piece ID", "Block ID", "Start", "Length", "Open") + "\n"
+        str_table = fmt.format("Piece ID", "Block ID", "Start",
+                               "Length", "Open") + "\n"
 
         for p in self.table:
             str_table += fmt.format(*p, self.blocks[p[0]].is_open()) + "\n"
@@ -153,10 +155,10 @@ class PieceTable:
         """
         stitched_file: List[str] = []
         position = 0
-        for _, block_id, start, length in self.table:
-            position += length
+        for _, block_id, start, len in self.table:
+            position += len
 
-            stitched_file.extend(self.blocks[block_id].get_lines(start, length))
+            stitched_file.extend(self.blocks[block_id].get_lines(start, len))
 
         return stitched_file
 
@@ -180,7 +182,7 @@ class PieceTable:
             else:
                 self.table[last_open_index][3] += section[3]
 
-                if i is last_open_index:
+                if i == last_open_index:
                     # Move the section to 'orig' and give it a new uuid.
                     section = [str(uuid.uuid4()), 0, cur_pos, section[3]]
                 else:
@@ -192,7 +194,7 @@ class PieceTable:
             # Generate new uuid's
             section[0] = str(uuid.uuid4())
 
-        self.table = [s for s in self.table if not s[0] is ""]
+        self.table = [s for s in self.table if s[0]]
 
         # Remove the closed blocks from memory
         for block_id in self.blocks:

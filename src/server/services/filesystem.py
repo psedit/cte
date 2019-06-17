@@ -68,15 +68,15 @@ class Filesystem(Service):
             message = f"""File {file_path} is not in system RAM.
                       Join the file to load it to memory."""
             self._send_message_client("error-response",
-                                      { "message": message,
-                                        "error_code": ERROR_FILE_NOT_IN_RAM },
+                                      {"message": message,
+                                       "error_code": ERROR_FILE_NOT_IN_RAM},
                                       address)
             return False
         elif not self.file_dict[file_path].is_joined(address):
             message = f"Join the file {file_path} to gain access to it."
             self._send_message_client("error-response",
-                                      { "message": message,
-                                        "error_code": ERROR_FILE_NOT_JOINED },
+                                      {"message": message,
+                                       "error_code": ERROR_FILE_NOT_JOINED},
                                       address)
             return False
         else:
@@ -114,7 +114,7 @@ class Filesystem(Service):
     async def _send_file_list(self, msg) -> None:
         address = msg["sender"][0]
 
-        net_msg = { "root_tree": self.root_tree }
+        net_msg = {"root_tree": self.root_tree}
         self._send_message_client("file-list-response", net_msg, address)
 
     @message_type("cursor-move")
@@ -180,8 +180,8 @@ class Filesystem(Service):
         if not os.path.isfile(os.path.join(self.root_dir, path)):
             message = f"The file {path} is not present on the server."
             self._send_message_client("error-response",
-                                      { "message": message,
-                                        "error_code": ERROR_FILE_NOT_PRESENT },
+                                      {"message": message,
+                                       "error_code": ERROR_FILE_NOT_PRESENT},
                                       address)
             return
 
@@ -215,8 +215,8 @@ class Filesystem(Service):
             message = f"""First save the file {path} or
                       resend request with 'force_exit' = 1"""
             self._send_message_client("error-response",
-                                      { "message": message,
-                                        "error_code": ERROR_FILE_NOT_PRESENT },
+                                      {"message": message,
+                                       "error_code": ERROR_FILE_NOT_PRESENT},
                                       address)
             return
 
@@ -247,15 +247,15 @@ class Filesystem(Service):
     def _send_file_join_broadcast(self, file_path: str, client: Address):
         file = self.file_dict[file_path]
         self._send_message_client("file-join-broadcast",
-                                  { "username": self.usernames[client],
-                                    "file_path": file_path },
+                                  {"username": self.usernames[client],
+                                   "file_path": file_path},
                                   *file.get_clients(exclude=[client]))
 
     def _send_file_leave_broadcast(self, file_path: str, client: Address):
         file = self.file_dict[file_path]
         self._send_message_client("file-leave-broadcast",
-                                  { "username": self.usernames[client],
-                                    "file_path": file_path },
+                                  {"username": self.usernames[client],
+                                   "file_path": file_path},
                                   *file.get_clients(exclude=[client]))
 
     @message_type("file-lock-request")
@@ -319,9 +319,9 @@ class Filesystem(Service):
         Send the file-lock-response message.
         """
         self._send_message_client("file-lock-response",
-                                  { "file_path": file_path,
-                                    "success": success,
-                                    "lock_id": lock_id },
+                                  {"file_path": file_path,
+                                   "success": success,
+                                   "lock_id": lock_id},
                                   client)
 
     def _send_piece_table_change_broadcast(self,
