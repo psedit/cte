@@ -96,7 +96,7 @@ export function convertToJS (pyPieceTable) {
  * @returns {Object.<string, TextBlock>} text blocks
  */
 export function convertBlockToJS (obj, [blockID, closed, lines]) {
-  obj = { ...obj }
+  obj = clone(obj)
   obj[blockID] = {
     open: !closed,
     lines
@@ -332,14 +332,3 @@ export function edit ({ textBlocks, table }, pieceID, lines) {
     textBlocks: newTextblocks
   }
 }
-// export function updateTable (table, piece) {
-//   return table.map(x => x.pieceID === piece.pieceID ? [...piece] : x)
-// }
-
-// export function update (source, target, changedBlock) {
-//   target = { ...target }
-//   target.textBlocks = { ...target.textBlocks, changedBlock }
-//   const piece = getPieceByBlockID(source.table, changedBlock.blockID)
-//   target.table = updateTable(target.table, piece)
-//   return target
-// }
