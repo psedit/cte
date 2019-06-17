@@ -187,7 +187,7 @@ describe('getText', function () {
   })
 })
 
-describe('stich', function () {
+describe('stitch', function () {
   it('should return the complete document in the correct order', function () {
     expect(stitch(largePieceTable)).to.deep.equal([
       ' 123 ',
