@@ -1,4 +1,5 @@
 const uuid = require('uuid/v4')
+const { insert, mergeLeft, clone, remove } = require('ramda')
 
 /**
  * A text block
@@ -243,7 +244,7 @@ export function getRange (table, lineNumber, length) {
  * @param {string} pieceID
  * @returns {TextBlock} the corresponding TextBlock
  */
-export function getBLock ({ textBlocks, table }, pieceID) {
+export function getBlock ({ textBlocks, table }, pieceID) {
   const piece = getPieceByPieceID(table, pieceID)
   return textBlocks[piece.blockID]
 }
@@ -258,11 +259,20 @@ export function getPieceByPieceID (table, pieceID) {
 }
 
 /**
+ * @param {Piece[]} table
+ * @param {string} pieceID
+ * @returns {number}
+ */
+export function getPieceIndexByPieceID (table, pieceID) {
+  return table.findIndex(x => x.pieceID === pieceID)
+}
+
+/**
  * Returns the new stitched file according to the piece table.
  * @param {PieceTable} pieceTable
  * @returns {string[]} the stiched file
  */
-export function stich ({ textBlocks, table }) {
+export function stitch ({ textBlocks, table }) {
   return [].concat(
     ...table.map(({ blockID, start, length }) =>
       textBlocks[blockID].lines.slice(start, start + length)
@@ -289,11 +299,39 @@ export function getFile ({ textBlocks, table }) {
   return table.map(({ pieceID }) => {
     return {
       pieceID,
-      text: getTextByPieceID({ textBlocks, table }, pieceID)
+      text: getTextByPieceID({ textBlocks, table }, pieceID),
+      open: getBlock({ textBlocks, table }, pieceID).open
     }
   })
 }
 
+/**
+ * @param {PieceTable} pieceTable
+ * @param {number} pieceID
+ * @param {string[]} lines
+ * @return {PieceTable}
+ */
+export function edit ({ textBlocks, table }, pieceID, lines) {
+  const index = getPieceIndexByPieceID(table, pieceID)
+  const piece = table[index]
+  const block = textBlocks[piece.blockID]
+
+  const newPiece = {
+    ...piece,
+    length: lines.length
+  }
+
+  const newTable = clone(table)
+  newTable[index] = newPiece
+  const newBlock = mergeLeft({ lines }, block)
+  const newTextblocks = clone(textBlocks)
+  newTextblocks[piece.blockID] = newBlock
+
+  return {
+    table: newTable,
+    textBlocks: newTextblocks
+  }
+}
 // export function updateTable (table, piece) {
 //   return table.map(x => x.pieceID === piece.pieceID ? [...piece] : x)
 // }

@@ -9,10 +9,11 @@ import {
   convertChangeToJS,
   getStart,
   getRange,
-  getBLock,
-  stich,
+  getBlock,
+  stitch,
   getTextByPieceID,
-  getFile
+  getFile,
+  edit
 } from '../../../src/main/pieceTable'
 
 const expected = {
@@ -170,7 +171,7 @@ const largePieceTable = {
 
 describe('getBlock', function () {
   it('should given an pieceID return the corresponding block', function () {
-    expect(getBLock(largePieceTable, '2')).to.deep.equal({
+    expect(getBlock(largePieceTable, '2')).to.deep.equal({
       open: false,
       lines: ['xabc ', ' 2123 ', ' g😀', 'dfsasdfasdfasd']
     })
@@ -188,7 +189,7 @@ describe('getText', function () {
 
 describe('stich', function () {
   it('should return the complete document in the correct order', function () {
-    expect(stich(largePieceTable)).to.deep.equal([
+    expect(stitch(largePieceTable)).to.deep.equal([
       ' 123 ',
       ' 😀',
       ' g😀',
@@ -200,9 +201,25 @@ describe('stich', function () {
 describe('getFile', function () {
   it('should return the file', function () {
     expect(getFile(largePieceTable)).to.deep.equal([
-      { pieceID: '1', text: [' 123 ', ' 😀'] },
-      { pieceID: '2', text: [' g😀'] },
-      { pieceID: '3', text: ['fabc '] }
+      { pieceID: '1', text: [' 123 ', ' 😀'], open: false },
+      { pieceID: '2', text: [' g😀'], open: false },
+      { pieceID: '3', text: ['fabc '], open: false }
+    ])
+  })
+})
+
+describe('edit', function () {
+  it('should return an edited piece table', function () {
+    // console.log(edit(largePieceTable, '3', ['kaas', 'hoi']))
+    expect(getFile(edit(largePieceTable, '3', ['kaas', 'hoi']))).to.deep.equal([
+      { pieceID: '1', text: [' 123 ', ' 😀'], open: false },
+      { pieceID: '2', text: [' g😀'], open: false },
+      { pieceID: '3', text: ['kaas', 'hoi'], open: false }
+    ])
+    expect(getFile(edit(largePieceTable, '1', ['abc ', ' 123 ', ' 😀aaa']))).to.deep.equal([
+      { pieceID: '1', text: [' 123 ', ' 😀aaa'], open: false },
+      { pieceID: '2', text: [' g😀'], open: false },
+      { pieceID: '3', text: ['fabc '], open: false }
     ])
   })
 })
