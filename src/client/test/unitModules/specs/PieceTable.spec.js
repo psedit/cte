@@ -210,7 +210,6 @@ describe('getFile', function () {
 
 describe('edit', function () {
   it('should return an edited piece table', function () {
-    // console.log(edit(largePieceTable, '3', ['kaas', 'hoi']))
     expect(getFile(edit(largePieceTable, '3', ['kaas', 'hoi']))).to.deep.equal([
       { pieceID: '1', text: [' 123 ', ' 😀'], open: false },
       { pieceID: '2', text: [' g😀'], open: false },

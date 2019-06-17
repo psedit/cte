@@ -332,11 +332,3 @@ export function edit ({ textBlocks, table }, pieceID, lines) {
     textBlocks: newTextblocks
   }
 }
-
-// export function update (source, target, changedBlock) {
-//   target = { ...target }
-//   target.textBlocks = { ...target.textBlocks, changedBlock }
-//   const piece = getPieceByBlockID(source.table, changedBlock.blockID)
-//   target.table = updateTable(target.table, piece)
-//   return target
-// }
