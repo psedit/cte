@@ -44,11 +44,11 @@ const uuid = require('uuid/v4')
  * @property {TextBlock} changedBlock the block that is changed
  */
 
- /**
-  * @typedef File
-  * @property {string} pieceID
-  * @property {string[]} text the text of the file
-  */
+/**
+ * @typedef FilePiece
+ * @property {string} pieceID
+ * @property {string[]} text the text of the file
+ */
 
 /**
  * Returns a create function
@@ -281,13 +281,17 @@ export function getTextByPieceID ({ textBlocks, table }, pieceID) {
   return block.lines.slice(start, start + length)
 }
 
-export function getFile({ textBlocks, table}) {
-  return table.map(({pieceID}) => {
+/**
+ * @param {PieceTable}
+ * @returns {FilePiece[]} a list of file pieces
+ */
+export function getFile ({ textBlocks, table }) {
+  return table.map(({ pieceID }) => {
     return {
       pieceID,
       text: getTextByPieceID({ textBlocks, table }, pieceID)
     }
-  }
+  })
 }
 
 // export function updateTable (table, piece) {
