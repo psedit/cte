@@ -478,6 +478,8 @@ class Filesystem(Service):
 
         file = self.file_dict[file_path]
         file.update_content(piece_uuid, block_content)
+
+        # TODO: broadcasten
         
 
 if __name__ == "__main__":
