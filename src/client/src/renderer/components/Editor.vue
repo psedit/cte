@@ -89,16 +89,14 @@
     },
 
     mounted () {
-      const cm = this.$refs.codemirror
-
       this.updateCode()
       this.$store.subscribe((mutation, state) => {
         if (mutation.type === 'updateCode') {
           this.updateCode()
-          cm.ghostCursors.changeFilepath(this.$store.state.fileTracker.openFile).then(cursors => {
-            console.log(cursors)
-            this.updateUsers(cursors)
-          })
+          // cm.ghostCursors.changeFilepath(this.$store.state.fileTracker.openFile).then(cursors => {
+          //   console.log(cursors)
+          //   this.updateUsers(cursors)
+          // })
         }
       })
 
@@ -113,8 +111,11 @@
 
 <style scoped lang="scss">
   .editor{
-      width: 100%;
-      height: calc(100vh - 3em);
+    width: 100%;
+    /*height: 100%;*/
+    /*max-height: 100%;*/
+    overflow-y: hidden;
+      /*height: calc(100vh - 3em);*/
     background-color: #272822;
   }
 

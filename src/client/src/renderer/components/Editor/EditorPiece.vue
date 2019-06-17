@@ -114,6 +114,10 @@
           })
         })
 
+        cm.on('scrollCursorIntoView', (_, e) => {
+          e.preventDefault()
+        })
+
         const gutter = cm.getGutterElement()
         gutter.addEventListener('mousedown', (e) => {
           const line = cm.lineAtHeight(e.pageY)
