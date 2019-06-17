@@ -161,3 +161,9 @@ class ServerFile:
 
     def change_file_path(self, new_path: str) -> None:
         self.file_path_relative = new_path
+
+    def update_content(self, piece_id: str, content: str) -> None:
+        """
+        Updates the content in the piecetable
+        """
+        self.file_pt.set_piece_content(piece_id, content)

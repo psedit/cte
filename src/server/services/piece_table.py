@@ -139,6 +139,37 @@ class PieceTable:
 
         return []
 
+    def get_piece(self, piece_id: str) -> List[Any]:
+        """
+        Returns the piece by piece_id, returns empty list otherwise
+        """
+        for piece in self.table:
+            if piece[0] == piece_id:
+                return  piece
+        
+        return []
+
+    def set_piece_size(self, piece_id: str, start:int, length:int):
+        """
+        Sets the length of a piece in the table
+        """
+        for piece in self.table:
+            if piece[0] == piece_id:
+                piece[2] = start
+                piece[3] = length
+
+    def set_piece_content(self, piece_id: str, content: str) -> None:
+        """
+        Sets the contents of a piece in the piecetable
+        """
+        _, block_id, start, _ = self.get_piece(piece_id)
+
+        text_block = self.blocks[block_id]
+
+        # set the content of the current block
+        text_block.set_content(content)
+        self.set_piece_size(piece_id, start, len(text_block))
+
     def get_piece_block_id(self, piece_id: str) -> int:
         """
         Returns the block id of a single piece in the table.

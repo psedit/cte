@@ -459,5 +459,26 @@ class Filesystem(Service):
                                   *resp["content"]["client_list"])
 
 
+    @message_type("file-delta")
+    async def _edit_block(self, msg) -> None:
+        """
+        Replaces a line in the given block of the piecetable
+        with the new provided content.
+        """"
+
+        try:
+            content = msg["content"]
+            file_path = content["file_path"]
+            piece_uuid = content["piece_uuid"]
+            block_content = content["content"]
+        except KeyError as e:
+            #TODO: error sturen
+            print (e)
+            return
+
+        file = self.file_dict[file_path]
+        file.update_content(piece_uuid, block_content)
+        
+
 if __name__ == "__main__":
     Filesystem.start()
