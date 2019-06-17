@@ -210,20 +210,6 @@ export function getStart (table, index) {
   return len(table.slice(0, index))
 }
 
-export function getIndexByBlockID (table, blockID) {
-  // eslint-disable-next-line
-  return table.findIndex(x => x.blockID == blockID)
-}
-
-export function getLineRange (table, blockID) {
-  const index = getIndexByBlockID(table, blockID)
-  const start = getStart(table, index)
-  return {
-    start,
-    end: start + table[index].length
-  }
-}
-
 /**
  * @param {Piece[]} table
  * @param {number} lineNumber
@@ -266,16 +252,6 @@ export function getPieceByPieceID (table, pieceID) {
 }
 
 /**
- * @param {Piece[]} table
- * @param {string|number} blockID
- * @returns {Piece}
- */
-export function getPieceByBlockID (table, blockID) {
-  // eslint-disable-next-line
-  return table.find(x => x.blockID == blockID)
-}
-
-/**
  * Returns the new stitched file according to the piece table.
  * @param {PieceTable} pieceTable
  * @returns {string[]} the stiched file
@@ -290,17 +266,6 @@ export function stich ({ textBlocks, table }) {
 
 /**
  * @param {PieceTable} pieceTable
- * @param {string|number} blockID
- * @returns {string[]} the text of the corresponding block
- */
-export function getTextByBlockID ({ textBlocks, table }, blockID) {
-  const { start, length } = getPieceByBlockID(table, blockID)
-  const block = textBlocks[blockID]
-  return block.lines.slice(start, start + length)
-}
-
-/**
- * @param {PieceTable} pieceTable
  * @param {string} pieceID
  * @returns {string[]} the text of the corresponding block
  */
@@ -310,14 +275,14 @@ export function getTextByPieceID ({ textBlocks, table }, pieceID) {
   return block.lines.slice(start, start + length)
 }
 
-export function updateTable (table, piece) {
-  return table.map(x => x.pieceID === piece.pieceID ? [...piece] : x)
-}
+// export function updateTable (table, piece) {
+//   return table.map(x => x.pieceID === piece.pieceID ? [...piece] : x)
+// }
 
-export function update (source, target, changedBlock) {
-  target = { ...target }
-  target.textBlocks = { ...target.textBlocks, changedBlock }
-  const piece = getPieceByBlockID(source.table, changedBlock.blockID)
-  target.table = updateTable(target.table, piece)
-  return target
-}
+// export function update (source, target, changedBlock) {
+//   target = { ...target }
+//   target.textBlocks = { ...target.textBlocks, changedBlock }
+//   const piece = getPieceByBlockID(source.table, changedBlock.blockID)
+//   target.table = updateTable(target.table, piece)
+//   return target
+// }
