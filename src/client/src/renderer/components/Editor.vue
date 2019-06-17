@@ -11,7 +11,6 @@
 
 <script>
   import CodeMirror from './Editor/CodeMirror'
-  import connector from '../../main/connector.js'
   import {getRandomColor} from './Editor/RandomColor'
 
   export default {
@@ -46,7 +45,6 @@
           backgroundColor: user.color
         }
       }
-
     },
 
     computed: {
@@ -56,9 +54,6 @@
     },
 
     mounted () {
-      // this.socket_init()
-
-      // Add fake demo cursor
       const cm = this.$refs.codemirror
 
       this.updateCode()
