@@ -2,8 +2,8 @@
   <div class="editor">
     <div class="editor-pieces">
       <editor-piece
-              v-for="(code, index) in pieces"
-              :key="index"
+              v-for="(piece, index) in pieces"
+              :key="piece.pieceID"
               :index="index"
               :pieces="pieces"
               :editable="index === 1"
@@ -21,20 +21,8 @@
 <script>
   import EditorPiece from './Editor/EditorPiece'
   import {getRandomColor} from './Editor/RandomColor'
-
-  // temp code pieces
-  const pieces = [`const a  = 1;
-const b = 1;
-/*`,
-  ` * Calculates fibonacci's sequence
- */
-console.log(a)
-console.log(b)
-while(true){`,
-  `    [a, b] = [b, a+b]
-    console.log(a)
-}`
-  ]
+  import {getFile} from '../../main/pieceTable'
+  import largePieceTable from './Editor/bigTable'
 
   export default {
     name: 'Editor',
@@ -45,7 +33,7 @@ while(true){`,
     data () {
       return {
         code: '',
-        pieces: pieces,
+        // pieces: pieces,
         activeUsers: [],
         lockDragRange: null
       }
@@ -89,6 +77,14 @@ while(true){`,
     computed: {
       ready () {
         return this.code !== undefined && this.code !== ''
+      },
+
+      pieces () {
+        console.log(largePieceTable)
+        // debugger
+        const file = getFile(largePieceTable)
+        console.log(file)
+        return file
       }
     },
 
@@ -118,7 +114,7 @@ while(true){`,
 <style scoped lang="scss">
   .editor{
       width: 100%;
-      height: calc(100vh - 2em);
+      height: calc(100vh - 3em);
     background-color: #272822;
   }
 

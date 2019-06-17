@@ -11,6 +11,7 @@
   import 'codemirror/theme/monokai.css'
   import 'codemirror/mode/javascript/javascript'
   import 'codemirror/mode/python/python'
+  // import {} from '../../'
 
   export default {
     name: 'EditorPiece.vue',
@@ -51,8 +52,9 @@
       })
 
       this.$options.cminstance = cm
+      // debugger
 
-      cm.setValue(this.pieces[this.index])
+      cm.setValue(this.pieces[this.index].text.join('\n'))
 
       this.$el.style.setProperty('--gutter-hue', Math.round(Math.random() * 360))
       cm.getGutterElement().setAttribute('title', this.user)
@@ -68,7 +70,10 @@
       addPreviousText () {
         const cm = this.$options.cminstance
 
-        const prevText = this.pieces.slice(0, this.index).join('\n')
+        // debugger
+        const prevText = this.pieces.slice(0, this.index).map(piece => {
+          return piece.text.join('\n')
+        }).join('\n')
         this.insertText(prevText + '\n', {line: 0, ch: 0})
 
         const lines = prevText.split('\n').length
@@ -140,7 +145,8 @@
 
       lineNumberFormatter (line) {
         if (line === 1 && this.index !== 0) {
-          const i = this.pieces.slice(0, this.index).join('\n').split('\n').length
+          const i = this.pieces.slice(0, this.index).reduce((acc, piece) => acc + piece.text.length, 0)
+          // const i = this.pieces.slice(0, this.index).join('\n').split('\n').length
           return (i + 1).toString()
         }
         return (line).toString()
