@@ -7,6 +7,7 @@
   import 'codemirror/lib/codemirror.css'
   import 'codemirror/theme/cobalt.css'
   import 'codemirror/mode/javascript/javascript'
+  import 'codemirror/mode/python/python'
 
   import Vue from 'vue'
   import GhostCursors from './GhostCursors'
@@ -42,8 +43,8 @@
 
     watch: {
       value (newVal, oldVal) { // watch it
+        this.updateMode()
         this.cminstance.setValue(this.value)
-        // console.log('Prop changed: ', newVal, ' | was: ', oldVal)
       }
     },
 
@@ -96,7 +97,7 @@
 
       initializeGhostCursors () {
         // debugger
-        const wrapper = this.cminstance.display.cursorDiv.parentElement
+        const wrapper = this.cminstance.getScrollerElement()
         const GhostCursorClass = Vue.extend(GhostCursors)
         this.ghostCursors = new GhostCursorClass({
           propsData: {
@@ -106,6 +107,21 @@
 
         this.ghostCursors.$mount()
         wrapper.appendChild(this.ghostCursors.$el)
+      },
+
+      updateMode () {
+        const path = this.$store.state.fileTracker.openFile
+        let mode = null
+        let extension = path.match(/\.([a-z]*)$/)
+        if (extension && extension[1]) {
+          extension = extension[1]
+          if (extension === 'py') {
+            mode = 'python'
+          } else if (extension === 'js') {
+            mode = 'javascript'
+          }
+        }
+        this.codemirror.setOption('mode', mode)
       },
 
       lock (start, end) {
@@ -139,6 +155,8 @@
 
     mounted () {
       window.CodeMirror = CodeMirror
+      require('codemirror/mode/javascript/javascript')
+
       this.initialize()
       window.edit = this.cminstance
     },

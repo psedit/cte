@@ -1,12 +1,12 @@
 <template>
   <div id="ghost-cursors">
-    <ghost-cursor v-for="cursor in cursors"
+    <ghost-cursor v-for="(cursor, index) in cursors"
                  :filepath="cursor.filepath"
                  :username="cursor.username"
                  :line="cursor.line"
                  :ch="cursor.ch"
                  :cminstance="cminstance"
-                 :key="cursor.filepath + cursor.username"/>
+                 :key="index"/>
   </div>
 </template>
 
@@ -52,23 +52,25 @@
             return
           }
         }
+        this.addCursor(username, filepath, row, column)
       },
 
       changeFilepath (path) {
         this.cursors.splice(0, this.cursors.length)
-        Connector.request(
+        return Connector.request(
           'cursor-list-request',
           'cursor-list-response',
           { file_path: path }
         ).then((response) => {
           for (const cursor of response.cursor_list) {
             this.addCursor(
-              cursor.username,
-              cursor.filepath,
-              cursor.row,
-              cursor.column
+              cursor[0],
+              path,
+              cursor[1],
+              cursor[2]
             )
           }
+          return this.cursors
         })
       }
     }
@@ -76,5 +78,9 @@
 </script>
 
 <style scoped>
-
+  #ghost-cursors {
+    position: absolute;
+    top: 0;
+    z-index: 4;
+  }
 </style>

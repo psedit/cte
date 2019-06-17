@@ -2,8 +2,9 @@
   <div class="editor">
     <code-mirror v-show="this.ready" v-model="code" ref="codemirror"/>
 
-    <div id="placeholder" v-if="!this.ready">
-      ⇚ Select a file
+    <div id="placeholder" v-if="!this.ready">⇚ Select a file</div>
+    <div class="user-list">
+      <div class="user-list-item" v-for="user in activeUsers" :title="user.username" :style="userStyle(user)">{{ user.username[0].toUpperCase() }}</div>
     </div>
   </div>
 </template>
@@ -11,6 +12,7 @@
 <script>
   import CodeMirror from './Editor/CodeMirror'
   import connector from '../../main/connector.js'
+  import {getRandomColor} from './Editor/RandomColor'
 
   export default {
     name: 'Editor',
@@ -20,49 +22,29 @@
     },
     data () {
       return {
-        code: ''
+        code: '',
+        activeUsers: []
       }
     },
     methods: {
+      /** Updates the code that is viewed by the editor. */
       updateCode () {
         this.code = this.$store.state.fileTracker.code
-      // },
-      // startFakeMovement () {
-      //   const cm = this.$refs.codemirror
-      //   const timeout = (func) => setTimeout(func, 1000)
-      //   function step1 () {
-      //     cm.updateShadowCursorLocation(0, 1, 2)
-      //     timeout(step2)
-      //   }
-      //   function step2 () {
-      //     cm.updateShadowCursorLocation(0, 1, 3)
-      //     timeout(step3)
-      //   }
-      //   function step3 () {
-      //     cm.updateShadowCursorLocation(0, 3, 2)
-      //     timeout(step4)
-      //   }
-      //   function step4 () {
-      //     cm.updateShadowCursorLocation(0, 3, 4)
-      //     timeout(step1)
-      //   }
-      //
-      //   setTimeout(step1, 1000)
-      // },
-      //
-      // socket_init () {
-      //   console.log('fdjsfs')
-      //   connector.addEventListener('open', () => {
-      //     console.log('Hello')
-      //
-      //     connector.listenToMsg('file-lock-change-broadcast', (content) => {
-      //       console.log(content)
-      //     })
-      //
-      //     connector.request('file-lock-request', 'file-lock-respond', { file_path: 'file.txt', start: 0, length: -1 }).then((content) => {
-      //       console.log(content)
-      //     })
-      //   })
+      },
+      updateUsers (cursors) {
+        this.activeUsers = cursors.map(cursor => {
+          return {
+            username: cursor.username,
+            line: cursor.line,
+            ch: cursor.ch,
+            color: getRandomColor(cursor.username)
+          }
+        })
+      },
+      userStyle (user) {
+        return {
+          backgroundColor: user.color
+        }
       }
 
     },
@@ -83,27 +65,54 @@
       this.$store.subscribe((mutation, state) => {
         if (mutation.type === 'updateCode') {
           this.updateCode()
-          cm.ghostCursors.changeFilepath('test.txt')
+          cm.ghostCursors.changeFilepath(this.$store.state.fileTracker.openFile).then(cursors => {
+            console.log(cursors)
+            this.updateUsers(cursors)
+          })
         }
-        // console.log(mutation.type)
-        // console.log(mutation.payload)
       })
     }
   }
 </script>
 
-<style scoped>
+<style scoped lang="scss">
   .editor{
       width: 100%;
-      height: calc(100vh - 50px);
+      height: calc(100vh - 2em);
   }
 
   #placeholder{
     font-size: 3em;
-    height: 100vh;
-    width: 100vh;
-    line-height: 100vh;
+    height: 100%;
+    width: 100%;
+    line-height: 100%;
     color: #555;
     text-align: center;
+
+    &:before {
+      content: "";
+      display: inline-block;
+      height: 100%;
+      vertical-align: middle;
+    }
+  }
+
+  .user-list {
+    position: fixed;
+    bottom: 1em;
+    right: 1em;
+
+    &-item {
+      display: inline-block;
+      width: 2em;
+      height: 2em;
+      border-radius: 1em;
+      margin-left: 0.5em;
+      line-height: 2em;
+      text-align: center;
+      background: black;
+      color: #fff;
+      cursor: pointer;
+    }
   }
 </style>

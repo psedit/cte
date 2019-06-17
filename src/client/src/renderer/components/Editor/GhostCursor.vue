@@ -3,9 +3,8 @@
 </template>
 
 <script>
-  import Color from 'color'
-
-  const pearsonTable = [...new Array(360)].map((_, i) => i).sort(() => 0.5 - Math.random())
+  import {getRandomColor} from './RandomColor'
+  // import CodeMirror from 'codemirror/lib/codemirror'
 
   export default {
     name: 'GhostCursor',
@@ -16,14 +15,16 @@
       ch: Number,
       cminstance: Object
     },
+    data () {
+      return {
+        top: 0,
+        left: 0
+      }
+    },
 
     computed: {
       backgroundColor () {
-        // Peason hash to generate hue
-        const hue = this.username.split('').reduce((hash, char) => {
-          return pearsonTable[(hash + char.charCodeAt(0)) % (pearsonTable.length - 1)]
-        }, this.username.length % (pearsonTable.length - 1))
-        return Color.hsl(hue, 90, 50)
+        return getRandomColor(this.username)
       },
 
       color () {
@@ -32,15 +33,34 @@
       },
 
       style () {
-        const {top, left} = this.cminstance.charCoords({line: this.line, ch: this.ch}, 'local')
         return {
-          left: left + 'px',
-          top: top + 'px',
+          left: this.left + 'px',
+          top: this.top + 'px',
           '--user-name': `'${this.username}'`,
           backgroundColor: this.backgroundColor.string(),
           color: this.color
         }
+      },
+
+      gutterWidth () {
+        return this.cminstance.getGutterElement().getBoundingClientRect().width
       }
+    },
+    methods: {
+      updateCoords () {
+        const pos = this.cminstance.charCoords({line: this.line, ch: this.ch}, 'local')
+        this.left = pos.left + this.gutterWidth
+        this.top = pos.top
+      }
+    },
+    watch: {
+      line () { this.updateCoords() },
+      ch () { this.updateCoords() }
+    },
+    mounted () {
+      console.log()
+      this.cminstance.on('update', this.updateCoords)
+      this.updateCoords()
     }
   }
 </script>
@@ -48,6 +68,7 @@
 <style lang="scss" scoped>
   .ghostCursor {
     position: absolute;
+    pointer-events: none;
     height: 1em;
     --hue-color: 170;
     --user-name: 'no';
