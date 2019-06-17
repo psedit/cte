@@ -285,7 +285,7 @@ export function getFile({ textBlocks, table}) {
   return table.map(({pieceID}) => {
     return {
       pieceID,
-      text: getTextByPieceID(pieceID)
+      text: getTextByPieceID({ textBlocks, table }, pieceID)
     }
   }
 }
