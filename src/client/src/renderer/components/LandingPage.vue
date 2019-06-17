@@ -1,8 +1,9 @@
 <template>
   <div id="wrapper">
+    <sidebar id="sidebar" v-if="isLoggedIn"/>
+    <editor id="editor" v-if="isLoggedIn"/>
+    <login id="login" v-if="!isLoggedIn"/>
     <tabs id="tabs"/>
-    <sidebar id="sidebar"/>
-    <editor id="editor"/>
     <error-messenger id="error-messenger"/>
   </div>
 </template>
@@ -11,13 +12,19 @@
 <script>
   import Editor from './Editor'
   import Sidebar from './Sidebar'
+  import Login from './Login'
   import Tabs from './Tabs/Tabs'
   import ErrorMessenger from './ErrorMessenger'
   import connector from '../../main/connector.js'
 
   export default {
     name: 'landing-page',
-    components: { Editor, Sidebar, Tabs, ErrorMessenger },
+    components: { Editor, Sidebar, Login, Tabs, ErrorMessenger },
+    computed: {
+      isLoggedIn () {
+        return this.$store.state.user.isLoggedIn
+      }
+    },
     mounted () {
       const username = require('os').userInfo().username
       connector.addEventListener('open', () => {

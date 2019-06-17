@@ -2,7 +2,6 @@ from typing import List, Tuple, Dict, Any
 from text_block import TextBlock
 import uuid
 
-
 class PieceTable:
     """
     Text file data structure consisting of the original file together with
@@ -22,9 +21,6 @@ class PieceTable:
 
         orig_piece = TextBlock(lines, False)
         orig_piece_id = str(uuid.uuid4())
-        print("###########################")
-        print(orig_piece_id)
-        print("###########################")
         self.blocks: Dict[int, TextBlock] = {0: orig_piece}
         self.table: List[List[Any]] = [[orig_piece_id, 0, 0, len(lines)]]
 
@@ -36,8 +32,7 @@ class PieceTable:
 
     def __str__(self) -> str:
         fmt = "{:>38}" + "{:>10}"*4
-        str_table = fmt.format("Piece ID", "Block ID", "Start",
-                               "Length", "Open") + "\n"
+        str_table = fmt.format("Piece ID", "Block ID", "Start", "Length", "Open") + "\n"
 
         for p in self.table:
             str_table += fmt.format(*p, self.blocks[p[0]].is_open()) + "\n"
@@ -66,7 +61,7 @@ class PieceTable:
         """
         cur_loc: int = 0
         for piece in self.table:
-            if piece[0] == piece_id:
+            if piece[0] is piece_id:
                 return cur_loc
             cur_loc += piece[3]
         return -1
@@ -95,6 +90,7 @@ class PieceTable:
         """
         if length < 0:
             length = len(self)
+        print(length)
 
         lines: List[str] = []
         length_rem: int = length
@@ -120,34 +116,13 @@ class PieceTable:
         If the given block is locked, returns the current piece length
         and starting location within the file.
         """
-        # TODO
         cur_pos = 0
         for piece in self.table:
-            if piece[0] == piece_id:
+            if piece[0] is piece_id:
                 return [cur_pos, piece[3]]
             else:
                 cur_pos += piece[3]
         return []
-
-    def get_piece_content(self, piece_id: str) -> List[str]:
-        """
-        Returns the content of a single piece in the table.
-        """
-        for p_id, block_id, start, length in self.table:
-            if p_id == piece_id:
-                return self.blocks[block_id].get_lines(start, length)
-
-        return []
-
-    def get_piece_block_id(self, piece_id: str) -> int:
-        """
-        Returns the block id of a single piece in the table.
-        """
-        for p_id, block_id, _, _ in self.table:
-            if p_id == piece_id:
-                return block_id
-
-        return -1
 
     def stitch(self) -> List[str]:
         """
@@ -155,10 +130,10 @@ class PieceTable:
         """
         stitched_file: List[str] = []
         position = 0
-        for _, block_id, start, len in self.table:
-            position += len
+        for _, block_id, start, length in self.table:
+            position += length
 
-            stitched_file.extend(self.blocks[block_id].get_lines(start, len))
+            stitched_file.extend(self.blocks[block_id].get_lines(start, length))
 
         return stitched_file
 
@@ -182,7 +157,7 @@ class PieceTable:
             else:
                 self.table[last_open_index][3] += section[3]
 
-                if i == last_open_index:
+                if i is last_open_index:
                     # Move the section to 'orig' and give it a new uuid.
                     section = [str(uuid.uuid4()), 0, cur_pos, section[3]]
                 else:
@@ -194,7 +169,7 @@ class PieceTable:
             # Generate new uuid's
             section[0] = str(uuid.uuid4())
 
-        self.table = [s for s in self.table if s[0]]
+        self.table = [s for s in self.table if not s[0] is ""]
 
         # Remove the closed blocks from memory
         for block_id in self.blocks:
@@ -243,7 +218,6 @@ class PieceTable:
         # Find and shrink previous containing block.
         index, offset = self.line_to_table_index(start)
         prev_len: int = self.table[index][2]
-        self.table[index][0] = str(uuid.uuid4())
         self.table[index][2] = offset
 
         # Insert the new block in the table
@@ -289,5 +263,5 @@ class PieceTable:
         anymore.
         """
         for piece in self.table:
-            if piece[0] == piece_id:
+            if piece[0] is piece_id:
                 self.blocks[piece[1]].close()
