@@ -6,7 +6,8 @@
       <home-icon title="Go to home folder" class="button" @click="home"/>
     </div>
     <div class="file-tools">
-      <upload title="Upload file" class="button" @click="uploadFile"/>
+      <upload title="Upload directory" class="button" @click="uploadDir"/>
+      <file-upload title="Upload file" class="button" @click="uploadFile"/>
       <file-plus title="Add new file" class="button" @click="createFile"/>
       <file-document-edit title="Rename file" class="button" @click="renameFile"/>
       <file-move title="Relocate file" class="button" @click="relocateFile"/>
@@ -25,12 +26,14 @@
   import FilePlus from 'vue-material-design-icons/FilePlus'
   import FileDocumentEdit from 'vue-material-design-icons/FileDocumentEdit'
   import FileMove from 'vue-material-design-icons/FileMove'
+  import FileUpload from 'vue-material-design-icons/FileUpload'
   import Upload from 'vue-material-design-icons/Upload'
   import connector from '../../main/connector'
   import FileTree from './Sidebar/FileTree'
   import * as fileManager from './Sidebar/fileManager'
   const { dialog } = require('electron').remote
   const dialogs = require('dialogs')
+  const fs = require('fs')
 
   export default {
     name: 'sidebar',
@@ -48,7 +51,8 @@
       FilePlus,
       FileDocumentEdit,
       FileMove,
-      Upload
+      Upload,
+      FileUpload
     },
     computed: {
       /**
@@ -98,6 +102,8 @@
       }
     },
     methods: {
+      // TODO: FIX CANCELLEN IN ELKE METHODE.
+
       /**
        * When clicking on a folder, push the folder name to currPath.
        *
@@ -190,7 +196,7 @@
            * changed into a file and a directory into a directory.
            */
           let changeName = (newName) => {
-            if (newName === '') {
+            if (newName === '' || newName === undefined) {
               return
             }
 
@@ -214,15 +220,20 @@
        * Change location of file or directory.
        */
       relocateFile () {
-        console.log('relocating file...')
         let selectFolder = (filePath, payload) => {
-          this.promptBox('Enter path', filePath, (reponse) => {
-            console.log('Requesting location change: ', reponse)
-            fileManager.locationChange(filePath, reponse)
+          this.promptBox('Enter path', filePath, (response) => {
+            if (response === undefined || response === '') {
+              return
+            }
+            console.log('Requesting location change: ')
+            console.log('old_path: ', filePath)
+            console.log('new_path: ', response)
+            fileManager.locationChange(filePath, response)
           })
         }
         this.selectItem('File move', 'select a file to move', '', this.currItems, 'file', selectFolder)
       },
+
       /* Let the user select a file.
         * Itemtype can be:
         *  'file'
@@ -244,6 +255,7 @@
               return true
           }
         }
+
         let filterItems = items.filter(filterFunc)
 
         /* Add a cancel button
@@ -274,10 +286,38 @@
       },
 
       /**
+       * Upload new directory to server.
+       */
+      uploadDir () {
+        console.log(dialog.showOpenDialog({ properties: ['openDirectory'] }))
+        /* TODO: voor alle elementen in map: uploadDir op elke map en uploadFile
+         * op elk bestand (recursief). Let op currPathString...
+         */
+      },
+
+      /**
        * Upload new file to server.
        */
       uploadFile () {
-        console.log('uploading')
+        let newFilePath = dialog.showOpenDialog({ properties: ['openFile'] })
+
+        if (newFilePath === '' || newFilePath === undefined) {
+          return
+        }
+
+        /* Get name of file from path. */
+        let lastIndex = newFilePath.lastIndexOf('/')
+        let newFileName = newFilePath.slice(lastIndex + 1, newFilePath.length)
+        let path = this.currPathString + newFileName
+        console.log('NEW FILE NAME: ' + newFileName)
+        fs.readFile(newFilePath, (err, data) => {
+          if (err) {
+            console.log(err)
+            return
+          }
+
+          fileManager.uploadFile(path, data)
+        })
       },
 
       /**
@@ -292,7 +332,7 @@
         Note: if file alread exists, it will be overwritten.`
 
         d.prompt(promptString, 'newFile', newFileName => {
-          if (newFileName === '') {
+          if (newFileName === '' || newFileName === undefined) {
             return
           }
 
@@ -313,27 +353,34 @@
         // })
         // files = ['cancel', ...files]
 
-        let items = ['cancel'].concat(this.itemNames()) // TODO: Remove if only file deletion allowed
+        // let items = ['cancel'].concat(this.itemNames()) // TODO: Remove if only file deletion allowed
 
-        /* Options needed for the message box. */
-        let options = {
-          type: 'question',
-          // buttons: files, // FIXME: Change to 'files' if only file deletion allowed
-          buttons: items,
-          defaultId: 0,
-          title: 'Delete file',
-          message: 'Select file to delete',
-          detail: 'This cannot be undone!'
-        }
+        // /* Options needed for the message box. */
+        // let options = {
+        //   type: 'question',
+        //   // buttons: files, // FIXME: Change to 'files' if only file deletion allowed
+        //   buttons: items,
+        //   defaultId: 0,
+        //   title: 'Delete file',
+        //   message: 'Select file to delete',
+        //   detail: 'This cannot be undone!'
+        // }
 
-        /* Let user choose which file to delete. */
-        dialog.showMessageBox(null, options, (response) => {
+        // /* Let user choose which file to delete. */
+        // dialog.showMessageBox(null, options, (response) => {
+        //   /* When user selects 'cancel', do nothing. */
+        //   if (response === 0) {
+        //     return
+        //   }
+
+        //   fileManager.removeFile(`${this.currPathString}${items[response]}`)
+        // })
+        this.selectItem('Delete file', 'Select file to delete', 'This cannot be undone!', this.currItems, 'file', (filePath) => {
           /* When user selects 'cancel', do nothing. */
-          if (response === 0) {
+          if (filePath === undefined) {
             return
           }
-
-          fileManager.removeFile(`${this.currPathString}${items[response]}`)
+          fileManager.removeFile(filePath)
         })
       },
 
@@ -422,7 +469,7 @@
   .file-tools {
     background-color: #555;
     display: grid;
-    grid-template-columns: 1fr auto auto auto auto auto;
+    grid-template-columns: 1fr auto auto auto auto auto auto;
     grid-gap: 0.5em;
     align-items: center;
     color: #fff;
