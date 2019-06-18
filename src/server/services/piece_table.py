@@ -273,9 +273,9 @@ class PieceTable:
 
         # Find and shrink previous containing block.
         index, offset = self.line_to_table_index(start)
-        prev_len: int = self.table[index][2]
+        prev_len: int = self.table[index][3]
         self.table[index][0] = str(uuid.uuid4())
-        self.table[index][2] = offset
+        self.table[index][3] = offset
 
         # Insert the new block in the table
         piece_id = str(uuid.uuid4())
