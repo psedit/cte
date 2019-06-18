@@ -3,11 +3,11 @@ from functools import partial
 import Pyro4
 import asyncio
 import json
-import traceback
 import websockets
 from typedefs import Address
 from service import Service, message_type
 from typing import Dict
+from collections import defaultdict
 
 
 @Pyro4.expose
@@ -22,6 +22,7 @@ class WSServer(Service):
         self.messages_to_send: asyncio.Queue = asyncio.Queue()
 
         self.usernames: Dict[Address, str] = {}
+        self.username_counters: Dict[str, int] = defaultdict(int)
 
     @classmethod
     def start(cls):
@@ -71,13 +72,17 @@ class WSServer(Service):
         done, pending = await asyncio.wait([read_task, write_task],
                                            return_when=asyncio.FIRST_COMPLETED)
 
+    def _disconnect_ws(self, client_address):
+        del self.clients[client_address]
+        del self.usernames[client_address]
+        self._send_message("client-disconnect", {"address": client_address})
+
     async def ws_write_loop(self):
         """
         Write loop for websockets.
         """
         while True:
             msg = await self.messages_to_send.get()
-            print(f"Got message: {msg}")
             recipients = msg["content"]["response_addrs"]
             self._info("Sending message %r to clients %r", msg, recipients)
             for recipient in recipients:
@@ -88,7 +93,9 @@ class WSServer(Service):
                 except Exception:
                     self._warning("Websocket %r unexpectedly disconnected!",
                                   recipient)
-                    traceback.print_exc()
+
+                    self._disconnect_ws(recipient)
+
             self.messages_to_send.task_done()
 
     async def ws_read_loop(self, websocket, path):
@@ -104,7 +111,7 @@ class WSServer(Service):
                     if 'quote' in e.msg:
                         await websocket.send("Double quotes. Niet single.")
                         continue
-                except:
+                except Exception:
                     continue
 
                 if 'type' not in data or 'content' not in data:
@@ -125,7 +132,7 @@ class WSServer(Service):
         except websockets.exceptions.ConnectionClosed:
             print(f'Websocket {websocket} unexpectedly closed connection.')
         finally:
-            del self.clients[websocket.remote_address]
+            self._disconnect_ws(websocket.remote_address)
 
     def handle_pyro_event(self, socket):
         """
@@ -147,11 +154,29 @@ class WSServer(Service):
 
     @message_type("login-request")
     async def _register_user(self, msg):
-        self.usernames[msg["sender"][0]] = msg["content"]["username"]
+        uname = msg["content"]["username"]
+        addr = msg["sender"][0]
+
+        if self.usernames.get(addr):
+            return self._send_message_client("login-response",
+                                             {"succeed": False},
+                                             addr)
+
+        username_count = self.username_counters[uname]
+        if username_count:
+            new_uname = f"{uname}_{username_count}"
+        else:
+            new_uname = uname
+
+        self.username_counters[uname] += 1
+        self.usernames[addr] = new_uname
 
         self._send_message_client("login-response",
-                                  {"succeed": True},
-                                  msg["sender"][0])
+                                  {
+                                      "succeed": True,
+                                      "new_username": new_uname
+                                  },
+                                  addr)
 
     @message_type("client-list-request")
     async def _send_client_list(self, msg):
