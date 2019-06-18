@@ -53,7 +53,6 @@ function createWindow () {
   })
 
   mainWindow.setFullScreenable(true)
-  mainWindow.setFullScreen(false)
 
   mainWindow.loadURL(winURL)
 
