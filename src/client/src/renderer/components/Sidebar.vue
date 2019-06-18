@@ -6,7 +6,11 @@
       <home-icon title="Go to home folder" class="button" @click="home"/>
     </div>
     <div class="file-tools">
-    <file-remove title="Remove file" class="button" @click="removeFile"/>
+      <upload title="Upload file" class="button" @click="uploadFile"/>
+      <file-plus title="Add new file" class="button" @click="createFile"/>
+      <file-document-edit title="Rename file" class="button" @click="renameFile"/>
+      <file-move title="Relocate file" class="button" @click="relocateFile"/>
+      <file-remove title="Remove file" class="button" @click="removeFile"/>
     </div>
 
 
@@ -18,10 +22,15 @@
   import HomeIcon from 'vue-material-design-icons/Home'
   import BackIcon from 'vue-material-design-icons/ArrowLeft'
   import FileRemove from 'vue-material-design-icons/FileRemove'
+  import FilePlus from 'vue-material-design-icons/FilePlus'
+  import FileDocumentEdit from 'vue-material-design-icons/FileDocumentEdit'
+  import FileMove from 'vue-material-design-icons/FileMove'
+  import Upload from 'vue-material-design-icons/Upload'
   import connector from '../../main/connector'
   import FileTree from './Sidebar/FileTree'
-  import fileManager from './Sidebar/fileManager'
+  import * as fileManager from './Sidebar/fileManager'
   const { dialog } = require('electron').remote
+  const dialogs = require('dialogs')
 
   export default {
     name: 'sidebar',
@@ -35,7 +44,11 @@
       FileTree,
       HomeIcon,
       BackIcon,
-      FileRemove
+      FileRemove,
+      FilePlus,
+      FileDocumentEdit,
+      FileMove,
+      Upload
     },
     computed: {
       /**
@@ -62,9 +75,16 @@
         }
         return items
       },
+
       currPathString () {
-        // TODO: test this
-        return `./${this.currPath.join('/')}`
+        /* The path string has to and on a '/' so we can append a file
+         * name directly to when we want the path of that file. */
+        let pathString = `./${this.currPath.join('/')}`
+        if (pathString.slice(-1) !== '/') {
+          pathString += '/'
+        }
+
+        return pathString
       }
     },
     methods: {
@@ -76,16 +96,62 @@
       openFolder (name) {
         this.currPath.push(name)
       },
+
+      /**
+       * Change name of file or directory.
+       */
+      renameFile () {
+        console.log('rename')
+      },
+
+      /**
+       * Change location of file or directory.
+       */
+      relocateFile () {
+        console.log('relocate')
+      },
+
+      /**
+       * Upload new file to server.
+       */
+      uploadFile () {
+        console.log('uploading')
+      },
+
+      /**
+       * Ask user for a name and create a new file with that name.
+       * If file already exists, it will be overwritten.
+       */
+      createFile () {
+        const d = dialogs()
+
+        let promptString = `Add new file or directory. Enter desired name.
+        If final character is '/', a new directory will be added.
+        Note: if file alread exists, it will be overwritten.`
+
+        d.prompt(promptString, 'newFile', newFileName => {
+          if (newFileName === '') {
+            return
+          }
+
+          /* Add new file. */
+          fileManager.newFile(`${this.currPathString}${newFileName}`)
+        })
+      },
+
+      /**
+       * Let user choose a file and remove that file from the server.
+       */
       removeFile () {
         let items = this.currItems
-        /* Get all files
-         */
+
+        /* Get all files. */
         let files = items.filter((item) => {
           return !(item instanceof Array)
         })
         files = ['cancel', ...files]
-        /* Options needed for the message box.
-         */
+
+        /* Options needed for the message box. */
         let options = {
           type: 'question',
           buttons: files,
@@ -94,12 +160,18 @@
           message: 'Select file to delete',
           detail: 'This cannot be undone!'
         }
+
+        /* Let user choose which file to delete. */
         dialog.showMessageBox(null, options, (response) => {
-          if (!(response === 0)) {
-            fileManager.removeFile(`${this.currPathString}/${files[response]}`)
+          /* When user selects 'cancel', do nothing. */
+          if (response === 0) {
+            return
           }
+
+          fileManager.removeFile(`${this.currPathString}${files[response]}`)
         })
       },
+
       /**
        * When clicking on a file, open file in editor.
        *
@@ -185,6 +257,9 @@
   .file-tools {
     background-color: #555;
     display: grid;
+    grid-template-columns: 1fr auto auto auto auto auto;
+    grid-gap: 0.5em;
+    align-items: center;
     color: #fff;
     font-size: 1.3em;
     padding: 0 $padding;

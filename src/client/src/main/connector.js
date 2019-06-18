@@ -114,6 +114,15 @@ class Connector {
   }
 
   /**
+   * Check if connection is open.
+   *
+   * @return {Boolean} True if websocket is open, otherwise False.
+   */
+  isOpen () {
+    return this.ws.readyState === WebSocket.OPEN
+  }
+
+  /**
    * Removes a listener.
    *
    * @param {string} type - The type of the event.

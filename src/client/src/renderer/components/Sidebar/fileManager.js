@@ -1,17 +1,32 @@
+import connector from '../../../main/connector'
+
 /** Sends message to the server indicating a file change.
-  * 
-  * @param {string} old_path empty if creating new file
-  * @param {string} new_path empty if removing file
-  * @param {string} file_content the content of the file 
+  *
+  * @param {string} oldPath empty if creating new file
+  * @param {string} newPath empty if removing file
+  * @param {string} fileContent the content of the file (only used for
+  *                             adding non-empty files to server)
   */
-export function fileChangeRequest (old_path, new_path, file_content) {
-  connector.addEventListener('open', () => {
+export function fileChangeRequest (oldPath, newPath, fileContent) {
+  /**
+   * Send a file-change message to server.
+   */
+  function sendMessage () {
     connector.send('file-change', {
-      old_path,
-      new_path,
-      file_content
+      old_path: oldPath,
+      new_path: newPath,
+      file_content: fileContent
     })
-  })
+  }
+
+  /* If connection is not open, first open the websocket. */
+  if (connector.isOpen()) {
+    sendMessage()
+  } else {
+    connector.addEventListener('open', () => {
+      sendMessage()
+    })
+  }
 }
 
 /**  Create a new empty file on the server.
@@ -24,15 +39,14 @@ export function newFile (path) {
 }
 
 export function removeFile (path) {
-  console.log(path)
-  // this.fileChangeRequest(path, '', '')
+  this.fileChangeRequest(path, '', '')
 }
 
-export function nameChange (path_to_dir, old_name, new_name) {
-  // NOTE: path_to_dir has to end on a  '/' 
-  this.locationChange(path_to_dir + old_name, path_to_dir + new_name, '')
+export function nameChange (pathToDir, oldName, newName) {
+  // NOTE: pathToDir has to end on a  '/'
+  this.locationChange(pathToDir + oldName, pathToDir + newName, '')
 }
 
-export function locationChange (old_path, new_path) {
-  this.fileChangeRequest(old_path, new_path, '')
+export function locationChange (oldPath, newPath) {
+  this.fileChangeRequest(oldPath, newPath, '')
 }
