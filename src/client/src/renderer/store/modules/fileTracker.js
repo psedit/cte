@@ -95,6 +95,12 @@ const actions = {
     }
     store.dispatch('openFile', store.state.tabs[currentIndex - 1].filePath)
   },
+  nextTab (store, currentIndex) {
+    if (currentIndex === store.state.tabs.length - 1) {
+      currentIndex = -1
+    }
+    store.dispatch('openFile', store.state.tabs[currentIndex + 1].filePath)
+  },
   /**
    * Removes a tab from state and switches to a new tab if the tab was opened.
    * @param {Object} store vuex store
@@ -107,11 +113,15 @@ const actions = {
     }
     store.commit('removeTab', tabToRemove)
   },
-  scrollTab (store) {
+  scrollTab (store, direction) {
     var i = 0
     for (let tab of store.state.tabs) {
       if (tab.filePath === store.state.openFile) {
-        store.dispatch('prevTab', i)
+        if (direction) {
+          store.dispatch('nextTab', i)
+        } else{
+          store.dispatch('prevTab', i)
+        }
         break
       }
       i++
