@@ -146,7 +146,7 @@ class PieceTable:
         for piece in self.table:
             if piece[0] == piece_id:
                 return  piece
-        
+
         return []
 
     def set_piece_size(self, piece_id: str, start:int, length:int):

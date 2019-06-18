@@ -464,23 +464,26 @@ class Filesystem(Service):
         """
         Replaces a line in the given block of the piecetable
         with the new provided content.
-        """"
+        """
 
         try:
+            address, username = msg["sender"]
             content = msg["content"]
+
             file_path = content["file_path"]
             piece_uuid = content["piece_uuid"]
             block_content = content["content"]
         except KeyError as e:
             #TODO: error sturen
-            print (e)
+            print(e)
             return
 
         file = self.file_dict[file_path]
         file.update_content(piece_uuid, block_content)
 
         # TODO: broadcasten
-        
+        self._send_message_client("file-delta-broadcast", content, *file.get_clients(exclude=[address]))
+
 
 if __name__ == "__main__":
     Filesystem.start()
