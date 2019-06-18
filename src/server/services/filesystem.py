@@ -1,4 +1,4 @@
-from server_file, LockError import ServerFile
+from server_file import ServerFile, LockError
 from typedefs import Address
 from typing import Dict, List
 from service import Service, message_type
@@ -486,6 +486,10 @@ class Filesystem(Service):
             #TODO send lock error
             print(e)
             return 
+        except ValueError as e:
+            print(e)
+            # self._send_message_client("file-delta-broadcast", content, [address])
+            return
 
         self._send_message_client("file-delta-broadcast", content, *file.get_clients(exclude=[address]))
 

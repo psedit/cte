@@ -54,7 +54,7 @@ async def open_file_data(sock, path):
     return await get_file_data(sock, path)
 
 async def close_file(sock, path):
-    data = {"type": "file-leave", "content": {"file_path": path}}
+    data = {"type": "file-leave", "content": {"file_path": path, "force_exit": "true"}}
     msg = json.dumps(data)
     await sock.send(msg)
 
