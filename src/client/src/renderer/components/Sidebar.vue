@@ -98,10 +98,106 @@
       },
 
       /**
+       * Open a prompt box and ask user for input.
+       *
+       * @param {string} promptString message shown in promptBox
+       * @param {string} defaultString default input for prompt
+       * @param {function} callback callback function to be executed
+       */
+      promptBox (promptString, defaultString, callback) {
+        const d = dialogs()
+
+        d.prompt(promptString, defaultString, response => {
+          callback(response)
+        })
+      },
+
+      /**
+       * This function checks if two paths are of the same type
+       * (both directories or both files).
+       *
+       * @param {string} path1 first path
+       * @param {string} path2 second path
+       * @return {Boolean} True if paths are of the same type
+       */
+      sameType (path1, path2) {
+        if (path1.slice(-1) === '/' && path2.slice(-1) === '/') {
+          /* Both paths indicate directories. */
+          return true
+        } else if (path1.slice(-1) !== '/' && path2.slice(-1) !== '/') {
+          /* Both paths indicate files. */
+          return true
+        }
+        return false
+      },
+
+      /**
+       * Get an array of strings of items in current directory.
+       */
+      itemNames () {
+        let items = []
+
+        for (let i = 0; i < this.currItems.length; i++) {
+          let item = this.currItems[i]
+          if (item instanceof Array) {
+            items.push(`${item[0]}/`)
+          } else {
+            items.push(item)
+          }
+        }
+
+        return items
+      },
+
+      /**
        * Change name of file or directory.
        */
       renameFile () {
-        console.log('rename')
+        /* Let user select file or directory from current folder.
+         * First get all files and directories. */
+        let items = ['cancel']
+        items = items.concat(this.itemNames())
+
+        /* Options needed for the message box. */
+        let options = {
+          type: 'question',
+          buttons: items,
+          defaultId: 0,
+          title: 'Rename file or directory',
+          message: 'Select item to rename'
+        }
+
+        /* Let user choose which file to rename. */
+        dialog.showMessageBox(null, options, (response) => {
+          /* When user selects 'cancel', do nothing. */
+          if (response === 0) {
+            return
+          }
+
+          let oldName = items[response]
+
+          /* Define a function to change name. Assure that a file gets
+           * changed into a file and a directory into a directory.
+           */
+          let changeName = (newName) => {
+            if (newName === '') {
+              return
+            }
+
+            /* If oldName is a directory, add a '/' to the new name.
+             * If not, but newName is a directory, throw an error. */
+            if (oldName.slice(-1) === '/') {
+              newName = newName.slice(-1) !== '/' ? newName + '/' : newName
+            } else if (newName.slice(-1) === '/') {
+              console.log('A file cannot be changed into a directory!')
+              return
+            }
+
+            fileManager.nameChange(this.currPathString, oldName, newName)
+          }
+
+          this.promptBox('Enter new name', 'newName', changeName)
+        })
       },
 
       /**
@@ -143,18 +239,21 @@
        * Let user choose a file and remove that file from the server.
        */
       removeFile () {
-        let items = this.currItems
+        // let items = this.currItems
 
-        /* Get all files. */
-        let files = items.filter((item) => {
-          return !(item instanceof Array)
-        })
-        files = ['cancel', ...files]
+        // /* Get all files. */
+        // let files = items.filter((item) => {
+        //   return !(item instanceof Array)
+        // })
+        // files = ['cancel', ...files]
+
+        let items = ['cancel'].concat(this.itemNames()) // TODO: Remove if only file deletion allowed
 
         /* Options needed for the message box. */
         let options = {
           type: 'question',
-          buttons: files,
+          // buttons: files, // FIXME: Change to 'files' if only file deletion allowed
+          buttons: items,
           defaultId: 0,
           title: 'Delete file',
           message: 'Select file to delete',
@@ -168,7 +267,7 @@
             return
           }
 
-          fileManager.removeFile(`${this.currPathString}${files[response]}`)
+          fileManager.removeFile(`${this.currPathString}${items[response]}`)
         })
       },
 

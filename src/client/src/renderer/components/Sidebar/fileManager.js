@@ -39,11 +39,13 @@ export function newFile (path) {
 }
 
 export function removeFile (path) {
+  console.log('Removing ' + path)
   this.fileChangeRequest(path, '', '')
 }
 
 export function nameChange (pathToDir, oldName, newName) {
   // NOTE: pathToDir has to end on a  '/'
+  console.log(`RENAMING pathToDir: ${pathToDir}, oldName: ${oldName}, newName: ${newName}`) // FIXME:
   this.locationChange(pathToDir + oldName, pathToDir + newName, '')
 }
 
