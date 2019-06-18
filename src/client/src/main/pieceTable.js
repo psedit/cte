@@ -183,6 +183,22 @@ export function len (table) {
 }
 
 /**
+ * Compute number of lines between two locations in the piece table
+ * @param {Piece[]} table
+ * @param {*} start
+ * @param {*} end
+ */
+export function lengthBetween (table, startpiece, startoffset,
+  endpiece, endoffset) {
+  let accumulator = 0
+  for (let i = getPieceIndexByPieceID(table, startpiece);
+    i < getPieceByPieceID(table, endpiece); i++) {
+    accumulator += table[i].length
+  }
+  return accumulator - startoffset + endoffset + 1
+}
+
+/**
  * Returns the corresponding piece index and piece offset
  * for a given file line. When line number is invalid returns 0, 0.
  * @param {Piece[]} table
@@ -237,6 +253,22 @@ export function getRange (table, lineNumber, length) {
   return {
     start: index,
     end: index + lastOff
+  }
+}
+
+/**
+ * @param {Piece[]} table
+ * @param {PieceID} startPieceID
+ * @param {PieceID} endPieceID
+ * @returns {Range} a range of pieces which cover the given piece ID's
+ */
+export function getRangeById (table, startPieceID, endPieceID) {
+  const startPiece = getPieceIndexByPieceID(startPieceID)
+  const endPiece = getPieceIndexByPieceID(endPieceID)
+
+  return {
+    start: startPiece,
+    end: endPiece
   }
 }
 

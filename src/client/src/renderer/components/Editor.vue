@@ -52,6 +52,11 @@
           }
         })
       },
+      requestLock (startId, startOffset, endId, endOffset) {
+        let payload = { start: {id: startId, offset: startOffset},
+          end: {id: endId, offset: endOffset}}
+        this.$store.dispatch('requestLock', payload)
+      },
       userStyle (user) {
         return {
           backgroundColor: user.color
@@ -71,7 +76,8 @@
         console.log(this.lockDragStartLocation)
         if (!this.lockDragStartLocation) return
 
-        console.log(`Request lock from ${this.lockDragStartLocation.piece}:${this.lockDragStartLocation.line} to ${index}:${line}`)
+        // console.log(`Request lock from ${this.lockDragStartLocation.piece}:${this.lockDragStartLocation.line} to ${index}:${line}`)
+        this.requestLock(this.lockDragStartLocation, this.lockDragEndLocation)
         this.lockDragStartLocation = null
         this.lockDragEndLocation = null
         for (var key in this.components) {
