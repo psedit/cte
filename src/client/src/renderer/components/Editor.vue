@@ -112,10 +112,7 @@
 <style scoped lang="scss">
   .editor{
     width: 100%;
-    /*height: 100%;*/
-    /*max-height: 100%;*/
     overflow-y: hidden;
-      /*height: calc(100vh - 3em);*/
     background-color: #272822;
   }
 

@@ -11,7 +11,6 @@
   import 'codemirror/theme/monokai.css'
   import 'codemirror/mode/javascript/javascript'
   import 'codemirror/mode/python/python'
-  // import {} from '../../'
 
   export default {
     name: 'EditorPiece.vue',
@@ -52,9 +51,8 @@
       })
 
       this.$options.cminstance = cm
-      // debugger
 
-      cm.setValue(this.pieces[this.index].text.join('\n'))
+      cm.setValue(this.code)
 
       this.$el.style.setProperty('--gutter-hue', Math.round(Math.random() * 360))
       cm.getGutterElement().setAttribute('title', this.user)
@@ -62,21 +60,43 @@
 
       if (this.index !== 0) {
         this.addPreviousText()
-        // this.pieces[this.index - 1] = ''
       }
+    },
+    computed: {
+      textPiecesArray () {
+        return this.pieces.map(piece => piece.text)
+      },
+      textPieces () {
+        return this.textPiecesArray.join('\n')
+      },
+
+      preCodeArray () {
+        return this.pieces.slice(0, this.index).reduce((acc, piece) => {
+          return acc.concat(piece.text)
+        }, [])
+      },
+      preCode () {
+        return this.preCodeArray.join('\n')
+      },
+
+      codeArray () {
+        return this.pieces[this.index].text
+      },
+      code () {
+        return this.codeArray.join('\n')
+      }
+
     },
 
     methods: {
       addPreviousText () {
+        if (this.preCode === '') return
+
         const cm = this.$options.cminstance
 
-        // debugger
-        const prevText = this.pieces.slice(0, this.index).map(piece => {
-          return piece.text.join('\n')
-        }).join('\n')
-        this.insertText(prevText + '\n', {line: 0, ch: 0})
+        this.insertText(this.preCode + '\n', {line: 0, ch: 0})
 
-        const lines = prevText.split('\n').length
+        const lines = this.preCodeArray.length
         this.$options.preText = cm.markText({line: 0, ch: 0}, {line: lines, ch: 0}, {
           collapsed: true,
           inclusiveLeft: true,
@@ -103,6 +123,13 @@
         if (!mark) return line
 
         return line - mark.lines.length + 1
+      },
+      relativeLineToLine (line) {
+        if (line === 0) return 0
+        const mark = this.$options.cminstance.getAllMarks()[0]
+        if (!mark) return line
+
+        return line + mark.lines.length - 1
       },
 
       initializeEvents () {
@@ -135,12 +162,15 @@
 
       insertText (text, pos) {
         const cm = this.$options.cminstance
+        pos.line = this.relativeLineToLine(pos.line)
         cm.replaceRange(text, pos, pos, {
           scroll: true
         })
       },
 
       deleteText (from, to) {
+        from.line = this.relativeLineToLine(from.line)
+        to.line = this.relativeLineToLine(to.line)
         const cm = this.$options.cminstance
         cm.replaceRange('', from, to, {
           scroll: true
@@ -149,9 +179,7 @@
 
       lineNumberFormatter (line) {
         if (line === 1 && this.index !== 0) {
-          const i = this.pieces.slice(0, this.index).reduce((acc, piece) => acc + piece.text.length, 0)
-          // const i = this.pieces.slice(0, this.index).join('\n').split('\n').length
-          return (i + 1).toString()
+          return (this.preCodeArray.length + 1).toString()
         }
         return (line).toString()
       }
