@@ -6,7 +6,6 @@
               :key="piece.pieceID"
               :index="index"
               :pieces="pieces"
-              :editable="index === 1"
               @lockDragStart="lockDragStart"
               @lockDragEnd="lockDragEnd"
       />
@@ -67,6 +66,15 @@
         if (!this.lockDragRange) return
 
         console.log(`Request lock from ${this.lockDragRange.piece}:${this.lockDragRange.line} to ${index}:${line}`)
+
+        if (this.lockDragRange.piece !== index) alert('NOT SUPPORTED')
+
+        connector.request('file-lock-request', 'file-lock-response', {
+          file_path: this.$store.state.fileTracker.openFile,
+          piece_uuid: this.pieces[this.lockDragRange.piece].pieceID,
+          offset: Math.min(this.lockDragRange.line, line),
+          length: Math.abs(this.lockDragRange.line - line) + 1
+        }).then(response => console.log(response))
       },
       lockDragCancel () {
         // console.log('cancel')
