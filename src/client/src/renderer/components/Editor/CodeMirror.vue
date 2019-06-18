@@ -13,8 +13,6 @@
   import GhostCursors from './GhostCursors'
 
   import Connector from '../../../main/connector'
-  // import 'codemirror/keymap/vim'
-
   export default {
     name: 'CodeMirror',
 
@@ -70,14 +68,11 @@
           }
         })
 
-        /* Decide whether to keep changes. */
         this.codemirror.on('beforeChange', (cm, change) => {
           // console.log(change)
           const line = change.to.line
           const info = cm.lineInfo(line)
-          /* Cancel change if it was initiated by a user outside of their
-           * locked sections */
-          if (change.origin !== 'setValue' && info.wrapClass !== 'lock') {
+          if (info.wrapClass === 'lock') {
             change.cancel()
           }
         })
@@ -126,17 +121,13 @@
 
       lock (start, end) {
         for (let line = start; line <= end; line++) {
-          if (this.cminstance.wrapClass !== 'lock') {
-            this.cminstance.addLineClass(line, 'wrap', 'lock')
-          }
+          this.cminstance.addLineClass(line, 'wrap', 'lock')
         }
       },
 
       unlock (start, end) {
         for (let line = start; line <= end; line++) {
-          if (this.cminstance.wrapClass === 'lock') {
-            this.cminstance.removeLineClass(line, 'wrap', 'lock')
-          }
+          this.cminstance.removeLineClass(line, 'wrap', 'lock')
         }
       },
 
