@@ -1,8 +1,5 @@
 <template>
-  <div ref="cm"
-       class="editor-piece"
-       :class="{editable}"
-  ></div>
+  <div ref="cm" class="editor-piece" :class="{editable}"></div>
 </template>
 
 <script>
@@ -11,8 +8,9 @@
   import 'codemirror/theme/monokai.css'
   import 'codemirror/mode/javascript/javascript'
   import 'codemirror/mode/python/python'
+  import { edit } from '../../../main/pieceTable'
+  import connector from '../../../main/connector'
 
-  let count = 0
   export default {
     name: 'EditorPiece.vue',
     props: {
@@ -27,13 +25,15 @@
 
     cminstance: null,
     preText: null,
-
+    watch: {
+      code (val) {
+        if (!this.editable) {
+          this.setText()
+        }
+      }
+    },
     mounted () {
-      console.log(count, 'mounted start')
-      count++
-
       setTimeout(() => this.initializeEditor(), 0)
-      console.log(count, 'mounted stop')
     },
     computed: {
       textPiecesArray () {
@@ -64,6 +64,9 @@
       },
       editable () {
         return this.$store.state.user.username === this.username
+      },
+      pieceTable () {
+        return this.$store.state.fileTracker.pieceTable
       }
     },
 
@@ -99,6 +102,14 @@
         this.$el.style.setProperty('--gutter-hue', Math.round(Math.random() * 360))
         cm.getGutterElement().setAttribute('title', this.username)
         this.initializeEvents()
+      },
+      setText () {
+        const cm = this.$options.cminstance
+
+        cm.setValue(this.code)
+        if (this.index !== 0) {
+          this.addPreviousText()
+        }
       },
       addPreviousText () {
         if (this.preCode === '') return
@@ -156,6 +167,22 @@
           e.preventDefault()
         })
 
+        if (this.editable) {
+          cm.on('changes', ({cminstance}) => {
+            const value = cm.getValue().slice(this.preCode.length)
+            // console.log(value)
+            const content = value.split('\n').map(val => val + '\n')
+            const newPieceTable = edit(this.pieceTable, this.pieces[this.index].pieceID, content)
+            this.$store.dispatch('updatePieceTable', newPieceTable)
+
+            connector.send('file-delta', {
+              file_path: this.$store.state.fileTracker.openFile,
+              piece_uuid: this.pieces[this.index].pieceID,
+              content: value
+            })
+          })
+        }
+
         const gutter = cm.getGutterElement()
         gutter.addEventListener('mousedown', (e) => {
           const line = cm.lineAtHeight(e.pageY)
@@ -199,48 +226,45 @@
 </script>
 
 <style lang="scss">
-  .editor-piece {
-
-    &:last-child {
-
-      .CodeMirror {
-        height: 100%;
-      }
-    }
-    border-bottom: 1px rgba(255, 255, 255, 0.2) dashed;
-  }
-
-  .CodeMirror {
-    height: auto;
-  }
-
-  .CodeMirror-lines {
-    min-height: unset!important;
-    padding: 0;
-
-  }
-  .editable {
-    .CodeMirror-cursor {
-      animation: blink 1s step-end infinite;
-    }
-    .user-gutter {
-      box-shadow: 0 0 3em 1em rgba(0, 256, 30, 0.6);
+.editor-piece {
+  &:last-child {
+    .CodeMirror {
+      height: 100%;
     }
   }
+  border-bottom: 1px rgba(255, 255, 255, 0.2) dashed;
+}
 
+.CodeMirror {
+  height: auto;
+}
+
+.CodeMirror-lines {
+  min-height: unset !important;
+  padding: 0;
+}
+.editable {
+  .CodeMirror-cursor {
+    animation: blink 1s step-end infinite;
+  }
   .user-gutter {
-    background-color: hsl(var(--gutter-hue), 90%, 60%);
-    width: 1em;
+    box-shadow: 0 0 3em 1em rgba(0, 256, 30, 0.6);
+  }
+}
+
+.user-gutter {
+  background-color: hsl(var(--gutter-hue), 90%, 60%);
+  width: 1em;
+}
+
+@keyframes blink {
+  from,
+  to {
+    opacity: 1;
   }
 
-  @keyframes blink {
-    from, to {
-      opacity: 1;
-    }
-
-    50% {
-      opacity: 0;
-    }
-
+  50% {
+    opacity: 0;
   }
+}
 </style>

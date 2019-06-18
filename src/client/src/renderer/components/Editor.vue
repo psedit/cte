@@ -118,12 +118,13 @@
 
       connector.listenToMsg('file-delta-broadcast', ({ content }) => {
         if (content.file_path === this.filePath) {
-          // Possibly slow untested
-          this.$store.dispatch('updatePieceTable', edit(this.pieceTable, content.piece_uuid, content.content))
+          const newPieceTable = edit(this.pieceTable, content.piece_uuid, content.content.split('\n').map(val => val + '\n'))
+          this.$store.dispatch('updatePieceTable', newPieceTable)
         }
       })
 
       connector.listenToMsg('file-piece-table-change-broadcast', ({ content }) => {
+        console.log(content)
         const { textBlocks } = this.pieceTable
         const update = convertChangeToJS(textBlocks, content)
         if (update.filePath === this.filePath) {
