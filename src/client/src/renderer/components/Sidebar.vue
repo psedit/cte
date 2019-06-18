@@ -88,6 +88,8 @@
       }
     },
     methods: {
+      // TODO: FIX CANCELLEN IN ELKE METHODE.
+
       /**
        * When clicking on a folder, push the folder name to currPath.
        *
@@ -267,7 +269,7 @@
        * Upload new file to server.
        */
       uploadFile () {
-        console.log('uploading')
+        console.log(dialog.showOpenDialog({ properties: ['openDirectory', 'openFile'] }))
       },
 
       /**
