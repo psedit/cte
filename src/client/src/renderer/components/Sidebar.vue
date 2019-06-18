@@ -182,7 +182,7 @@
            * changed into a file and a directory into a directory.
            */
           let changeName = (newName) => {
-            if (newName === '') {
+            if (newName === '' || newName === undefined) {
               return
             }
 
@@ -206,11 +206,15 @@
        * Change location of file or directory.
        */
       relocateFile () {
-        console.log('relocating file...')
         let selectFolder = (filePath, payload) => {
-          this.promptBox('Enter path', filePath, (reponse) => {
-            console.log('Requesting location change: ', reponse)
-            fileManager.locationChange(filePath, reponse)
+          this.promptBox('Enter path', filePath, (response) => {
+            if (response === undefined || response === '') {
+              return
+            }
+            console.log('Requesting location change: ')
+            console.log('old_path: ', filePath)
+            console.log('new_path: ', response)
+            fileManager.locationChange(filePath, response)
           })
         }
         this.selectItem('File move', 'select a file to move', '', this.currItems, 'file', selectFolder)
@@ -285,7 +289,7 @@
         Note: if file alread exists, it will be overwritten.`
 
         d.prompt(promptString, 'newFile', newFileName => {
-          if (newFileName === '') {
+          if (newFileName === '' || newFileName === undefined) {
             return
           }
 
