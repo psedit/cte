@@ -475,7 +475,6 @@ class Filesystem(Service):
             block_content = content["content"]
         except KeyError as e:
             #TODO: error sturen
-            print(e)
             return
 
         file = self.file_dict[file_path]
@@ -484,15 +483,40 @@ class Filesystem(Service):
             file.update_content(address, piece_uuid, block_content)
         except LockError as e:
             #TODO send lock error
-            print(e)
-            return 
+            return
         except ValueError as e:
-            print(e)
             # self._send_message_client("file-delta-broadcast", content, [address])
             return
 
-        self._send_message_client("file-delta-broadcast", content, *file.get_clients(exclude=[address]))
+        self._send_message_client("file-delta-broadcast",
+                                  content,
+                                  *file.get_clients(exclude=[address]))
 
+    @message_type("file-save")
+    async def _save_file_to_disk(self, msg):
+        try:
+            address, username = msg['sender']
+            content = msg['content']
+            file_path = content['file_path']
+
+            if file_path not in self.file_dict \
+                or not self.file_dict[file_path].is_joined(address):
+                message = f"""File {file_path} is not in system RAM.
+                          Join the file to load it to memory."""
+                self._send_message_client("error-response",
+                                          {"message": message,
+                                           "error_code": ERROR_FILE_NOT_IN_RAM},
+                                          address)
+                return
+
+            self.file_dict[file_path].save_to_disk()
+            content['saved'] = 'true'
+
+            self._send_message_client("file-save-broadcast",
+                                      content,
+                                      *self.file_dict[file_path].get_clients())
+        except KeyError as e:
+            return
 
 if __name__ == "__main__":
     Filesystem.start()

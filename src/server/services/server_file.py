@@ -31,15 +31,19 @@ class ServerFile:
             self.file_pt = PieceTable(file_list)
             self.is_saved = True
 
-    def save_to_disk(self) -> None:
+    def save_to_disk(self, garbage_collect=True) -> None:
         """
         Writes the current buffer to the file on disk, while keeping all
         open edit-blocks open.
         """
         file_path = os.path.join(self.root_dir, self.file_path_relative)
         with open(file_path, 'w') as f:
-            for line in self.file_pt.stitch():
-                f.write(line)
+            if garbage_collect:
+                for line in self.file_pt.remove_closed_blocks():
+                    f.write(line)
+            else:
+                for line in self.file_pt.stitch():
+                    f.write(line)
 
         self.is_saved = True
 
@@ -174,7 +178,7 @@ class ServerFile:
         Updates the content in the piecetable
         """
         if self._has_lock(address, piece_id):
-            self.file_pt.set_piece_content(piece_id, content)            
+            self.file_pt.set_piece_content(piece_id, content)
         else:
             raise LockError("{address} has no lock on {piece_id}")
 

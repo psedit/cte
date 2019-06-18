@@ -70,3 +70,13 @@ async def edit_file(sock, path, uuid, content):
     data = {"type": "file-delta", "content": payload}
     msg = json.dumps(data)
     await sock.send(msg)
+
+async def save_file(sock, path):
+    data = {"type": "file-save", "content": {"file_path": path}}
+    msg = json.dumps(data)
+    await sock.send(msg)
+
+    print('wait for response')
+
+    msg = await sock.recv()
+    return json.loads(msg)
