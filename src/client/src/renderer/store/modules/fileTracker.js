@@ -89,6 +89,12 @@ const actions = {
       // })
     })
   },
+  prevTab (store, currentIndex) {
+    if (currentIndex === 0) {
+      currentIndex = store.state.tabs.length
+    }
+    store.dispatch('openFile', store.state.tabs[currentIndex - 1].filePath)
+  },
   /**
    * Removes a tab from state and switches to a new tab if the tab was opened.
    * @param {Object} store vuex store
@@ -96,19 +102,20 @@ const actions = {
    */
   removeTab (store, tabToRemove) {
     if (tabToRemove.filePath === store.state.openFile) {
-      if (store.state.tabs.length === 1) {
-        store.commit('updateOpenFile', '')
-        // FIXME: hide the editor if last file is removed
-        store.commit('updateCode', 'Fix even pls dat de editor verdwijnt. (v-if)')
-      } else {
-        const i = store.state.tabs.indexOf(tabToRemove)
-        store.dispatch('openFile', store.state.tabs[(i + 1) % store.state.tabs.length].filePath)
-      }
+      const i = store.state.tabs.indexOf(tabToRemove)
+      store.dispatch('prevTab', i)
     }
     store.commit('removeTab', tabToRemove)
   },
-  updateCodeAction (state, newCode) {
-    state.commit('updateCode', newCode)
+  scrollTab (store) {
+    var i = 0
+    for (let tab of store.state.tabs) {
+      if (tab.filePath === store.state.openFile) {
+        store.dispatch('prevTab', i)
+        break
+      }
+      i++
+    }
   }
 }
 

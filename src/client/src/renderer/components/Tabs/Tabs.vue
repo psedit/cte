@@ -2,7 +2,7 @@
   <div>
     <ul id="tab-list" @wheel="scroll()">
       <li v-for="tab in tabs" class="tab" @click.self="tabClick(tab.filePath)" :class="{ 'active': isActive(tab.filePath) }">
-        <span>{{ tab.fileName }}</span> <close-icon class="close-tab" @click="tabRemove(tab)"/>
+        {{ tab.fileName }} <close-icon class="close-tab" @click="tabRemove(tab)"/>
       </li>
     </ul>
   </div>
@@ -25,7 +25,7 @@
     },
     methods: {
       scroll (e) {
-        console.log('scrolling')
+        this.$store.dispatch('scrollTab')
       },
       tabClick (fileName) {
         this.$store.dispatch('openFile', fileName)
