@@ -7,10 +7,13 @@ import shutil
 import Pyro4
 
 # TODO: dit is vast lelijk
-ERROR_FILE_NOT_IN_RAM = 1
-ERROR_FILE_NOT_JOINED = 2
-ERROR_FILE_NOT_PRESENT = 3
-ERROR_FILE_ILLEGAL_LOCK = 4
+ERROR_WRONG_MESSAGE = 1
+ERROR_FILE_NOT_IN_RAM = 2
+ERROR_FILE_NOT_JOINED = 3
+ERROR_FILE_NOT_PRESENT = 4
+ERROR_FILE_ILLEGAL_LOCK = 5
+ERROR_NOT_LOCKED = 6
+ERROR_ILLEGAL_PIECE_ID = 7
 
 
 @Pyro4.expose
@@ -476,8 +479,10 @@ class Filesystem(Service):
             piece_uuid = content["piece_uuid"]
             block_content = content["content"]
         except KeyError as e:
-            #TODO: error sturen
-            print(e)
+            self._send_message_client("error-response",
+                                      {"message": str(e),
+                                       "error_code": ERROR_WRONG_MESSAGE},
+                                      address)
             return
 
         file = self.file_dict[file_path]
@@ -485,16 +490,34 @@ class Filesystem(Service):
         try:
             file.update_content(address, piece_uuid, block_content)
         except LockError as e:
-            #TODO send lock error
-            print(e)
-            return 
+            message = "Illegal edit, this lock does not belong to you."
+            self._send_message_client("error-response",
+                                      {"message": message,
+                                       "error_code": ERROR_NOT_LOCKED},
+                                      address)
+
+            block_line = file.file_pt.get_piece_content(piece_uuid)
+            block_content = ""
+            for line in block_line:
+                block_content += line
+
+            resp_content = {
+                        "file_path": file_path,
+                        "piece_uuid": piece_uuid,
+                        "content": block_content
+                    }
+            self._send_message_client("file-delta-broadcast",
+                                      resp_content, address)
+            return
         except ValueError as e:
-            print(e)
-            # self._send_message_client("file-delta-broadcast", content, [address])
+            self._send_message_client("error-response",
+                                      {"message": str(e),
+                                       "error_code": ERROR_ILLEGAL_PIECE_ID},
+                                      address)
             return
 
-        self._send_message_client("file-delta-broadcast", content, *file.get_clients(exclude=[address]))
-
+        self._send_message_client("file-delta-broadcast", content,
+                                  *file.get_clients(exclude=[address]))
 
 if __name__ == "__main__":
     Filesystem.start()

@@ -83,7 +83,6 @@ class WSServer(Service):
         """
         while True:
             msg = await self.messages_to_send.get()
-            print(f"Got message: {msg}")
             recipients = msg["content"]["response_addrs"]
             self._info("Sending message %r to clients %r", msg, recipients)
             for recipient in recipients:
