@@ -36,7 +36,6 @@ class Filesystem(Service):
         Add the file to the Filesystem. Path file is relative to root
         directory.
         """
-
         if file_path not in self.file_dict:
             self.file_dict[file_path] = ServerFile(self.root_dir, file_path)
 
@@ -82,6 +81,16 @@ class Filesystem(Service):
         else:
             return True
 
+    def _extend_pt_uname(self, file):
+        """
+        Returns an extended piece table including usernames of piece owners.
+        """
+        ex_tab = []
+        for i, piece in enumerate(file.file_pt.table):
+            uname = self.usernames.get(file.get_lock_client(piece[0])) or ""
+            ex_tab.append([*piece, uname])
+        return ex_tab
+
     @message_type("file-content-request")
     async def _process_file_content_request(self, msg) -> None:
         """
@@ -100,7 +109,7 @@ class Filesystem(Service):
             for b_id, block in file.file_pt.blocks.items():
                 block_list.append((b_id, block.is_open(), block.lines))
 
-            response_content = {"piece_table": file.file_pt.table,
+            response_content = {"piece_table": self._extend_pt_uname(file),
                                 "block_list": block_list}
 
             self._send_message_client("file-content-response",
@@ -339,11 +348,13 @@ class Filesystem(Service):
         block_id = file.file_pt.get_piece_block_id(lock_id)
         content = {
                     "file_path": file_path,
-                    "piece_table": file.file_pt.table,
+                    "piece_table": self._extend_pt_uname(file),
                     "changed_block": [block_id, is_locked, lines]
                   }
         self._send_message_client("file-piece-table-change-broadcast", content,
                                   *file.get_clients())
+
+        self._send_cursor_list(file_path, *file.get_clients())
 
     @message_type("file-lock-list-request")
     async def _file_send_lock_list(self, msg) -> None:

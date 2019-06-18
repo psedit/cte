@@ -99,6 +99,15 @@ class ServerFile:
         return [[usernames[addr], lock_id] for addr in self.locks
                 for lock_id in self.locks[addr]]
 
+    def get_lock_client(self, lock_id) -> str:
+        """
+        Returns the address of the client who holds the lock.
+        """
+        for client, locks in self.locks.items():
+            if lock_id in locks:
+                return client
+        return None
+
     def join_file(self, client: Address) -> None:
         self.clients[client] = [self.file_pt.table[0][0], 0, 0, False]
 
