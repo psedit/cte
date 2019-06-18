@@ -219,6 +219,7 @@
         }
         this.selectItem('File move', 'select a file to move', '', this.currItems, 'file', selectFolder)
       },
+
       /* Let the user select a file.
         * Itemtype can be:
         *  'file'
