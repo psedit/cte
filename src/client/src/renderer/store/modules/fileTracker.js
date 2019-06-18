@@ -1,16 +1,29 @@
 import Tab from '../../components/Tabs/tabType'
 import connector from '../../../main/connector'
+import { convertToJS, getFile } from '../../../main/pieceTable'
 
 const state = {
-  code: '',
+  pieces: null,
+  pieceTable: null,
   openFile: '',
   filePaths: '',
   tabs: []
 }
 
 const mutations = {
-  updateCode (state, newCode) {
-    state.code = newCode
+  /**
+   * @param {Object} state
+   * @param {FilePiece} pieces
+   */
+  updatePieces (state, pieces) {
+    state.pieces = pieces
+  },
+  /**
+   * @param {Object} state
+   * @param {pieceTable} pieceTable
+   */
+  updatePieceTable (state, pieceTable) {
+    state.pieceTable = pieceTable
   },
   /**
    * Adds a tab to state
@@ -66,7 +79,11 @@ const actions = {
         'length': -1
       }
     ).then((data) => {
-      store.commit('updateCode', data.file_content)
+      const pieceTable = convertToJS(data)
+      const pieces = getFile(pieceTable)
+      store.commit('updatePieceTable', pieceTable)
+      store.commit('updatePieces', pieces)
+
       // fs.writeFile(filePath, data.file_content, (err) => {
       //   if (err) console.error(err)
       // })
