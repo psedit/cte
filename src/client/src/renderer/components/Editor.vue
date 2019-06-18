@@ -65,10 +65,32 @@
       this.$store.subscribe((mutation, state) => {
         if (mutation.type === 'updateCode') {
           this.updateCode()
-          cm.ghostCursors.changeFilepath(this.$store.state.fileTracker.openFile).then(cursors => {
-            console.log(cursors)
-            this.updateUsers(cursors)
-          })
+          // cm.ghostCursors.changeFilepath(this.$store.state.fileTracker.openFile).then(cursors => {
+          //   console.log(cursors)
+          //   this.updateUsers(cursors)
+          // })
+        }
+      })
+
+      addEventListener('mouseup', (e) => {
+        if (!e.composedPath()[0].classList.contains('user-gutter')) {
+          this.lockDragCancel()
+        }
+      })
+
+      connector.listenToMsg('file-delta-broadcast', ({ content }) => {
+        if (content.file_path === this.filePath) {
+          // Possibly slow untested
+          this.$store.dispatch('updatePieceTable', edit(this.pieceTable, content.piece_uuid, content.content))
+        }
+      })
+
+      connector.listenToMsg('file-piece-table-change-broadcast', ({ content }) => {
+        console.log(content)
+        const { textBlocks } = this.pieceTable
+        const update = convertChangeToJS(textBlocks, content)
+        if (update.filePath === this.filePath) {
+          this.$store.dispatch('updatePieceTable', update.pieceTable)
         }
       })
     }
