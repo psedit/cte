@@ -23,10 +23,17 @@ const expected = {
       lines: ['abc ', ' 123 ', ' 😀']
     }
   },
-  table: [{ pieceID: 'kat', blockID: 0, start: 0, length: 3 }]
+  table: [
+    { pieceID: 'kat', blockID: 0, start: 0, length: 3, username: 'hans' }
+  ]
 }
 
 const expectedPy = {
+  block_list: [[0, true, expected.textBlocks[0].lines]],
+  piece_table: [['kat', 0, 0, 3, 'hans']]
+}
+
+const expectedTestPy = {
   block_list: [[0, true, expected.textBlocks[0].lines]],
   piece_table: [['kat', 0, 0, 3]]
 }
@@ -63,7 +70,7 @@ describe('convertToJS', function () {
 
 describe('convertToPy', function () {
   it('should convert the javascript representation of the piece table to the py represenation', function () {
-    expect(convertToPy(expected)).to.deep.equal(expectedPy)
+    expect(convertToPy(expected)).to.deep.equal(expectedTestPy)
   })
 })
 
@@ -163,9 +170,9 @@ const largePieceTable = {
     }
   },
   table: [
-    { pieceID: '1', blockID: '0', start: 1, length: 2 },
-    { pieceID: '2', blockID: '1', start: 2, length: 1 },
-    { pieceID: '3', blockID: '2', start: 0, length: 1 }
+    { pieceID: '1', blockID: '0', start: 1, length: 2, username: 'j' },
+    { pieceID: '2', blockID: '1', start: 2, length: 1, username: 'a' },
+    { pieceID: '3', blockID: '2', start: 0, length: 1, username: 's' }
   ]
 }
 
@@ -201,9 +208,9 @@ describe('stitch', function () {
 describe('getFile', function () {
   it('should return the file', function () {
     expect(getFile(largePieceTable)).to.deep.equal([
-      { pieceID: '1', text: [' 123 ', ' 😀'], open: false },
-      { pieceID: '2', text: [' g😀'], open: false },
-      { pieceID: '3', text: ['fabc '], open: false }
+      { pieceID: '1', text: [' 123 ', ' 😀'], open: false, username: 'j' },
+      { pieceID: '2', text: [' g😀'], open: false, username: 'a' },
+      { pieceID: '3', text: ['fabc '], open: false, username: 's' }
     ])
   })
 })
@@ -211,14 +218,16 @@ describe('getFile', function () {
 describe('edit', function () {
   it('should return an edited piece table', function () {
     expect(getFile(edit(largePieceTable, '3', ['kaas', 'hoi']))).to.deep.equal([
-      { pieceID: '1', text: [' 123 ', ' 😀'], open: false },
-      { pieceID: '2', text: [' g😀'], open: false },
-      { pieceID: '3', text: ['kaas', 'hoi'], open: false }
+      { pieceID: '1', text: [' 123 ', ' 😀'], open: false, username: 'j' },
+      { pieceID: '2', text: [' g😀'], open: false, username: 'a' },
+      { pieceID: '3', text: ['kaas', 'hoi'], open: false, username: 's' }
     ])
-    expect(getFile(edit(largePieceTable, '1', ['abc ', ' 123 ', ' 😀aaa']))).to.deep.equal([
-      { pieceID: '1', text: [' 123 ', ' 😀aaa'], open: false },
-      { pieceID: '2', text: [' g😀'], open: false },
-      { pieceID: '3', text: ['fabc '], open: false }
+    expect(
+      getFile(edit(largePieceTable, '1', ['abc ', ' 123 ', ' 😀aaa']))
+    ).to.deep.equal([
+      { pieceID: '1', text: [' 123 ', ' 😀aaa'], open: false, username: 'j' },
+      { pieceID: '2', text: [' g😀'], open: false, username: 'a' },
+      { pieceID: '3', text: ['fabc '], open: false, username: 's' }
     ])
   })
 })
