@@ -11,7 +11,6 @@
   import { edit } from '../../../main/pieceTable'
   import connector from '../../../main/connector'
 
-  let count = 0
   export default {
     name: 'EditorPiece.vue',
     props: {
@@ -34,11 +33,7 @@
       }
     },
     mounted () {
-      console.log(count, 'mounted start')
-      count++
-
       setTimeout(() => this.initializeEditor(), 0)
-      console.log(count, 'mounted stop')
     },
     computed: {
       textPiecesArray () {
