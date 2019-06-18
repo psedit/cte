@@ -22,9 +22,6 @@ class PieceTable:
 
         orig_piece = TextBlock(lines, False)
         orig_piece_id = str(uuid.uuid4())
-        print("###########################")
-        print(orig_piece_id)
-        print("###########################")
         self.blocks: Dict[int, TextBlock] = {0: orig_piece}
         self.table: List[List[Any]] = [[orig_piece_id, 0, 0, len(lines)]]
 
@@ -145,7 +142,7 @@ class PieceTable:
         """
         for piece in self.table:
             if piece[0] == piece_id:
-                return  piece
+                return piece
 
         return []
 
@@ -273,9 +270,9 @@ class PieceTable:
 
         # Find and shrink previous containing block.
         index, offset = self.line_to_table_index(start)
-        prev_len: int = self.table[index][2]
+        prev_len: int = self.table[index][3]
         self.table[index][0] = str(uuid.uuid4())
-        self.table[index][2] = offset
+        self.table[index][3] = offset
 
         # Insert the new block in the table
         piece_id = str(uuid.uuid4())
