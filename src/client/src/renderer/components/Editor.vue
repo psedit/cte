@@ -116,7 +116,6 @@
       })
 
       connector.listenToMsg('file-piece-table-change-broadcast', ({ content }) => {
-        console.log(content)
         const { textBlocks } = this.pieceTable
         const update = convertChangeToJS(textBlocks, content)
         if (update.filePath === this.filePath) {
