@@ -6,7 +6,6 @@
               :key="piece.pieceID"
               :index="index"
               :pieces="pieces"
-              :editable="index === 1"
               @lockDragStart="lockDragStart"
               @lockDragEnd="lockDragEnd"
       />

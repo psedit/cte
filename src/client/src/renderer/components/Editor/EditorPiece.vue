@@ -15,7 +15,6 @@
   export default {
     name: 'EditorPiece.vue',
     props: {
-      editable: Boolean,
       pieces: Array,
       index: Number
     },
@@ -87,6 +86,9 @@
 
       username () {
         return this.pieces[this.index].username
+      },
+      editable () {
+        return this.$store.state.user.username === this.username
       }
     },
 
