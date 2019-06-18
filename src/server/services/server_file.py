@@ -167,14 +167,14 @@ class ServerFile:
         Checks if the given address has a lock on the given piece id
         """
 
-        return piece_id in self.locks[Address]
+        return piece_id in self.locks[address]
 
     def update_content(self, address: Address, piece_id: str, content: str) -> None:
         """
         Updates the content in the piecetable
         """
         if self._has_lock(address, piece_id):
-            self.file_pt.set_piece_content(piece_id, content)            
+            self.file_pt.set_piece_content(piece_id, content)
         else:
             raise LockError("{address} has no lock on {piece_id}")
 
