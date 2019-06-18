@@ -70,7 +70,7 @@
 
         connector.request('file-lock-request', 'file-lock-response', {
           file_path: this.$store.state.fileTracker.openFile,
-          piece_uuid: this.lockDragRange.piece,
+          piece_uuid: this.pieces[this.lockDragRange.piece].pieceID,
           offset: Math.min(this.lockDragRange.line, line),
           length: Math.abs(this.lockDragRange.line - line) + 1
         }).then(response => console.log(response))
