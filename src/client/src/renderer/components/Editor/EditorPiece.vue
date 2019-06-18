@@ -12,6 +12,7 @@
   import 'codemirror/mode/javascript/javascript'
   import 'codemirror/mode/python/python'
 
+  let count = 0
   export default {
     name: 'EditorPiece.vue',
     props: {
@@ -28,44 +29,18 @@
     preText: null,
 
     mounted () {
-      const cm = CodeMirror(this.$refs.cm, {
-        mode: 'javascript',
-        lineNumbers: true,
-        theme: 'monokai',
-        smartIndent: true,
-        lineWrapping: true,
-        showCursorWhenSelecting: true,
-        readOnly: !this.editable,
-        // inputStyle: 'contenteditable',
-        lineNumberFormatter: this.lineNumberFormatter,
-        viewportMargin: Infinity,
-        cursorBlinkRate: 0,
-        gutters: ['user-gutter', 'CodeMirror-linenumbers'],
-        extraKeys: {
-          'Alt-R': () => {
-            this.updatePreviousText()
-          }
-        }
-      })
+      console.log(count, 'mounted start')
+      count++
 
-      this.$options.cminstance = cm
-
-      cm.setValue(this.code)
-
-      this.$el.style.setProperty('--gutter-hue', Math.round(Math.random() * 360))
-      cm.getGutterElement().setAttribute('title', this.username)
-      this.initializeEvents()
-
-      if (this.index !== 0) {
-        this.addPreviousText()
-      }
+      setTimeout(() => this.initializeEditor(), 0)
+      console.log(count, 'mounted stop')
     },
     computed: {
       textPiecesArray () {
         return this.pieces.map(piece => piece.text)
       },
       textPieces () {
-        return this.textPiecesArray.join('')
+        return this.textPiecesArray.join('').replace(/\n$/, '')
       },
 
       preCodeArray () {
@@ -74,14 +49,14 @@
         }, [])
       },
       preCode () {
-        return this.preCodeArray.join('')
+        return this.preCodeArray.join('').replace(/\n$/, '')
       },
 
       codeArray () {
         return this.pieces[this.index].text
       },
       code () {
-        return this.codeArray.join('')
+        return this.codeArray.join('').replace(/\n$/, '')
       },
 
       username () {
@@ -93,6 +68,38 @@
     },
 
     methods: {
+      initializeEditor () {
+        const cm = CodeMirror(this.$refs.cm, {
+          mode: 'javascript',
+          lineNumbers: true,
+          theme: 'monokai',
+          smartIndent: true,
+          lineWrapping: true,
+          showCursorWhenSelecting: true,
+          readOnly: !this.editable,
+          // inputStyle: 'contenteditable',
+          lineNumberFormatter: this.lineNumberFormatter,
+          viewportMargin: Infinity,
+          cursorBlinkRate: 0,
+          gutters: ['user-gutter', 'CodeMirror-linenumbers'],
+          extraKeys: {
+            'Alt-R': () => {
+              this.updatePreviousText()
+            }
+          }
+        })
+
+        this.$options.cminstance = cm
+
+        cm.setValue(this.code)
+        if (this.index !== 0) {
+          this.addPreviousText()
+        }
+
+        this.$el.style.setProperty('--gutter-hue', Math.round(Math.random() * 360))
+        cm.getGutterElement().setAttribute('title', this.username)
+        this.initializeEvents()
+      },
       addPreviousText () {
         if (this.preCode === '') return
 
