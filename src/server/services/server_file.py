@@ -162,8 +162,22 @@ class ServerFile:
     def change_file_path(self, new_path: str) -> None:
         self.file_path_relative = new_path
 
-    def update_content(self, piece_id: str, content: str) -> None:
+    def _has_lock(self, address: Address, piece_id: str):
+        """
+        Checks if the given address has a lock on the given piece id
+        """
+
+        return piece_id in self.locks[Address]
+
+    def update_content(self, address: Address, piece_id: str, content: str) -> None:
         """
         Updates the content in the piecetable
         """
-        self.file_pt.set_piece_content(piece_id, content)
+        if self._has_lock(address, piece_id):
+            self.file_pt.set_piece_content(piece_id, content)
+        else
+            raise LockError("{address} has no lock on {piece_id}")
+
+
+class LockError(Exception):
+    pass

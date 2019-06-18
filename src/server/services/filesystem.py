@@ -1,4 +1,4 @@
-from server_file import ServerFile
+from server_file, LockError import ServerFile
 from typedefs import Address
 from typing import Dict, List
 from service import Service, message_type
@@ -479,9 +479,14 @@ class Filesystem(Service):
             return
 
         file = self.file_dict[file_path]
-        file.update_content(piece_uuid, block_content)
 
-        # TODO: broadcasten
+        try:
+            file.update_content(address, piece_uuid, block_content)
+        except LockError as e:
+            #TODO send lock error
+            print(e)
+            return 
+
         self._send_message_client("file-delta-broadcast", content, *file.get_clients(exclude=[address]))
 
 
