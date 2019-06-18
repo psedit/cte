@@ -8,7 +8,7 @@
   import 'codemirror/theme/monokai.css'
   import 'codemirror/mode/javascript/javascript'
   import 'codemirror/mode/python/python'
-  import { edit} from '../../../main/pieceTable'
+  import { edit } from '../../../main/pieceTable'
   import connector from '../../../main/connector'
 
   let count = 0
@@ -28,7 +28,7 @@
     preText: null,
     watch: {
       code (val) {
-        if(!this.editable) {
+        if (!this.editable) {
           this.setText()
         }
       }
@@ -108,8 +108,8 @@
         cm.getGutterElement().setAttribute('title', this.username)
         this.initializeEvents()
       },
-      setText() {
-        this.$options.cminstance = cm
+      setText () {
+        const cm = this.$options.cminstance
 
         cm.setValue(this.code)
         if (this.index !== 0) {
@@ -179,9 +179,9 @@
             const content = value.split('\n').map(val => val + '\n')
             const newPieceTable = edit(this.pieceTable, this.pieces[this.index].pieceID, content)
             this.$store.dispatch('updatPieceTable', newPieceTable)
-            this.send('file-delta', {
+            connector.send('file-delta', {
               file_path: this.$store.state.fileTracker.openFile,
-              piece_uuid: this.pieces[this.index].pieceID, 
+              piece_uuid: this.pieces[this.index].pieceID,
               content
             })
           })
