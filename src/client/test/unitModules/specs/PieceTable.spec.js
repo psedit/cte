@@ -23,12 +23,12 @@ const expected = {
       lines: ['abc ', ' 123 ', ' 😀']
     }
   },
-  table: [{ pieceID: 'kat', blockID: 0, start: 0, length: 3 }]
+  table: [{ pieceID: 'kat', blockID: 0, start: 0, length: 3, username: 'hans' }]
 }
 
 const expectedPy = {
   block_list: [[0, true, expected.textBlocks[0].lines]],
-  piece_table: [['kat', 0, 0, 3]]
+  piece_table: [['kat', 0, 0, 3, 'hans']]
 }
 
 const table = [

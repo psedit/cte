@@ -108,12 +108,13 @@ export function convertBlockToJS (obj, [blockID, closed, lines]) {
  * @param {any[]} piece
  * @returns {Piece}
  */
-export function convertTableTojs ([pieceID, blockID, start, length]) {
+export function convertTableTojs ([pieceID, blockID, start, length, username]) {
   return {
     pieceID,
     blockID,
     start,
-    length
+    length,
+    username
   }
 }
 
@@ -296,11 +297,12 @@ export function getTextByPieceID ({ textBlocks, table }, pieceID) {
  * @returns {FilePiece[]} a list of file pieces
  */
 export function getFile ({ textBlocks, table }) {
-  return table.map(({ pieceID }) => {
+  return table.map(({ pieceID, username }) => {
     return {
       pieceID,
       text: getTextByPieceID({ textBlocks, table }, pieceID),
-      open: getBlock({ textBlocks, table }, pieceID).open
+      open: getBlock({ textBlocks, table }, pieceID).open,
+      username
     }
   })
 }
