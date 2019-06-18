@@ -204,7 +204,63 @@
        * Change location of file or directory.
        */
       relocateFile () {
-        console.log('relocate')
+        console.log('relocating file...')
+        let selectFolder = (filePath, payload) => {
+          this.promptBox('Enter path', filePath, (reponse) => {
+            console.log('Requesting location change: ', reponse)
+            fileManager.locationChange(filePath, reponse)
+          })
+        }
+        this.selectItem('File move', 'select a file to move', '', this.currItems, 'file', selectFolder)
+      },
+      /* Let the user select a file.
+        * Itemtype can be:
+        *  'file'
+        *  'all'
+        *  'dir'
+        *  Passes selected filename in callback.
+        *  NOTE: can return 0 in case of cancel!
+        */
+      selectItem (title, message, detail, items = this.currItems, itemType, callback) {
+        /* Get all items of the desired type.
+        */
+        let filterFunc = (item) => {
+          switch (itemType) {
+            case 'file':
+              return !(item instanceof Array)
+            case 'dir':
+              return (item instanceof Array)
+            default:
+              return true
+          }
+        }
+        let filterItems = items.filter(filterFunc)
+
+        /* Add a cancel button
+          */
+        let buttonOptions = ['cancel', ...filterItems]
+
+        /* Options needed for the message box. */
+        let options = {
+          type: 'question',
+          buttons: buttonOptions,
+          defaultId: 0,
+          title: title,
+          message: message,
+          detail: detail
+        }
+        let returnValue = 0
+        /* Let user choose which file to delete. */
+        dialog.showMessageBox(null, options, (response) => {
+          /* When user selects 'cancel', do nothing. */
+          if (response === 0) {
+            return
+          }
+          console.log('button options', buttonOptions)
+          returnValue = buttonOptions[response]
+          returnValue = `${this.currPathString}${returnValue}`
+          callback(returnValue)
+        })
       },
 
       /**
