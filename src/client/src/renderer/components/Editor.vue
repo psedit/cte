@@ -21,8 +21,6 @@
 <script>
   import EditorPiece from './Editor/EditorPiece'
   import {getRandomColor} from './Editor/RandomColor'
-  import {getFile} from '../../main/pieceTable'
-  import largePieceTable from './Editor/bigTable'
 
   export default {
     name: 'Editor',
@@ -80,11 +78,7 @@
       },
 
       pieces () {
-        console.log(largePieceTable)
-        // debugger
-        const file = getFile(largePieceTable)
-        console.log(file)
-        return file
+        return this.$store.state.fileTracker.pieces
       }
     },
 
