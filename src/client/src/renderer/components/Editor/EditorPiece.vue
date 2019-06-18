@@ -27,6 +27,10 @@
     cminstance: null,
     preText: null,
 
+    dragInProcess: false,
+    tentativeLockStart: 0,
+    tentativeLockEnd: 0,
+
     mounted () {
       const cm = CodeMirror(this.$refs.cm, {
         mode: 'javascript',
@@ -136,6 +140,13 @@
         return line + mark.lines.length - 1
       },
 
+      gutterSelectMarker () {
+        var marker = document.createElement('div')
+        marker.style.backgroundColor = 'white'
+        marker.innerHTML = '●'
+        return marker
+      },
+
       initializeEvents () {
         const cm = this.$options.cminstance
 
@@ -150,10 +161,18 @@
         })
 
         const gutter = cm.getGutterElement()
+        // const gutterId = cm.getGutterElement().gutterId
         gutter.addEventListener('mousedown', (e) => {
           const line = cm.lineAtHeight(e.pageY)
           const relLine = this.lineToRelativeLine(line)
           // console.log('mouse up at', line)
+          this.$emit('lockDragStart', relLine, this.index, e)
+        })
+        gutter.addEventListener('mousemove', (e) => {
+          const line = cm.lineAtHeight(e.pageY)
+          const relLine = this.lineToRelativeLine(line)
+          console.log('mousemove at', relLine, line)
+          // cm.setGutterMarker(line, 'user-gutter', this.gutterSelectMarker())
           this.$emit('lockDragStart', relLine, this.index, e)
         })
         gutter.addEventListener('mouseup', (e) => {
@@ -163,7 +182,6 @@
           this.$emit('lockDragEnd', relLine, this.index, e)
         })
       },
-
       insertText (text, pos) {
         const cm = this.$options.cminstance
         pos.line = this.relativeLineToLine(pos.line)

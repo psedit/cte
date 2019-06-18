@@ -7,6 +7,7 @@
               :index="index"
               :pieces="pieces"
               @lockDragStart="lockDragStart"
+              @lockDragUpdate="lockDragUpdate"
               @lockDragEnd="lockDragEnd"
       />
     </div>
@@ -32,7 +33,8 @@
         code: '',
         // pieces: pieces,
         activeUsers: [],
-        lockDragRange: null
+        lockDragStartLocation: null,
+        lockDragEndLocation: null
       }
     },
     methods: {
@@ -57,17 +59,32 @@
       },
       lockDragStart (line, index) {
         // console.log('start', line, index)
-        this.lockDragRange = {piece: index, line}
+        this.lockDragStartLocation = {piece: index, line}
+      },
+      lockDragUpdate (line, index) {
+        if (this.lockDragStart) {
+          this.lockDragEndLocation = {piece: index, line}
+          this.updateDrag()
+        }
       },
       lockDragEnd (line, index) {
-        console.log(this.lockDragRange)
-        if (!this.lockDragRange) return
+        console.log(this.lockDragStartLocation)
+        if (!this.lockDragStartLocation) return
 
-        console.log(`Request lock from ${this.lockDragRange.piece}:${this.lockDragRange.line} to ${index}:${line}`)
+        console.log(`Request lock from ${this.lockDragStartLocation.piece}:${this.lockDragStartLocation.line} to ${index}:${line}`)
+        this.lockDragStartLocation = null
+        this.lockDragEndLocation = null
+        for (var key in this.components) {
+          this.components[key].$options.cminstance.clearGutter('user-gutter')
+        }
       },
       lockDragCancel () {
-        // console.log('cancel')
-        this.lockDragRange = null
+        console.log('cancel')
+        this.lockDragStartLocation = null
+        this.lockDragEndLocation = null
+        for (let key in this.components) {
+          this.components[key].$options.cminstance.clearGutter('user-gutter')
+        }
       }
     },
 
