@@ -53,12 +53,20 @@ async def open_file_data(sock, path):
     await open_file(sock, path)
     return await get_file_data(sock, path)
 
-async def close_file(sock, path):
-    data = {"type": "file-leave", "content": {"file_path": path, "force_exit": "true"}}
+async def close_file(sock, path, exit=True):
+    data = {
+        "type": "file-leave",
+        "content": {"file_path": path, "force_exit": str(exit)}
+    }
     msg = json.dumps(data)
     await sock.send(msg)
 
 async def edit_file(sock, path, uuid, content):
-    data = {"type": "file-delta", "content": {"file_path": path, "piece_uuid": uuid, "content": content}}
+    payload = {
+        "file_path": path,
+        "piece_uuid": uuid,
+        "content": content
+    }
+    data = {"type": "file-delta", "content": payload}
     msg = json.dumps(data)
     await sock.send(msg)
