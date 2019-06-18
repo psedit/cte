@@ -196,7 +196,7 @@
             fileManager.nameChange(this.currPathString, oldName, newName)
           }
 
-          this.promptBox('Enter new name', 'newName', changeName)
+          this.promptBox('Enter new name', oldName, changeName)
         })
       },
 
