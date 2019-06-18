@@ -179,10 +179,11 @@
             const content = value.split('\n').map(val => val + '\n')
             const newPieceTable = edit(this.pieceTable, this.pieces[this.index].pieceID, content)
             this.$store.dispatch('updatePieceTable', newPieceTable)
+
             connector.send('file-delta', {
               file_path: this.$store.state.fileTracker.openFile,
               piece_uuid: this.pieces[this.index].pieceID,
-              value
+              content: value
             })
           })
         }
