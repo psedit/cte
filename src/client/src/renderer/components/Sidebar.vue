@@ -6,7 +6,8 @@
       <home-icon title="Go to home folder" class="button" @click="home"/>
     </div>
     <div class="file-tools">
-      <upload title="Upload file" class="button" @click="uploadFile"/>
+      <upload title="Upload directory" class="button" @click="uploadDir"/>
+      <file-upload title="Upload file" class="button" @click="uploadFile"/>
       <file-plus title="Add new file" class="button" @click="createFile"/>
       <file-document-edit title="Rename file" class="button" @click="renameFile"/>
       <file-move title="Relocate file" class="button" @click="relocateFile"/>
@@ -25,12 +26,14 @@
   import FilePlus from 'vue-material-design-icons/FilePlus'
   import FileDocumentEdit from 'vue-material-design-icons/FileDocumentEdit'
   import FileMove from 'vue-material-design-icons/FileMove'
+  import FileUpload from 'vue-material-design-icons/FileUpload'
   import Upload from 'vue-material-design-icons/Upload'
   import connector from '../../main/connector'
   import FileTree from './Sidebar/FileTree'
   import * as fileManager from './Sidebar/fileManager'
   const { dialog } = require('electron').remote
   const dialogs = require('dialogs')
+  const fs = require('fs')
 
   export default {
     name: 'sidebar',
@@ -48,7 +51,8 @@
       FilePlus,
       FileDocumentEdit,
       FileMove,
-      Upload
+      Upload,
+      FileUpload
     },
     computed: {
       /**
@@ -241,6 +245,7 @@
               return true
           }
         }
+
         let filterItems = items.filter(filterFunc)
 
         /* Add a cancel button
@@ -271,10 +276,38 @@
       },
 
       /**
+       * Upload new directory to server.
+       */
+      uploadDir () {
+        console.log(dialog.showOpenDialog({ properties: ['openDirectory'] }))
+        /* TODO: voor alle elementen in map: uploadDir op elke map en uploadFile
+         * op elk bestand (recursief). Let op currPathString...
+         */
+      },
+
+      /**
        * Upload new file to server.
        */
       uploadFile () {
-        console.log(dialog.showOpenDialog({ properties: ['openDirectory', 'openFile'] }))
+        let newFilePath = dialog.showOpenDialog({ properties: ['openFile'] })
+
+        if (newFilePath === '' || newFilePath === undefined) {
+          return
+        }
+
+        /* Get name of file from path. */
+        let lastIndex = newFilePath.lastIndexOf('/')
+        let newFileName = newFilePath.slice(lastIndex + 1, newFilePath.length)
+        let path = this.currPathString + newFileName
+        console.log('NEW FILE NAME: ' + newFileName)
+        fs.readFile(newFilePath, (err, data) => {
+          if (err) {
+            console.log(err)
+            return
+          }
+
+          fileManager.uploadFile(path, data)
+        })
       },
 
       /**
@@ -419,7 +452,7 @@
   .file-tools {
     background-color: #555;
     display: grid;
-    grid-template-columns: 1fr auto auto auto auto auto;
+    grid-template-columns: 1fr auto auto auto auto auto auto;
     grid-gap: 0.5em;
     align-items: center;
     color: #fff;
