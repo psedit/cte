@@ -21,6 +21,7 @@
 <script>
   import EditorPiece from './Editor/EditorPiece'
   import {getRandomColor} from './Editor/RandomColor'
+  import connector from '../../main/connector'
 
   export default {
     name: 'Editor',
@@ -65,6 +66,15 @@
         if (!this.lockDragRange) return
 
         console.log(`Request lock from ${this.lockDragRange.piece}:${this.lockDragRange.line} to ${index}:${line}`)
+
+        if (this.lockDragRange.piece !== index) alert('NOT SUPPORTED')
+
+        connector.request('file-lock-request', 'file-lock-response', {
+          file_path: this.$store.state.fileTracker.openFile,
+          piece_uuid: this.lockDragRange.piece,
+          offset: Math.min(this.lockDragRange.line, line),
+          length: Math.abs(this.lockDragRange.line - line) + 1
+        }).then(response => console.log(response))
       },
       lockDragCancel () {
         // console.log('cancel')
