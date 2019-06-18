@@ -1,5 +1,5 @@
 const uuid = require('uuid/v4')
-const { insert, mergeLeft, clone, remove } = require('ramda')
+const { mergeLeft, clone } = require('ramda')
 
 /**
  * A text block
