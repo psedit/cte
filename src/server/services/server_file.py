@@ -28,14 +28,19 @@ class ServerFile:
         self.file_pt = PieceTable(file_list)
         self.is_saved = True
 
-    def save_to_disk(self) -> None:
+    def save_to_disk(self, garbage_collect=True) -> None:
         """
         Writes the current buffer to the file on disk, while keeping all
         open edit-blocks open.
         """
-        f = open(os.path.join(self.root_dir, self.file_path_relative), 'w')
-        for line in self.file_pt.stitch():
-            f.write(line)
+        file_path = os.path.join(self.root_dir, self.file_path_relative)
+        with open(file_path, 'w') as f:
+            if garbage_collect:
+                for line in self.file_pt.remove_closed_blocks():
+                    f.write(line)
+            else:
+                for line in self.file_pt.stitch():
+                    f.write(line)
 
         self.is_saved = True
 
@@ -93,3 +98,30 @@ class ServerFile:
 
     def change_file_path(self, new_path: str) -> None:
         self.file_path_relative = new_path
+
+    def _has_lock(self, address: Address, piece_id: str):
+        """
+        Checks if the given address has a lock on the given piece id
+        """
+
+        return address in self.locks and piece_id in self.locks[address]
+
+    def update_content(self,
+                       address: Address,
+                       piece_id: str,
+                       content: str) -> None:
+        """
+        Updates the content in the piecetable
+        """
+        if self._has_lock(address, piece_id):
+            self.file_pt.set_piece_content(piece_id, content)
+        if not self.file_pt.get_piece(piece_id):
+            raise ValueError("The piece uuid is not present within the table.")
+        elif self._has_lock(address, piece_id):
+            self.file_pt.set_piece_content(piece_id, content)
+        else:
+            raise LockError(f"{address} has no lock on {piece_id}")
+
+
+class LockError(Exception):
+    pass

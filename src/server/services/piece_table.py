@@ -19,9 +19,10 @@ class PieceTable:
         else:
             lines = text
 
-        orig_block = TextBlock(lines, False)
-        self.blocks: List[TextBlock] = [orig_block]
-        self.table: List[List[int]] = [[0, 0, len(lines)]]
+        orig_piece = TextBlock(lines, False)
+        orig_piece_id = str(uuid.uuid4())
+        self.blocks: Dict[int, TextBlock] = {0: orig_piece}
+        self.table: List[List[Any]] = [[orig_piece_id, 0, 0, len(lines)]]
 
     def __len__(self) -> int:
         """
@@ -105,6 +106,71 @@ class PieceTable:
 
         return lines
 
+    def get_piece_info(self, piece_id: str) -> List[int]:
+        """
+        If the given block is locked, returns the current piece length
+        and starting location within the file.
+        """
+        # TODO
+        cur_pos = 0
+        for piece in self.table:
+            if piece[0] == piece_id:
+                return [cur_pos, piece[3]]
+            else:
+                cur_pos += piece[3]
+        return []
+
+    def get_piece_content(self, piece_id: str) -> List[str]:
+        """
+        Returns the content of a single piece in the table.
+        """
+        for p_id, block_id, start, length in self.table:
+            if p_id == piece_id:
+                return self.blocks[block_id].get_lines(start, length)
+
+        return []
+
+    def get_piece(self, piece_id: str) -> List[Any]:
+        """
+        Returns the piece by piece_id, returns empty list otherwise
+        """
+        for piece in self.table:
+            if piece[0] == piece_id:
+                return piece
+
+        return []
+
+    def set_piece_size(self, piece_id: str, start:int, length:int):
+        """
+        Sets the length of a piece in the table
+        """
+        for piece in self.table:
+            if piece[0] == piece_id:
+                piece[2] = start
+                piece[3] = length
+
+    def set_piece_content(self, piece_id: str, content: str) -> None:
+        """
+        Sets the contents of a piece in the piecetable
+        """
+        _, block_id, start, _ = self.get_piece(piece_id)
+
+        text_block = self.blocks[block_id]
+
+        # set the content of the current block
+        text_block.set_content(content)
+        self.set_piece_size(piece_id, start, len(text_block))
+
+    def get_piece_block_id(self, piece_id: str) -> int:
+        """
+        Returns the block id of a single piece in the table.
+        """
+        for p_id, block_id, _, _ in self.table:
+            if p_id == piece_id:
+                return block_id
+
+        return -1
+
     def stitch(self) -> List[str]:
         """
         Returns the new stitched file according to the piece table.
@@ -156,8 +222,9 @@ class PieceTable:
 
         # Find and shrink previous containing block
         index, offset = self.line_to_table_index(start)
-        prev_len: int = self.table[index][2]
-        self.table[index][2] = offset
+        prev_len: int = self.table[index][3]
+        self.table[index][0] = str(uuid.uuid4())
+        self.table[index][3] = offset
 
         # Insert the new block in the table
         self.table.insert(index + 1, [len(self.blocks) - 1, 0, length])
