@@ -17,8 +17,7 @@
     props: {
       editable: Boolean,
       pieces: Array,
-      index: Number,
-      user: String
+      index: Number
     },
 
     data () {
@@ -55,7 +54,7 @@
       cm.setValue(this.code)
 
       this.$el.style.setProperty('--gutter-hue', Math.round(Math.random() * 360))
-      cm.getGutterElement().setAttribute('title', this.user)
+      cm.getGutterElement().setAttribute('title', this.username)
       this.initializeEvents()
 
       if (this.index !== 0) {
@@ -67,7 +66,7 @@
         return this.pieces.map(piece => piece.text)
       },
       textPieces () {
-        return this.textPiecesArray.join('\n')
+        return this.textPiecesArray.join('')
       },
 
       preCodeArray () {
@@ -76,16 +75,19 @@
         }, [])
       },
       preCode () {
-        return this.preCodeArray.join('\n')
+        return this.preCodeArray.join('')
       },
 
       codeArray () {
         return this.pieces[this.index].text
       },
       code () {
-        return this.codeArray.join('\n')
-      }
+        return this.codeArray.join('')
+      },
 
+      username () {
+        return this.pieces[this.index].username
+      }
     },
 
     methods: {
