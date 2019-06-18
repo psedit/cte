@@ -309,27 +309,34 @@
         // })
         // files = ['cancel', ...files]
 
-        let items = ['cancel'].concat(this.itemNames()) // TODO: Remove if only file deletion allowed
+        // let items = ['cancel'].concat(this.itemNames()) // TODO: Remove if only file deletion allowed
 
-        /* Options needed for the message box. */
-        let options = {
-          type: 'question',
-          // buttons: files, // FIXME: Change to 'files' if only file deletion allowed
-          buttons: items,
-          defaultId: 0,
-          title: 'Delete file',
-          message: 'Select file to delete',
-          detail: 'This cannot be undone!'
-        }
+        // /* Options needed for the message box. */
+        // let options = {
+        //   type: 'question',
+        //   // buttons: files, // FIXME: Change to 'files' if only file deletion allowed
+        //   buttons: items,
+        //   defaultId: 0,
+        //   title: 'Delete file',
+        //   message: 'Select file to delete',
+        //   detail: 'This cannot be undone!'
+        // }
 
-        /* Let user choose which file to delete. */
-        dialog.showMessageBox(null, options, (response) => {
+        // /* Let user choose which file to delete. */
+        // dialog.showMessageBox(null, options, (response) => {
+        //   /* When user selects 'cancel', do nothing. */
+        //   if (response === 0) {
+        //     return
+        //   }
+
+        //   fileManager.removeFile(`${this.currPathString}${items[response]}`)
+        // })
+        this.selectItem('Delete file', 'Select file to delete', 'This cannot be undone!', this.currItems, 'file', (filePath) => {
           /* When user selects 'cancel', do nothing. */
-          if (response === 0) {
+          if (filePath === undefined) {
             return
           }
-
-          fileManager.removeFile(`${this.currPathString}${items[response]}`)
+          fileManager.removeFile(filePath)
         })
       },
 
