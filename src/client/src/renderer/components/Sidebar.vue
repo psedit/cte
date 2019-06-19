@@ -319,7 +319,7 @@
             return item
           }
         })
-        console.log('filteritems: ', filterItems)
+
         /* Add a cancel button
           */
         let buttonOptions = ['cancel', ...filterItems]
@@ -340,7 +340,7 @@
           if (response === 0) {
             return
           }
-          console.log('button options', buttonOptions)
+
           returnValue = buttonOptions[response]
           returnValue = `${this.currPathString}${returnValue}`
           callback(returnValue)
