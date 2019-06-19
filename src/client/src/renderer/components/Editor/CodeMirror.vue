@@ -13,8 +13,6 @@
   import GhostCursors from './GhostCursors'
 
   import Connector from '../../../main/connector'
-  // import 'codemirror/keymap/vim'
-
   export default {
     name: 'CodeMirror',
 

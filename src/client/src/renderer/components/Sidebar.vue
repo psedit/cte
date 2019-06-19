@@ -297,7 +297,8 @@
         let lastIndex = newFilePath.lastIndexOf('/')
         let newFileName = newFilePath.slice(lastIndex + 1, newFilePath.length)
         let path = this.currPathString + newFileName
-        console.log('NEW FILE NAME: ' + newFileName)
+        console.log('NEW FILE NAME: ' + newFileName) // TODO: fix path
+
         fs.readFile(newFilePath, (err, data) => {
           if (err) {
             console.log(err)

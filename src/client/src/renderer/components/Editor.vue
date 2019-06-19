@@ -1,8 +1,16 @@
 <template>
   <div class="editor">
-    <code-mirror v-show="this.ready" v-model="code" ref="codemirror"/>
-
-    <div id="placeholder" v-if="!this.ready">⇚ Select a file</div>
+    <div class="editor-pieces">
+      <editor-piece
+              v-for="(piece, index) in pieces"
+              :key="piece.pieceID"
+              :index="index"
+              :pieces="pieces"
+              @lockDragStart="lockDragStart"
+              @lockDragEnd="lockDragEnd"
+      />
+    </div>
+    <!--<div id="placeholder" v-if="!this.ready">⇚ Select a file</div>-->
     <div class="user-list">
       <div class="user-list-item" v-for="user in activeUsers" :title="user.username" :style="userStyle(user)">{{ user.username[0].toUpperCase() }}</div>
     </div>
@@ -10,19 +18,23 @@
 </template>
 
 <script>
-  import CodeMirror from './Editor/CodeMirror'
+  import EditorPiece from './Editor/EditorPiece'
   import {getRandomColor} from './Editor/RandomColor'
+  import connector from '../../main/connector'
+  import { convertChangeToJS, edit } from '../../main/pieceTable'
 
   export default {
     name: 'Editor',
 
     components: {
-      CodeMirror
+      EditorPiece
     },
     data () {
       return {
         code: '',
-        activeUsers: []
+        // pieces: pieces,
+        activeUsers: [],
+        lockDragRange: null
       }
     },
     methods: {
@@ -44,26 +56,79 @@
         return {
           backgroundColor: user.color
         }
+      },
+      lockDragStart (line, index) {
+        // console.log('start', line, index)
+        this.lockDragRange = {piece: index, line}
+      },
+      lockDragEnd (line, index) {
+        console.log(this.lockDragRange)
+        if (!this.lockDragRange) return
+
+        console.log(`Request lock from ${this.lockDragRange.piece}:${this.lockDragRange.line} to ${index}:${line}`)
+
+        if (this.lockDragRange.piece !== index) alert('NOT SUPPORTED')
+
+        connector.request('file-lock-request', 'file-lock-response', {
+          file_path: this.$store.state.fileTracker.openFile,
+          piece_uuid: this.pieces[this.lockDragRange.piece].pieceID,
+          offset: Math.min(this.lockDragRange.line, line),
+          length: Math.abs(this.lockDragRange.line - line) + 1
+        }).then(response => console.log(response))
+      },
+      lockDragCancel () {
+        // console.log('cancel')
+        this.lockDragRange = null
       }
     },
 
     computed: {
       ready () {
         return this.code !== undefined && this.code !== ''
+      },
+
+      pieces () {
+        return this.$store.state.fileTracker.pieces
+      },
+      pieceTable () {
+        return this.$store.state.fileTracker.pieceTable
+      },
+      filePath () {
+        return this.$store.state.fileTracker.openFile
       }
     },
 
     mounted () {
-      const cm = this.$refs.codemirror
-
       this.updateCode()
       this.$store.subscribe((mutation, state) => {
         if (mutation.type === 'updateCode') {
           this.updateCode()
-          cm.ghostCursors.changeFilepath(this.$store.state.fileTracker.openFile).then(cursors => {
-            console.log(cursors)
-            this.updateUsers(cursors)
-          })
+          // cm.ghostCursors.changeFilepath(this.$store.state.fileTracker.openFile).then(cursors => {
+          //   console.log(cursors)
+          //   this.updateUsers(cursors)
+          // })
+        }
+      })
+
+      addEventListener('mouseup', (e) => {
+        if (!e.composedPath()[0].classList.contains('user-gutter')) {
+          this.lockDragCancel()
+        }
+      })
+
+      connector.listenToMsg('file-delta-broadcast', ({ content }) => {
+        if (content.file_path === this.filePath) {
+          const newPieceTable = edit(this.pieceTable, content.piece_uuid, content.content.split('\n').map(val => val + '\n'))
+          this.$store.dispatch('updatePieceTable', newPieceTable)
+        }
+      })
+
+      connector.listenToMsg('file-piece-table-change-broadcast', ({ content }) => {
+        console.log(content)
+        const { textBlocks } = this.pieceTable
+        const update = convertChangeToJS(textBlocks, content)
+        if (update.filePath === this.filePath) {
+          this.$store.dispatch('updatePieceTable', update.pieceTable)
         }
       })
     }
@@ -72,8 +137,16 @@
 
 <style scoped lang="scss">
   .editor{
-      width: 100%;
-      height: calc(100vh - 2em);
+    width: 100%;
+    overflow-y: hidden;
+    background-color: #272822;
+  }
+
+  .editor-pieces {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow-y: auto;
   }
 
   #placeholder{

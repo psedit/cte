@@ -1,16 +1,29 @@
 import Tab from '../../components/Tabs/tabType'
 import connector from '../../../main/connector'
+import { convertToJS, getFile, create } from '../../../main/pieceTable'
 
 const state = {
-  code: '',
+  pieces: null,
+  pieceTable: null,
   openFile: '',
   filePaths: '',
   tabs: []
 }
 
 const mutations = {
-  updateCode (state, newCode) {
-    state.code = newCode
+  /**
+   * @param {Object} state
+   * @param {pieceTable} pieceTable
+   */
+  updatePieces (state, pieceTable) {
+    state.pieces = getFile(pieceTable)
+  },
+  /**
+   * @param {Object} state
+   * @param {pieceTable} pieceTable
+   */
+  updatePieceTable (state, pieceTable) {
+    state.pieceTable = pieceTable
   },
   /**
    * Adds a tab to state
@@ -66,11 +79,22 @@ const actions = {
         'length': -1
       }
     ).then((data) => {
-      store.commit('updateCode', data.file_content)
+      const pieceTable = convertToJS(data)
+      store.dispatch('updatePieceTable', pieceTable)
+
       // fs.writeFile(filePath, data.file_content, (err) => {
       //   if (err) console.error(err)
       // })
     })
+  },
+  /**
+   * Updates pieces and piece table
+   * @param {Object} store
+   * @param {PieceTable} pieceTable
+   */
+  updatePieceTable (store, pieceTable) {
+    store.commit('updatePieceTable', pieceTable)
+    store.commit('updatePieces', pieceTable)
   },
   /**
    * Removes a tab from state and switches to a new tab if the tab was opened.
@@ -82,7 +106,7 @@ const actions = {
       if (store.state.tabs.length === 1) {
         store.commit('updateOpenFile', '')
         // FIXME: hide the editor if last file is removed
-        store.commit('updateCode', 'Fix even pls dat de editor verdwijnt. (v-if)')
+        store.dispatch('updatePieceTable', create('Fix even pls dat de editor verdwijnt. (v-if)'))
       } else {
         const i = store.state.tabs.indexOf(tabToRemove)
         store.dispatch('openFile', store.state.tabs[(i + 1) % store.state.tabs.length].filePath)
