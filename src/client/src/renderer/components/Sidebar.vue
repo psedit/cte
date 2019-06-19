@@ -405,7 +405,6 @@
           /* Get dir name from newDirLocal. */
           let folderPath = newDirLocal.split('/')
           let newDirName = folderPath[folderPath.length - 1]
-          console.log('NEWDIRNAME: ' + newDirName)
 
           let dirs = []
           files.forEach(file => {
@@ -422,13 +421,14 @@
             }
           })
 
+          /* End recursion. */
+          if (dirs === []) {
+            return
+          }
+
           /* Recursively add subdirectories. */
           dirs.forEach(dirPath => {
-            /* Get dir name from dirPath. */
-            let folderPath = dirPath.split('/')
-            let newSubDirName = folderPath[folderPath.length - 1]
-            console.log('RECURSIVE CALL! newDirLocal: ' + dirPath + ' currServerPath: ' + currServerPath + newDirName + '/')
-            this.uploadDirRecursive(dirPath, currServerPath + newDirName + '/' + newSubDirName + '/')
+            this.uploadDirRecursive(dirPath, currServerPath + newDirName + '/')
           })
         })
       },
