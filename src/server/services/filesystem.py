@@ -26,7 +26,7 @@ class Filesystem(Service):
         super().__init__(*super_args)
         # Check server config for root directory
         # TODO: retrieve from server
-        self.root_dir: str = os.path.realpath('../test')
+        self.root_dir: str = os.path.realpath('../file_root')
         self.usernames: Dict[Address, str] = {}
 
         # Files sorted by path relative to root dir
@@ -39,6 +39,7 @@ class Filesystem(Service):
         Add the file to the Filesystem. Path file is relative to root
         directory.
         """
+
         if file_path not in self.file_dict:
             self.file_dict[file_path] = ServerFile(self.root_dir, file_path)
 
@@ -84,16 +85,6 @@ class Filesystem(Service):
         else:
             return True
 
-    def _extend_pt_uname(self, file):
-        """
-        Returns an extended piece table including usernames of piece owners.
-        """
-        ex_tab = []
-        for i, piece in enumerate(file.file_pt.table):
-            uname = self.usernames.get(file.get_lock_client(piece[0])) or ""
-            ex_tab.append([*piece, uname])
-        return ex_tab
-
     @message_type("file-content-request")
     async def _process_file_content_request(self, msg) -> None:
         """
@@ -112,7 +103,7 @@ class Filesystem(Service):
             for b_id, block in file.file_pt.blocks.items():
                 block_list.append((b_id, block.is_open(), block.lines))
 
-            response_content = {"piece_table": self._extend_pt_uname(file),
+            response_content = {"piece_table": file.file_pt.table,
                                 "block_list": block_list}
 
             self._send_message_client("file-content-response",
@@ -159,7 +150,7 @@ class Filesystem(Service):
                                   *file.get_clients(exclude=[address]))
 
     @message_type("cursor-list-request")
-    async def _send_cursor_list(self, msg):
+    async def _clist_request_handler(self, msg):
         address = msg["sender"][0]
         content = msg["content"]
 
@@ -168,12 +159,39 @@ class Filesystem(Service):
         if not self._is_joined(address, path):
             return
 
-        curs_f = self.file_dict[path].get_cursors([address])
+        self._send_cursor_list(path, address, exclude=(address,))
+
+    def _send_cursor_list(self, path, *addrs, exclude=None):
+        """
+        Send the cursor list for a path to the given addresses.
+
+        If no addresses are passed, send the cursor list to everyone who
+        is joined to the file.
+        """
+        curs_f = self.file_dict[path].get_cursors(exclude)
         cursors = [[self.usernames[c]] + curs_f[c] for c in curs_f]
+
+        if not addrs:
+            addrs = curs_f.get_clients()
+            # broadcast
+            pass
 
         self._send_message_client("cursor-list-response",
                                   {"cursor_list": cursors},
-                                  address)
+                                  *addrs)
+
+    def _broadcast_file_cursors(self, file):
+        for client, loc in file.client.items():
+            uname = self.usernames[client]
+            self._send_message_client("cursor-move-broadcast",
+                                      {
+                                          "username": uname,
+                                          "file_path": file.file_path_relative,
+                                          "piece_id": loc[0],
+                                          "offset": loc[1],
+                                          "column": loc[2]
+                                      },
+                                      file.get_clients(exclude=client))
 
     @message_type("file-join")
     async def _file_add_client(self, msg) -> None:
@@ -240,7 +258,10 @@ class Filesystem(Service):
 
         # Broadcast the change and remove the username
         self._send_file_leave_broadcast(path, address)
-        del self.usernames[address]
+        self._send_piece_table_change_broadcast(path)
+
+        if self.usernames[address]:
+            del self.usernames[address]
 
     @message_type("client-disconnect")
     async def _remove_client(self, msg) -> None:
@@ -250,12 +271,12 @@ class Filesystem(Service):
 
         for path, f in self.file_dict.items():
             if f.is_joined(address):
+                # Remove the client from the file and broadcast the change.
                 f.drop_client(address)
                 self._send_file_leave_broadcast(path, address)
+                self._send_piece_table_change_broadcast(path)
 
-        # Broadcast the change and remove the username
         if address in self.usernames:
-            self._send_file_leave_broadcast(path, address)
             del self.usernames[address]
 
     def _send_file_join_broadcast(self, file_path: str, client: Address):
@@ -294,7 +315,7 @@ class Filesystem(Service):
 
         try:
             lock_id = self.file_dict[path].add_lock(address, piece_id,
-                                                    offset, length)
+                                                    offset, length, username)
         except ValueError as e:
             self._send_message_client("error-response",
                                       {
@@ -308,6 +329,7 @@ class Filesystem(Service):
 
         self._send_lock_response(path, True, lock_id, address)
         self._send_piece_table_change_broadcast(path, lock_id, True)
+        self._broadcast_file_cursors(self.file_dict[path])
 
     @message_type("file-unlock-request")
     async def _file_remove_lock(self, msg) -> None:
@@ -340,24 +362,29 @@ class Filesystem(Service):
 
     def _send_piece_table_change_broadcast(self,
                                            file_path: str,
-                                           lock_id: str,
-                                           is_locked: bool) -> None:
+                                           lock_id: str = "",
+                                           is_locked: bool = False) -> None:
         """
         Send the new table from the piece table to all clients within the file.
+        Also sends the updated cursor positions.
         """
         file = self.file_dict[file_path]
 
         lines = file.file_pt.get_piece_content(lock_id)
-        block_id = file.file_pt.get_piece_block_id(lock_id)
+        if lock_id:
+            block_id = file.file_pt.get_piece_block_id(lock_id)
+        else:
+            block_id = -1  # Signals no block is changed
+
         content = {
                     "file_path": file_path,
-                    "piece_table": self._extend_pt_uname(file),
+                    "piece_table": file.file_pt.table,
                     "changed_block": [block_id, is_locked, lines]
                   }
         self._send_message_client("file-piece-table-change-broadcast", content,
                                   *file.get_clients())
 
-        self._send_cursor_list(file_path, *file.get_clients())
+        self._broadcast_file_cursors(file)
 
     @message_type("file-lock-list-request")
     async def _file_send_lock_list(self, msg) -> None:

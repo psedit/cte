@@ -23,7 +23,7 @@ class PieceTable:
         orig_piece = TextBlock(lines, False)
         orig_piece_id = str(uuid.uuid4())
         self.blocks: Dict[int, TextBlock] = {0: orig_piece}
-        self.table: List[List[Any]] = [[orig_piece_id, 0, 0, len(lines)]]
+        self.table: List[List[Any]] = [[orig_piece_id, 0, 0, len(lines), ""]]
 
     def __len__(self) -> int:
         """
@@ -34,10 +34,10 @@ class PieceTable:
     def __str__(self) -> str:
         fmt = "{:>38}" + "{:>10}"*4
         str_table = fmt.format("Piece ID", "Block ID", "Start",
-                               "Length", "Open") + "\n"
+                               "Length", "Owner", "Locked") + "\n"
 
         for p in self.table:
-            str_table += fmt.format(*p, self.blocks[p[0]].is_open()) + "\n"
+            str_table += fmt.format(*p, not p[4] == "") + "\n"
 
         return str_table
 
@@ -130,7 +130,7 @@ class PieceTable:
         """
         Returns the content of a single piece in the table.
         """
-        for p_id, block_id, start, length in self.table:
+        for p_id, block_id, start, length, _ in self.table:
             if p_id == piece_id:
                 return self.blocks[block_id].get_lines(start, length)
 
@@ -146,7 +146,7 @@ class PieceTable:
 
         return []
 
-    def set_piece_size(self, piece_id: str, start:int, length:int):
+    def set_piece_size(self, piece_id: str, start: int, length: int):
         """
         Sets the length of a piece in the table
         """
@@ -231,7 +231,8 @@ class PieceTable:
 
         return stitched_file
 
-    def open_block(self, piece_id: str, offset: int, length: int) -> str:
+    def open_block(self, piece_id: str, offset: int, length: int,
+                   uname: str) -> str:
         """
         Opens a new block in the piece table starting at the given offset
         within the specified piece, until the given length.
@@ -273,6 +274,7 @@ class PieceTable:
         prev_len: int = self.table[index][3]
         self.table[index][0] = str(uuid.uuid4())
         self.table[index][3] = offset
+        self.table[index][4] = uname
 
         # Insert the new block in the table
         piece_id = str(uuid.uuid4())
@@ -316,6 +318,7 @@ class PieceTable:
         The block is kept within the piece table but should not be written to
         anymore.
         """
-        for piece in self.table:
+        for i, piece in enumerate(self.table):
             if piece[0] == piece_id:
                 self.blocks[piece[1]].close()
+                self.table[i][4] = ""
