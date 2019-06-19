@@ -1,4 +1,5 @@
 const uuid = require('uuid/v4')
+const { mergeLeft, clone } = require('ramda')
 
 /**
  * A text block
@@ -34,7 +35,7 @@ const uuid = require('uuid/v4')
 /**
  * @typedef {Object} Range
  * @property {number} start inclusive start
- * @property {number} end inclusive end
+ * @property {number} end exclusive end
  */
 
 /**
@@ -42,6 +43,12 @@ const uuid = require('uuid/v4')
  * @property {string} filePath
  * @property {PieceTable} pieceTable the updated piece table
  * @property {TextBlock} changedBlock the block that is changed
+ */
+
+/**
+ * @typedef FilePiece
+ * @property {string} pieceID
+ * @property {string[]} text the text of the file
  */
 
 /**
@@ -63,7 +70,7 @@ export function _create (UUID) {
           lines: lines
         }
       },
-      table: [{ pieceID: UUID(), blockID: 0, start: 0, length: lines.length }]
+      table: [{ pieceID: UUID(), blockID: 0, start: 0, length: lines.length, username: 'hans' }]
     }
   }
 }
@@ -89,7 +96,7 @@ export function convertToJS (pyPieceTable) {
  * @returns {Object.<string, TextBlock>} text blocks
  */
 export function convertBlockToJS (obj, [blockID, closed, lines]) {
-  obj = { ...obj }
+  obj = clone(obj)
   obj[blockID] = {
     open: !closed,
     lines
@@ -101,12 +108,13 @@ export function convertBlockToJS (obj, [blockID, closed, lines]) {
  * @param {any[]} piece
  * @returns {Piece}
  */
-export function convertTableTojs ([pieceID, blockID, start, length]) {
+export function convertTableTojs ([pieceID, blockID, start, length, username]) {
   return {
     pieceID,
     blockID,
     start,
-    length
+    length,
+    username
   }
 }
 
@@ -228,7 +236,7 @@ export function getRange (table, lineNumber, length) {
 
   return {
     start: index,
-    end: index + lastOff - 1
+    end: index + lastOff
   }
 }
 
@@ -237,11 +245,27 @@ export function getRange (table, lineNumber, length) {
  * @param {string} pieceID
  * @returns {TextBlock} the corresponding TextBlock
  */
-export function getBLock ({ textBlocks, table }, pieceID) {
-  const piece = table.find(x => {
-    return x.pieceID === pieceID
-  })
+export function getBlock ({ textBlocks, table }, pieceID) {
+  const piece = getPieceByPieceID(table, pieceID)
   return textBlocks[piece.blockID]
+}
+
+/**
+ * @param {Piece[]} table
+ * @param {string} pieceID
+ * @returns {Piece}
+ */
+export function getPieceByPieceID (table, pieceID) {
+  return table.find(x => x.pieceID === pieceID)
+}
+
+/**
+ * @param {Piece[]} table
+ * @param {string} pieceID
+ * @returns {number}
+ */
+export function getPieceIndexByPieceID (table, pieceID) {
+  return table.findIndex(x => x.pieceID === pieceID)
 }
 
 /**
@@ -249,6 +273,64 @@ export function getBLock ({ textBlocks, table }, pieceID) {
  * @param {PieceTable} pieceTable
  * @returns {string[]} the stiched file
  */
-export function stich ({ textBlocks, table }) {
-  return [].concat(...table.map(({ blockID, start, length }) => textBlocks[blockID].lines.slice(start, start + length)))
+export function stitch ({ textBlocks, table }) {
+  return [].concat(
+    ...table.map(({ blockID, start, length }) =>
+      textBlocks[blockID].lines.slice(start, start + length)
+    )
+  )
+}
+
+/**
+ * @param {PieceTable} pieceTable
+ * @param {string} pieceID
+ * @returns {string[]} the text of the corresponding block
+ */
+export function getTextByPieceID ({ textBlocks, table }, pieceID) {
+  const { blockID, start, length } = getPieceByPieceID(table, pieceID)
+  const block = textBlocks[blockID]
+  return block.lines.slice(start, start + length)
+}
+
+/**
+ * @param {PieceTable}
+ * @returns {FilePiece[]} a list of file pieces
+ */
+export function getFile ({ textBlocks, table }) {
+  return table.map(({ pieceID, username }) => {
+    return {
+      pieceID,
+      text: getTextByPieceID({ textBlocks, table }, pieceID),
+      open: getBlock({ textBlocks, table }, pieceID).open,
+      username
+    }
+  })
+}
+
+/**
+ * @param {PieceTable} pieceTable
+ * @param {number} pieceID
+ * @param {string[]} lines
+ * @return {PieceTable}
+ */
+export function edit ({ textBlocks, table }, pieceID, lines) {
+  const index = getPieceIndexByPieceID(table, pieceID)
+  const piece = table[index]
+  const block = textBlocks[piece.blockID]
+
+  const newPiece = {
+    ...piece,
+    length: lines.length
+  }
+
+  const newTable = clone(table)
+  newTable[index] = newPiece
+  const newBlock = mergeLeft({ lines }, block)
+  const newTextblocks = clone(textBlocks)
+  newTextblocks[piece.blockID] = newBlock
+
+  return {
+    table: newTable,
+    textBlocks: newTextblocks
+  }
 }

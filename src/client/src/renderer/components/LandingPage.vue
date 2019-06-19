@@ -3,6 +3,7 @@
     <tabs id="tabs"/>
     <sidebar id="sidebar"/>
     <editor id="editor"/>
+    <error-messenger id="error-messenger"/>
   </div>
 </template>
 
@@ -11,12 +12,12 @@
   import Editor from './Editor'
   import Sidebar from './Sidebar'
   import Tabs from './Tabs/Tabs'
-
+  import ErrorMessenger from './ErrorMessenger'
   import connector from '../../main/connector.js'
 
   export default {
     name: 'landing-page',
-    components: { Editor, Sidebar, Tabs },
+    components: { Editor, Sidebar, Tabs, ErrorMessenger },
     mounted () {
       const username = require('os').userInfo().username
       connector.addEventListener('open', () => {
@@ -24,9 +25,12 @@
           'login-request',
           'login-response',
           {username}
-        ).then(({succeed, error}) => {
+        ).then(({succeed, new_username: newUsername}) => {
           if (!succeed) {
-            console.error(error)
+            // FIXME: do error screeen pls
+            console.error('hier graag')
+          } else {
+            this.$store.dispatch('login', newUsername)
           }
         })
       })
