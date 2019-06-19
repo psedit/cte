@@ -3,7 +3,7 @@ const uuid = require('uuid/v4')
 
 // FIXME: Change path to server path.
 // const path = new URL('ws://bami.party:12345')
-const path = new URL('ws://seqfault.party:12345')
+const path = new URL('ws://segfault.party:12345')
 // const path = new URL('ws://localhost:8080')
 
 /**
