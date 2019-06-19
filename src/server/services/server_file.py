@@ -103,7 +103,7 @@ class ServerFile:
         return [[usernames[addr], lock_id] for addr in self.locks
                 for lock_id in self.locks[addr]]
 
-    def get_lock_client(self, lock_id) -> str:
+    def get_lock_client(self, lock_id):
         """
         Returns the address of the client who holds the lock.
         """

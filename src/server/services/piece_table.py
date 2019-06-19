@@ -146,7 +146,7 @@ class PieceTable:
 
         return []
 
-    def set_piece_size(self, piece_id: str, start:int, length:int):
+    def set_piece_size(self, piece_id: str, start: int, length: int):
         """
         Sets the length of a piece in the table
         """
@@ -322,4 +322,3 @@ class PieceTable:
             if piece[0] == piece_id:
                 self.blocks[piece[1]].close()
                 self.table[i][4] = ""
-

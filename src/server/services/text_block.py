@@ -22,9 +22,8 @@ class TextBlock:
     def is_open(self) -> bool:
         return self.open
 
-    def set_content(self, content:str) -> None:
+    def set_content(self, content: str) -> None:
         """
         Sets the content of the textblock and returns the new length
         """
         self.lines = content.splitlines(True)
-

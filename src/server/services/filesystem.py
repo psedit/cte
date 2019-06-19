@@ -279,7 +279,6 @@ class Filesystem(Service):
         if address in self.usernames:
             del self.usernames[address]
 
-
     def _send_file_join_broadcast(self, file_path: str, client: Address):
         file = self.file_dict[file_path]
         self._send_message_client("file-join-broadcast",
@@ -330,7 +329,7 @@ class Filesystem(Service):
 
         self._send_lock_response(path, True, lock_id, address)
         self._send_piece_table_change_broadcast(path, lock_id, True)
-        self._broadcast_file_cursors(file)
+        self._broadcast_file_cursors(self.file_dict[path])
 
     @message_type("file-unlock-request")
     async def _file_remove_lock(self, msg) -> None:
@@ -375,7 +374,7 @@ class Filesystem(Service):
         if lock_id:
             block_id = file.file_pt.get_piece_block_id(lock_id)
         else:
-            block_id = -1 # Signals no block is changed
+            block_id = -1  # Signals no block is changed
 
         content = {
                     "file_path": file_path,
