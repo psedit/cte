@@ -209,7 +209,7 @@ describe('getText', function () {
       ' 😀'
     ])
   })
-  it('should not give an empty array when text length is zero', function () {
+  it('should give an empty array when text length is zero', function () {
     expect(getTextByPieceID(emptyTable, 'ab003168-dfcf-49f3-8f8a-eb43e558f42a')).to.deep.equal([])
   })
 })
