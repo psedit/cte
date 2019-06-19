@@ -1,6 +1,6 @@
 import Tab from '../../components/Tabs/tabType'
 import connector from '../../../main/connector'
-import { convertToJS, getFile, create } from '../../../main/pieceTable'
+import { convertToJS, getFile } from '../../../main/pieceTable'
 
 const state = {
   pieces: null,
