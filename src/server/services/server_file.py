@@ -65,7 +65,7 @@ class ServerFile:
         pass
 
     def add_lock(self, client: Address, piece_id: str, offset: int,
-                 length: int) -> str:
+                 length: int, uname: str) -> str:
         """
         Tries to create the block within the piece table.
         Returns the block ID of the created block when successful, None
@@ -73,7 +73,7 @@ class ServerFile:
         """
         cursors_rows = self.get_cursors_rows()
 
-        lock_id = self.file_pt.open_block(piece_id, offset, length)
+        lock_id = self.file_pt.open_block(piece_id, offset, length, uname)
 
         if client not in self.locks:
             self.locks[client] = [lock_id]
