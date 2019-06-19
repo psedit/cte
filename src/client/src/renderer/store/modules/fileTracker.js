@@ -88,10 +88,28 @@ const actions = {
     })
   },
   /**
-   * Updates pieces and piece table
-   * @param {Object} store
-   * @param {PieceTable} pieceTable
+   * Move to the tab before the tab with the given index.
    */
+  prevTab (store, index) {
+    if (index === 0) {
+      index = store.state.tabs.length
+    }
+    store.dispatch('openFile', store.state.tabs[index - 1].filePath)
+  },
+  /**
+   * Move to the tab after the tab with the given index.
+   */
+  nextTab (store, index) {
+    if (index === store.state.tabs.length - 1) {
+      index = -1
+    }
+    store.dispatch('openFile', store.state.tabs[index + 1].filePath)
+  },
+  /**
+  * Updates pieces and piece table
+  * @param {Object} store
+  * @param {PieceTable} pieceTable
+  */
   updatePieceTable (store, pieceTable) {
     store.commit('updatePieceTable', pieceTable)
     store.commit('updatePieces', pieceTable)
@@ -103,19 +121,29 @@ const actions = {
    */
   removeTab (store, tabToRemove) {
     if (tabToRemove.filePath === store.state.openFile) {
-      if (store.state.tabs.length === 1) {
-        store.commit('updateOpenFile', '')
-        // FIXME: hide the editor if last file is removed
-        store.dispatch('updatePieceTable', create('Fix even pls dat de editor verdwijnt. (v-if)'))
-      } else {
-        const i = store.state.tabs.indexOf(tabToRemove)
-        store.dispatch('openFile', store.state.tabs[(i + 1) % store.state.tabs.length].filePath)
-      }
+      const i = store.state.tabs.indexOf(tabToRemove)
+      store.dispatch('prevTab', i)
     }
     store.commit('removeTab', tabToRemove)
   },
-  updateCodeAction (state, newCode) {
-    state.commit('updateCode', newCode)
+  /**
+   * Moves from the current tab to another tab in the given direction.
+   * @param {Object} store vuex store
+   * @param {Tab} direction 1 for moving to the next tab, 0 for to the previous
+   */
+  scrollTab (store, direction) {
+    var i = 0
+    for (let tab of store.state.tabs) {
+      if (tab.filePath === store.state.openFile) {
+        if (direction) {
+          store.dispatch('nextTab', i)
+        } else {
+          store.dispatch('prevTab', i)
+        }
+        break
+      }
+      i++
+    }
   }
 }
 
