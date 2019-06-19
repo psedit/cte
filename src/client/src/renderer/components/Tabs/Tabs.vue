@@ -2,7 +2,7 @@
   <div>
     <ul id="tab-list" @wheel="scrollTabs">
       <li v-for="tab in tabs" class="tab" @click.self="tabClick(tab.filePath)" :class="{ 'active': isActive(tab.filePath) }">
-        {{ tab.fileName }} <close-icon class="close-tab" @click="tabRemove(tab)"/>
+        {{ tab.fileName }} <close-icon v-if="tabs.length != 1" class="close-tab" @click="tabRemove(tab)"/>
       </li>
     </ul>
   </div>
