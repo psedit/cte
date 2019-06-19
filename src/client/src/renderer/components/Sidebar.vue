@@ -299,72 +299,81 @@
        * Upload new file to server.
        */
       uploadFile () {
-        let newFilePath = dialog.showOpenDialog({ properties: ['openFile'] })
+        let localPath = dialog.showOpenDialog({ properties: ['openFile'] })
 
-        if (newFilePath === undefined || newFilePath.toString() === '') {
+        if (localPath === undefined || localPath.toString() === '') {
           return
         } else {
-          newFilePath = newFilePath.toString()
+          localPath = localPath.toString()
         }
 
         /* Get name of file from path. */
-        let folderPath = newFilePath.split('/')
+        let folderPath = localPath.split('/')
         let newFileName = folderPath[folderPath.length - 1]
-        let path = this.currPathString + newFileName
+        let serverPath = this.currPathString + newFileName
 
-        this.uploadFileHelper(newFilePath, path)
+        this.uploadFileHelper(localPath, serverPath)
+      },
+
+      /**
+       * Recursively upload subdirectories to server.
+       *
+       * @param {string} newDirLocal local path to new directory
+       * @param {string} currServerPath destination path in which to make new directory
+       */
+      uploadDirRecursive (newDirLocal, currServerPath) {
+        /* Read local directory. */
+        fs.readdir(newDirLocal, {withFileTypes: true}, (err, files) => {
+          if (err) {
+            console.log(err)
+            return
+          }
+
+          /* Get dir name from newDirLocal. */
+          let folderPath = newDirLocal.split('/')
+          let newDirName = folderPath[folderPath.length - 1]
+          console.log('NEWDIRNAME: ' + newDirName)
+
+          let dirs = []
+          files.forEach(file => {
+            let localPath = `${newDirLocal}/${file}`
+            let stat = fs.statSync(localPath)
+
+            /* Upload all files and make a list of the directories. */
+            if (stat.isDirectory()) {
+              dirs.push(localPath)
+            } else {
+              let serverPath = currServerPath + newDirName + '/' + file
+
+              this.uploadFileHelper(localPath, serverPath)
+            }
+          })
+
+          /* Recursively add subdirectories. */
+          dirs.forEach(dirPath => {
+            /* Get dir name from dirPath. */
+            let folderPath = dirPath.split('/')
+            let newSubDirName = folderPath[folderPath.length - 1]
+            console.log('RECURSIVE CALL! newDirLocal: ' + dirPath + ' currServerPath: ' + currServerPath + newDirName + '/')
+            this.uploadDirRecursive(dirPath, currServerPath + newDirName + '/' + newSubDirName + '/')
+          })
+        })
       },
 
       /**
        * Upload new directory to server.
        */
       uploadDir () {
-        let newDir = dialog.showOpenDialog({ properties: ['openDirectory'] })
+        let localDirPath = dialog.showOpenDialog({ properties: ['openDirectory'] })
 
-        if (newDir === undefined || newDir[0].toString().toString() === '') {
+        if (localDirPath === undefined || localDirPath[0].toString().toString() === '') {
           return
         } else {
-          newDir = newDir[0].toString().toString()
+          localDirPath = localDirPath[0].toString().toString()
         }
 
-        fs.readdir(newDir, {withFileTypes: true}, (err, files) => {
-          if (err) {
-            console.log(err)
-            return
-          }
-
-          let dirs = []
-          files.forEach(file => {
-            let localPath = `${newDir}/${file}`
-            let stat = fs.statSync(localPath)
-
-            /* Upload all files and make a list of the directories. */
-            if (stat.isDirectory()) {
-              dirs.push(localPath + '/')
-            } else {
-              /* Get name of file from path. */
-              let folderPath = newFilePath.split('/')
-              let newFileName = folderPath[folderPath.length - 1]
-              let path = this.currPathString + newFileName
-
-              this.uploadFileHelper()
-            }
-            console.log(`${newDir}/${file} is a dir? ${stat.isDirectory()}`)
-          })
-          // stat = fs.statSync(filePath)
-          // FIXME: dirs = ['src/map/', 'src/map2/', ...]
-          // if stat.isDirectory()
-          //     dirs.push(file)
-
-          console.log(typeof (files[1]))
-          console.log(typeof (files[0]))
-          console.log(files)
-          console.log(files[1].isDirectory())
-        })
-
-        /* TODO: voor alle elementen in map: uploadDir op elke map en uploadFile
-         * op elk bestand (recursief). Let op currPathString...
-         */
+        /* Recursively upload folder (and all its subfolders). */
+        this.uploadDirRecursive(localDirPath, this.currPathString)
       },
 
       /**
@@ -392,7 +401,7 @@
        * Let user choose a file and remove that file from the server.
        */
       removeFile () {
-        this.selectItem('Delete file', 'Select file to delete', 'This cannot be undone!', this.currItems, 'file', (filePath) => {
+        this.selectItem('Delete file', 'Select file to delete', 'This cannot be undone!', this.currItems, 'all', (filePath) => {
           /* When user selects 'cancel', do nothing. */
           if (filePath === undefined) {
             return
