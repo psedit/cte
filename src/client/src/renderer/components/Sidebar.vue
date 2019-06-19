@@ -12,6 +12,7 @@
       <file-document-edit title="Rename file" class="button" @click="renameFile"/>
       <file-move title="Relocate file" class="button" @click="relocateFile"/>
       <file-remove title="Remove file" class="button" @click="removeFile"/>
+      <file-download title="Download file" class="button" @click="downloadFile"/>
     </div>
 
 
@@ -27,12 +28,13 @@
   import FileDocumentEdit from 'vue-material-design-icons/FileDocumentEdit'
   import FileMove from 'vue-material-design-icons/FileMove'
   import FileUpload from 'vue-material-design-icons/FileUpload'
+  import FileDownload from 'vue-material-design-icons/Download'
   import Upload from 'vue-material-design-icons/Upload'
   import connector from '../../main/connector'
   import FileTree from './Sidebar/FileTree'
   import * as fileManager from './Sidebar/fileManager'
-  const { dialog } = require('electron').remote
-  // const read = require('fs-readdir-recursive')
+  import {convertToJS, stitch} from '../../main/pieceTable'
+  const {dialog} = require('electron').remote
   const dialogs = require('dialogs')
   const fs = require('fs')
 
@@ -53,7 +55,8 @@
       FileDocumentEdit,
       FileMove,
       Upload,
-      FileUpload
+      FileUpload,
+      FileDownload
     },
     computed: {
       /**
@@ -101,7 +104,68 @@
       openFolder (name) {
         this.currPath.push(name)
       },
+      /**
+       * Lets the user select a local map and a file on the server.
+       * The user then downloads the file.
+       */
+      downloadFile () {
+        /**
+         * Is called when the file has been selected
+         * @param {string} filePath path to the file that is to be downloaded
+         */
+        let fileToLocal = (filePath) => {
+          if (filePath === undefined) {
+            return
+          }
+          /* Select a local file
+           */
+          let options = {
+            title: 'Download location',
+            message: 'Select where to download file',
+            defaultPath: 'default.txt'
+          }
+          dialog.showSaveDialog(null, options, (downloadPath) => {
+            if (downloadPath === undefined) {
+              return
+            }
+            /* Get filename
+             */
+            let lastSlash = downloadPath.lastIndexOf('/')
+            let filename = downloadPath.slice(lastSlash + 1, downloadPath.length)
 
+            console.log('Ready to save: ', filePath, downloadPath)
+            /* Join the file
+             */
+            connector.send(
+              'file-join',
+              {
+                'file_path': filePath
+              }
+            )
+            /* Get the file from
+             */
+            connector.request(
+              'file-content-request',
+              'file-content-response',
+              {
+                'file_path': filePath,
+                'start': 0,
+                'length': -1
+              }
+            ).then((data) => {
+              let fileContent = stitch(convertToJS(data)).join('')
+              fs.writeFile(downloadPath, fileContent, (err) => {
+                console.log('error', err)
+              })
+              console.log('dd: ', filename)
+              console.log('fc: ', fileContent)
+            })
+          })
+        }
+        /* Let the user select a file
+         */
+        this.selectItem('Download file', 'Select a file to download', '', this.currItems, 'file', fileToLocal)
+      },
       /**
        * Open a prompt box and ask user for input.
        *
@@ -240,13 +304,22 @@
               return !(item instanceof Array)
             case 'dir':
               return (item instanceof Array)
+            case 'all':
+              return true
             default:
               return true
           }
         }
 
         let filterItems = items.filter(filterFunc)
-
+        filterItems = filterItems.map((item) => {
+          if (item instanceof Array) {
+            return item[0] + '/'
+          } else {
+            return item
+          }
+        })
+        console.log('filteritems: ', filterItems)
         /* Add a cancel button
           */
         let buttonOptions = ['cancel', ...filterItems]
@@ -495,7 +568,7 @@
   .file-tools {
     background-color: #555;
     display: grid;
-    grid-template-columns: 1fr auto auto auto auto auto auto;
+    grid-template-columns: 1fr auto auto auto auto auto auto auto;
     grid-gap: 0.5em;
     align-items: center;
     color: #fff;
