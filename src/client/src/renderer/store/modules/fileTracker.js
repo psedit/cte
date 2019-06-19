@@ -89,17 +89,23 @@ const actions = {
       // })
     })
   },
-  prevTab (store, currentIndex) {
-    if (currentIndex === 0) {
-      currentIndex = store.state.tabs.length
+  /**
+   * Move to the tab before the tab with the given index.
+   */
+  prevTab (store, index) {
+    if (index === 0) {
+      index = store.state.tabs.length
     }
-    store.dispatch('openFile', store.state.tabs[currentIndex - 1].filePath)
+    store.dispatch('openFile', store.state.tabs[index - 1].filePath)
   },
-  nextTab (store, currentIndex) {
-    if (currentIndex === store.state.tabs.length - 1) {
-      currentIndex = -1
+  /**
+   * Move to the tab after the tab with the given index.
+   */
+  nextTab (store, index) {
+    if (index === store.state.tabs.length - 1) {
+      index = -1
     }
-    store.dispatch('openFile', store.state.tabs[currentIndex + 1].filePath)
+    store.dispatch('openFile', store.state.tabs[index + 1].filePath)
   },
   /**
    * Removes a tab from state and switches to a new tab if the tab was opened.
@@ -113,13 +119,18 @@ const actions = {
     }
     store.commit('removeTab', tabToRemove)
   },
+  /**
+   * Moves from the current tab to another tab in the given direction.
+   * @param {Object} store vuex store
+   * @param {Tab} direction 1 for moving to the next tab, 0 for to the previous
+   */
   scrollTab (store, direction) {
     var i = 0
     for (let tab of store.state.tabs) {
       if (tab.filePath === store.state.openFile) {
         if (direction) {
           store.dispatch('nextTab', i)
-        } else{
+        } else {
           store.dispatch('prevTab', i)
         }
         break
