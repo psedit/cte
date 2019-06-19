@@ -130,10 +130,9 @@
             }
             /* Get filename
              */
-            let lastSlash = downloadPath.lastIndexOf('/')
-            let filename = downloadPath.slice(lastSlash + 1, downloadPath.length)
+            // let lastSlash = downloadPath.lastIndexOf('/')
+            // let filename = downloadPath.slice(lastSlash + 1, downloadPath.length)
 
-            console.log('Ready to save: ', filePath, downloadPath)
             /* Join the file
              */
             connector.send(
@@ -157,8 +156,6 @@
               fs.writeFile(downloadPath, fileContent, (err) => {
                 console.log('error', err)
               })
-              console.log('dd: ', filename)
-              console.log('fc: ', fileContent)
             })
           })
         }
@@ -278,9 +275,6 @@
             if (response === undefined || response === '') {
               return
             }
-            console.log('Requesting location change: ')
-            console.log('old_path: ', filePath)
-            console.log('new_path: ', response)
             fileManager.locationChange(filePath, response)
           })
         }
