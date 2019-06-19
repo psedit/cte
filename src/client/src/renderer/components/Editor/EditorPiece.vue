@@ -1,8 +1,5 @@
 <template>
-  <div ref="cm"
-       class="editor-piece"
-       :class="{editable}"
-  ></div>
+  <div ref="cm" class="editor-piece" :class="{editable}"></div>
 </template>
 
 <script>
@@ -11,6 +8,8 @@
   import 'codemirror/theme/monokai.css'
   import 'codemirror/mode/javascript/javascript'
   import 'codemirror/mode/python/python'
+  import { edit } from '../../../main/pieceTable'
+  import connector from '../../../main/connector'
 
   export default {
     name: 'EditorPiece.vue',
@@ -26,50 +25,22 @@
 
     cminstance: null,
     preText: null,
-
-    dragInProcess: false,
-    tentativeLockStart: 0,
-    tentativeLockEnd: 0,
-
-    mounted () {
-      const cm = CodeMirror(this.$refs.cm, {
-        mode: 'javascript',
-        lineNumbers: true,
-        theme: 'monokai',
-        smartIndent: true,
-        lineWrapping: true,
-        showCursorWhenSelecting: true,
-        readOnly: !this.editable,
-        // inputStyle: 'contenteditable',
-        lineNumberFormatter: this.lineNumberFormatter,
-        viewportMargin: Infinity,
-        cursorBlinkRate: 0,
-        gutters: ['user-gutter', 'CodeMirror-linenumbers'],
-        extraKeys: {
-          'Alt-R': () => {
-            this.updatePreviousText()
-          }
+    watch: {
+      code (val) {
+        if (!this.editable) {
+          this.setText()
         }
-      })
-
-      this.$options.cminstance = cm
-
-      cm.setValue(this.code)
-
-      this.$el.style.setProperty('--gutter-hue', Math.round(Math.random() * 360))
-      cm.getGutterElement().setAttribute('title', this.username)
-      this.initializeEvents()
-
-      if (this.index !== 0) {
-        this.addPreviousText()
       }
+    },
+    mounted () {
+      setTimeout(() => this.initializeEditor(), 0)
     },
     computed: {
       textPiecesArray () {
         return this.pieces.map(piece => piece.text)
       },
       textPieces () {
-        return this.textPiecesArray.join('')
+        return this.textPiecesArray.join('').replace(/\n$/, '')
       },
 
       preCodeArray () {
@@ -78,14 +49,14 @@
         }, [])
       },
       preCode () {
-        return this.preCodeArray.join('')
+        return this.preCodeArray.join('').replace(/\n$/, '')
       },
 
       codeArray () {
         return this.pieces[this.index].text
       },
       code () {
-        return this.codeArray.join('')
+        return this.codeArray.join('').replace(/\n$/, '')
       },
 
       username () {
@@ -93,10 +64,53 @@
       },
       editable () {
         return this.$store.state.user.username === this.username
+      },
+      pieceTable () {
+        return this.$store.state.fileTracker.pieceTable
       }
     },
 
     methods: {
+      initializeEditor () {
+        const cm = CodeMirror(this.$refs.cm, {
+          mode: 'javascript',
+          lineNumbers: true,
+          theme: 'monokai',
+          smartIndent: true,
+          lineWrapping: true,
+          showCursorWhenSelecting: true,
+          readOnly: !this.editable,
+          // inputStyle: 'contenteditable',
+          lineNumberFormatter: this.lineNumberFormatter,
+          viewportMargin: Infinity,
+          cursorBlinkRate: 0,
+          gutters: ['user-gutter', 'CodeMirror-linenumbers'],
+          extraKeys: {
+            'Alt-R': () => {
+              this.updatePreviousText()
+            }
+          }
+        })
+
+        this.$options.cminstance = cm
+
+        cm.setValue(this.code)
+        if (this.index !== 0) {
+          this.addPreviousText()
+        }
+
+        this.$el.style.setProperty('--gutter-hue', Math.round(Math.random() * 360))
+        cm.getGutterElement().setAttribute('title', this.username)
+        this.initializeEvents()
+      },
+      setText () {
+        const cm = this.$options.cminstance
+
+        cm.setValue(this.code)
+        if (this.index !== 0) {
+          this.addPreviousText()
+        }
+      },
       addPreviousText () {
         if (this.preCode === '') return
 
@@ -160,6 +174,22 @@
           e.preventDefault()
         })
 
+        if (this.editable) {
+          cm.on('changes', ({cminstance}) => {
+            const value = cm.getValue().slice(this.preCode.length)
+            // console.log(value)
+            const content = value.split('\n').map(val => val + '\n')
+            const newPieceTable = edit(this.pieceTable, this.pieces[this.index].pieceID, content)
+            this.$store.dispatch('updatePieceTable', newPieceTable)
+
+            connector.send('file-delta', {
+              file_path: this.$store.state.fileTracker.openFile,
+              piece_uuid: this.pieces[this.index].pieceID,
+              content: value
+            })
+          })
+        }
+
         const gutter = cm.getGutterElement()
         // const gutterId = cm.getGutterElement().gutterId
         gutter.addEventListener('mousedown', (e) => {
@@ -210,48 +240,45 @@
 </script>
 
 <style lang="scss">
-  .editor-piece {
-
-    &:last-child {
-
-      .CodeMirror {
-        height: 100%;
-      }
-    }
-    border-bottom: 1px rgba(255, 255, 255, 0.2) dashed;
-  }
-
-  .CodeMirror {
-    height: auto;
-  }
-
-  .CodeMirror-lines {
-    min-height: unset!important;
-    padding: 0;
-
-  }
-  .editable {
-    .CodeMirror-cursor {
-      animation: blink 1s step-end infinite;
-    }
-    .user-gutter {
-      box-shadow: 0 0 3em 1em rgba(0, 256, 30, 0.6);
+.editor-piece {
+  &:last-child {
+    .CodeMirror {
+      height: 100%;
     }
   }
+  border-bottom: 1px rgba(255, 255, 255, 0.2) dashed;
+}
 
+.CodeMirror {
+  height: auto;
+}
+
+.CodeMirror-lines {
+  min-height: unset !important;
+  padding: 0;
+}
+.editable {
+  .CodeMirror-cursor {
+    animation: blink 1s step-end infinite;
+  }
   .user-gutter {
-    background-color: hsl(var(--gutter-hue), 90%, 60%);
-    width: 1em;
+    box-shadow: 0 0 3em 1em rgba(0, 256, 30, 0.6);
+  }
+}
+
+.user-gutter {
+  background-color: hsl(var(--gutter-hue), 90%, 60%);
+  width: 1em;
+}
+
+@keyframes blink {
+  from,
+  to {
+    opacity: 1;
   }
 
-  @keyframes blink {
-    from, to {
-      opacity: 1;
-    }
-
-    50% {
-      opacity: 0;
-    }
-
+  50% {
+    opacity: 0;
   }
+}
 </style>
