@@ -119,8 +119,8 @@ const actions = {
   },
   /**
    * Sends a request for a lock to the server.
-   * @param {} state 
-   * @param {start: {id, offset}, end: {id, offset}} payload 
+   * @param {} state
+   * @param {start: {id, offset}, end: {id, offset}} payload
    */
   requestLockAction (state, payload) {
     console.log('request Lock of length', lengthBetween(this.state.pieces, payload.start.id,

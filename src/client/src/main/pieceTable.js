@@ -182,6 +182,71 @@ export function len (table) {
   return table.reduce((total, curr) => total + curr.length, 0)
 }
 
+export function indexOffsetRangeSort (A, B) {
+  const comp = indexOffsetCompare(A, B)
+  console.log('comp', comp)
+  if (comp > 0) {
+    console.log('sort a', [B, A])
+    return [ B, A ]
+  } else {
+    console.log('sort b', [A, B])
+    return [ A, B ]
+  }
+}
+
+export function indexOffsetCompare (A, B) {
+  if (A.piece < B.piece || (A.piece === B.piece && A.line < B.line)) {
+    return -1
+  } else if (A.piece > B.piece || (A.piece === B.piece && A.line > B.line)) {
+    return 1
+  } else {
+    return 0
+  }
+}
+
+// export function indexOffsetCompare (A, B) {
+//   if (A.piece < B.piece || (A.piece === B.piece && A.offset < B.offset)) {
+//     return -1
+//   } else if (A.piece > B.piece || (A.piece === B.piece && A.offset > B.offset)) {
+//     return 1
+//   } else {
+//     return 0
+//   }
+// }
+
+/**
+ *
+ * @param {*} table
+ * @param {*} idxA
+ * @param {*} offsetA
+ * @param {*} idxB
+ * @param {*} offsetB
+ */
+export function rangeToAnchoredLength (table, idxA, offsetA,
+  idxB, offsetB) {
+  var startPiece, endPiece
+  if (idxA < idxB || (idxA === idxB && offsetA <= offsetB)) {
+    startPiece = { piece: idxA, offset: offsetA }
+    endPiece = { piece: idxB, offset: offsetB }
+  } else {
+    startPiece = { piece: idxB, offset: offsetB }
+    endPiece = { piece: idxA, offset: offsetA }
+  }
+
+  let interLines = 0
+  for (let i = startPiece.piece + 1; i < endPiece.piece; i++) {
+    console.log(`interLines: ${interLines}, length: ${table.table[i].length}`)
+    console.log(table.table[i])
+    interLines += table.table[i].length
+  }
+
+  return {
+    index: startPiece.piece,
+    offset: startPiece.offset,
+    length: interLines - startPiece.offset + endPiece.offset + 1
+  }
+}
+
 /**
  * Compute number of lines between two locations in the piece table
  * @param {Piece[]} table

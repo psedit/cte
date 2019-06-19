@@ -6,6 +6,8 @@
               :key="piece.pieceID"
               :index="index"
               :pieces="pieces"
+              :dragStart="lockDragStartLocation"
+              :dragEnd="lockDragEndLocation"
               @lockDragStart="lockDragStart"
               @lockDragUpdate="lockDragUpdate"
               @lockDragEnd="lockDragEnd"
@@ -22,7 +24,7 @@
   import EditorPiece from './Editor/EditorPiece'
   import {getRandomColor} from './Editor/RandomColor'
   import connector from '../../main/connector'
-  import { convertChangeToJS, edit } from '../../main/pieceTable'
+  import { convertChangeToJS, edit, rangeToAnchoredLength } from '../../main/pieceTable'
 
   export default {
     name: 'Editor',
@@ -36,7 +38,8 @@
         // pieces: pieces,
         activeUsers: [],
         lockDragStartLocation: null,
-        lockDragEndLocation: null
+        lockDragEndLocation: null,
+        dragList: null
       }
     },
     methods: {
@@ -54,6 +57,41 @@
           }
         })
       },
+      removeDragMarkers () {
+        for (let key in this.components) {
+          this.components[key].$options.cminstance.clearGutter('user-gutter')
+        }
+      },
+      updateDrag () {
+        // this.removeDragMarkers()
+        // let start = this.lockDragStartLocation
+        // let end = this.lockDragEndLocation
+        // console.log(start, end)
+        // // let lastLine = 0
+        // if (indexOffsetCompare(this.lockDragStartLocation, this.lockDragEndLocation) > 0) {
+        //   start = this.lockDragEndLocation
+        //   end = this.lockDragStartLocation
+        // }
+        // if (start.piece === end.piece) {
+        //   lastLine = end.offset
+        // }
+        // console.log('components', this.components)
+        // for (let line = start.offset;
+        //   line < Math.max(this.components[start.piece].$options.cminstance.lineCount(), lastLine); line++) {
+        //   this.$components[start.piece].$options.cminstance.setGutterMarker(line, 'user-gutter', this.gutterSelectMarker())
+        // }
+        // for (let i = start.piece + 1; i < end.piece; i++) {
+        //   for (let line = 0; line < this.components[i].$options.cminstance.lineCount(); line++) {
+        //     this.$components[i].$options.cminstance.setGutterMarker(line, 'user-gutter', this.gutterSelectMarker())
+        //   }
+        // }
+        // if (start.piece !== end.piece) {
+        //   for (let line = end.offset;
+        //     line < Math.max(this.components[start.piece].$options.cminstance.lineCount(), end.offset); line++) {
+        //     this.$components[end.piece].$options.cminstance.setGutterMarker(line, 'user-gutter', this.gutterSelectMarker())
+        //   }
+        // }
+      },
       requestLock (startId, startOffset, endId, endOffset) {
         let payload = { start: {id: startId, offset: startOffset},
           end: {id: endId, offset: endOffset}}
@@ -69,32 +107,37 @@
         this.lockDragStartLocation = {piece: index, line}
       },
       lockDragUpdate (line, index) {
-        if (this.lockDragStart) {
+        if (this.lockDragStartLocation) {
           this.lockDragEndLocation = {piece: index, line}
           this.updateDrag()
         }
       },
       lockDragEnd (line, index) {
-        console.log(this.lockDragStartLocation)
-        if (!this.lockDragStartLocation) return
+        if (this.lockDragStartLocation === null) return
+        console.log(this.lockDragStartLocation.piece)
+        console.log(this.lockDragStartLocation.line)
 
-        // console.log(`Request lock from ${this.lockDragStartLocation.piece}:${this.lockDragStartLocation.line} to ${index}:${line}`)
-        this.requestLock(this.lockDragStartLocation, this.lockDragEndLocation)
-        this.lockDragStartLocation = null
-        this.lockDragEndLocation = null
-        for (var key in this.components) {
-          this.components[key].$options.cminstance.clearGutter('user-gutter')
-        }
-        console.log(`Request lock from ${this.lockDragRange.piece}:${this.lockDragRange.line} to ${index}:${line}`)
+        console.log(`Request lock from ${this.lockDragStartLocation.piece}:${this.lockDragStartLocation.line} to ${index}:${line}`)
+        // this.requestLock(this.lockDragStartLocation, this.lockDragEndLocation)
 
-        if (this.lockDragRange.piece !== index) alert('NOT SUPPORTED')
+        // console.log(`Request lock from ${this.lockDragStartLocation.piece}:${this.LockDragStartLocation.line} to ${index}:${line}`)
+
+        // if (this.lockDragRange.piece !== index) alert('NOT SUPPORTED')
+
+        let draggedLock = rangeToAnchoredLength(this.$store.state.fileTracker.pieceTable,
+          this.lockDragStartLocation.piece, this.lockDragStartLocation.line,
+          this.lockDragEndLocation.piece, this.lockDragEndLocation.line)
+
+        console.log(`PieceIdx: ${draggedLock.index}, Offset: ${draggedLock.offset}, Length: ${draggedLock.length}`)
 
         connector.request('file-lock-request', 'file-lock-response', {
           file_path: this.$store.state.fileTracker.openFile,
-          piece_uuid: this.pieces[this.lockDragRange.piece].pieceID,
-          offset: Math.min(this.lockDragRange.line, line),
-          length: Math.abs(this.lockDragRange.line - line) + 1
+          piece_uuid: this.pieces[draggedLock.index].pieceID,
+          offset: draggedLock.offset,
+          length: draggedLock.length
         }).then(response => console.log(response))
+
+        this.lockDragCancel()
       },
       lockDragCancel () {
         console.log('cancel')

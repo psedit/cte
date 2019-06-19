@@ -8,14 +8,16 @@
   import 'codemirror/theme/monokai.css'
   import 'codemirror/mode/javascript/javascript'
   import 'codemirror/mode/python/python'
-  import { edit } from '../../../main/pieceTable'
+  import { edit, indexOffsetRangeSort } from '../../../main/pieceTable'
   import connector from '../../../main/connector'
 
   export default {
     name: 'EditorPiece.vue',
     props: {
       pieces: Array,
-      index: Number
+      index: Number,
+      dragStart: Object,
+      dragEnd: Object
     },
 
     data () {
@@ -30,6 +32,12 @@
         if (!this.editable) {
           this.setText()
         }
+      },
+      pieceDragStart: function (newDragStart, oldDragStart) {
+        this.updateDragStart(oldDragStart, newDragStart)
+      },
+      pieceDragLength: function (newDragEnd, oldDragEnd) {
+        this.updateDragLength(oldDragEnd, newDragEnd)
       }
     },
     mounted () {
@@ -67,6 +75,45 @@
       },
       pieceTable () {
         return this.$store.state.fileTracker.pieceTable
+      },
+
+      pieceDragStart () {
+        // console.log(this.dragStart, this.dragEnd)
+        if (!(this.dragStart || this.dragEnd)) {
+          return null
+        }
+        // let range = indexOffsetRangeSort(this.dragStart, this.dragEnd)[0]
+        // console.log(range)
+        let start = indexOffsetRangeSort(this.dragStart, this.dragEnd)[0]
+        console.log('pieceDragStart()', start.line, this.dragStart.line, this.dragEnd.line, indexOffsetRangeSort(this.dragStart, this.dragEnd))
+        if (start.piece < this.index) {
+          return 0
+        } else if (start.piece === this.index) {
+          return start.line
+        }
+  
+        return null
+      },
+      pieceDragLength () {
+        if (!(this.dragStart && this.dragEnd)) {
+          return 0
+        }
+        let range = indexOffsetRangeSort(this.dragStart, this.dragEnd)
+        let start = range[0]
+        let end = range[1]
+        if (start.piece > this.index) {
+          return 0
+        } else if (end.piece > this.index) {
+          return this.textPiecesArray.length
+        } else {
+          if (start.offset < this.index) {
+            console.log('pieceDragLength()', end.line + 1)
+            return end.line + 1
+          } else {
+            console.log('pieceDragLength()', end.line - start.line + 1)
+            return end.line - start.line + 1
+          }
+        }
       }
     },
 
@@ -139,6 +186,63 @@
         // console.log(this.$options.cminstance.getValue())
       },
 
+      updateDragStart (newDragStart, oldDragStart) {
+        const cm = this.$options.cminstance
+        // if (newDragStart === null) {
+        //   cm.clearGutter('user-gutter')
+        // } else {
+        //   if (newDragStart < oldDragStart) {
+        //     /* Extend highlight to include earlier start */
+        //     for (let i = newDragStart; i < oldDragStart; i++) {
+        //       cm.setGutterMarker(this.relativeLineToLine(i), 'user-gutter',
+        //         this.gutterSelectMarker())
+        //       console.log(`setting marker at ${this.index}:${i}:${this.relativeLineToLine(i)}`)
+        //     }
+        //   } else if (oldDragStart < newDragStart) {
+        //     for (let i = newDragStart; i < oldDragStart; i++) {
+        //       cm.setGutterMarker(this.relativeLineToLine(i), 'user-gutter',
+        //         null)
+        //       console.log(`unsetting marker at ${this.index}:${i}:${this.relativeLineToLine(i)}`)
+        //     }
+        //   }
+        // }
+        cm.clearGutter('user-gutter')
+        console.log(`drag ${this.pieceDragStart}:${this.pieceDragLength}`)
+        for (let i = this.pieceDragStart; i < this.pieceDragStart + this.pieceDragLength; i++) {
+          // console.log(`setting marker at ${this.index}:${i}:${this.relativeLineToLine(i)}`)
+          cm.setGutterMarker(this.relativeLineToLine(i), 'user-gutter',
+            this.gutterSelectMarker())
+        }
+      },
+      updateDragLength (newDragLength, oldDragLength) {
+        const cm = this.$options.cminstance
+        // if (newDragLength === null || newDragLength === 0) {
+        //   cm.clearGutter('user-gutter')
+        // } else {
+        //   if (newDragLength < oldDragLength) {
+        //     /* Extend highlight to include earlier start */
+        //     for (let i = this.pieceDragStart; i < this.pieceDragStart + this.pieceDragLength; i++) {
+        //       cm.setGutterMarker(this.relativeLineToLine(i), 'user-gutter',
+        //         this.gutterSelectMarker())
+        //       console.log(`setting marker at ${this.index}:${i}:${this.relativeLineToLine(i)}`)
+        //     }
+        //   } else if (oldDragLength < newDragLength) {
+        //     for (let i = this.pieceDragStart + newDragLength; i < this.pieceDragStart + oldDragLength; i++) {
+        //       cm.setGutterMarker(this.relativeLineToLine(i), 'user-gutter',
+        //         null)
+        //       console.log(`unsetting marker at ${this.index}:${i}:${this.relativeLineToLine(i)}`)
+        //     }
+        //   }
+        // }
+        cm.clearGutter('user-gutter')
+        console.log(`drag ${this.pieceDragStart}:${this.pieceDragLength}`)
+        for (let i = this.pieceDragStart; i < this.pieceDragStart + this.pieceDragLength; i++) {
+          // console.log(`setting marker at ${this.index}:${i}:${this.relativeLineToLine(i)}`)
+          cm.setGutterMarker(this.relativeLineToLine(i), 'user-gutter',
+            this.gutterSelectMarker())
+        }
+      },
+
       lineToRelativeLine (line) {
         if (line === 0) return 0
         const mark = this.$options.cminstance.getAllMarks()[0]
@@ -147,16 +251,21 @@
         return line - mark.lines.length + 1
       },
       relativeLineToLine (line) {
-        if (line === 0) return 0
-        const mark = this.$options.cminstance.getAllMarks()[0]
-        if (!mark) return line
+        // if (line === 0) return 0
+        // const mark = this.$options.cminstance.getAllMarks()[0]
+        // if (!mark) return line
 
-        return line + mark.lines.length - 1
+        // return line + mark.lines.length - 1
+        return (this.preCodeArray.length + line)
       },
 
       gutterSelectMarker () {
         var marker = document.createElement('div')
         marker.style.backgroundColor = 'white'
+        // marker.style.cssText = 'backgroundColor: white; pointer-events: none'
+        marker.style.pointerEvents = 'none'
+        marker.style.position = 'absolute'
+        marker.style.width = '100%'
         marker.innerHTML = '●'
         return marker
       },
@@ -201,9 +310,9 @@
         gutter.addEventListener('mousemove', (e) => {
           const line = cm.lineAtHeight(e.pageY)
           const relLine = this.lineToRelativeLine(line)
-          console.log('mousemove at', relLine, line)
+          // console.log('mousemove at', relLine, line)
           // cm.setGutterMarker(line, 'user-gutter', this.gutterSelectMarker())
-          this.$emit('lockDragStart', relLine, this.index, e)
+          this.$emit('lockDragUpdate', relLine, this.index, e)
         })
         gutter.addEventListener('mouseup', (e) => {
           const line = cm.lineAtHeight(e.pageY)
