@@ -8,10 +8,10 @@
     <div class="file-tools">
       <upload title="Upload directory" class="button" @click="uploadDir"/>
       <file-upload title="Upload file" class="button" @click="uploadFile"/>
-      <file-plus title="Add new file" class="button" @click="createFile"/>
-      <file-document-edit title="Rename file" class="button" @click="renameFile"/>
-      <file-move title="Relocate file" class="button" @click="relocateFile"/>
-      <file-remove title="Remove file" class="button" @click="removeFile"/>
+      <file-plus title="Add new file/directory" class="button" @click="createItem"/>
+      <file-document-edit title="Rename file/directory" class="button" @click="renameItem"/>
+      <file-move title="Relocate file/directory" class="button" @click="relocate"/>
+      <file-remove title="Remove file/directory" class="button" @click="removeItem"/>
       <file-download title="Download file" class="button" @click="downloadFile"/>
     </div>
 
@@ -221,7 +221,7 @@
       /**
        * Change name of file or directory.
        */
-      renameFile () {
+      renameItem () {
         /* Let user select file or directory from current folder.
          * First get all files and directories. */
         let items = ['cancel']
@@ -272,7 +272,7 @@
       /**
        * Change location of file or directory.
        */
-      relocateFile () {
+      relocate () {
         let selectFolder = (filePath, payload) => {
           this.promptBox('Enter path', filePath, (response) => {
             if (response === undefined || response === '') {
@@ -284,7 +284,7 @@
             fileManager.locationChange(filePath, response)
           })
         }
-        this.selectItem('File move', 'select a file to move', '', this.currItems, 'file', selectFolder)
+        this.selectItem('File move', 'select a file to move', '', this.currItems, 'all', selectFolder)
       },
 
       /* Let the user select a file.
@@ -453,7 +453,7 @@
        * Ask user for a name and create a new file with that name.
        * If file already exists, it will be overwritten.
        */
-      createFile () {
+      createItem () {
         const d = dialogs()
 
         let promptString = `Add new file or directory. Enter desired name.
@@ -473,13 +473,13 @@
       /**
        * Let user choose a file and remove that file from the server.
        */
-      removeFile () {
+      removeItem () {
         this.selectItem('Delete file', 'Select file to delete', 'This cannot be undone!', this.currItems, 'all', (filePath) => {
           /* When user selects 'cancel', do nothing. */
           if (filePath === undefined) {
             return
           }
-          fileManager.removeFile(filePath)
+          fileManager.removeItem(filePath)
         })
       },
 

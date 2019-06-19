@@ -54,9 +54,9 @@ export function uploadFile (path, content) {
 /**
  * Remove file from server.
  *
- * @param {string} path path on server of file to be deleted
+ * @param {string} path path on server of file or directory to be deleted
  */
-export function removeFile (path) {
+export function removeItem (path) {
   console.log('Removing ' + path)
   this.fileChangeRequest(path, '', '')
 }
