@@ -128,10 +128,6 @@
             if (downloadPath === undefined) {
               return
             }
-            /* Get filename
-             */
-            // let lastSlash = downloadPath.lastIndexOf('/')
-            // let filename = downloadPath.slice(lastSlash + 1, downloadPath.length)
 
             /* Join the file
              */
