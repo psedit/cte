@@ -32,6 +32,7 @@
   import FileTree from './Sidebar/FileTree'
   import * as fileManager from './Sidebar/fileManager'
   const { dialog } = require('electron').remote
+  // const read = require('fs-readdir-recursive')
   const dialogs = require('dialogs')
   const fs = require('fs')
 
@@ -274,13 +275,24 @@
       },
 
       /**
-       * Upload new directory to server.
+       * Upload a file to server (helper function of uploadFile),
+       * does the actual communication with server.
+       *
+       * @param {string} localPath local path to file that will be uploaded
+       * @param {string} serverPath destination path on server
+       *
+       * @see uploadFile()
        */
-      uploadDir () {
-        console.log(dialog.showOpenDialog({ properties: ['openDirectory'] }))
-        /* TODO: voor alle elementen in map: uploadDir op elke map en uploadFile
-         * op elk bestand (recursief). Let op currPathString...
-         */
+      uploadFileHelper (localPath, serverPath) {
+        /* Read content from file and request file upload from server. */
+        fs.readFile(localPath, (err, data) => {
+          if (err) {
+            console.log(err)
+            return
+          }
+
+          fileManager.uploadFile(serverPath, data.toString())
+        })
       },
 
       /**
@@ -289,24 +301,70 @@
       uploadFile () {
         let newFilePath = dialog.showOpenDialog({ properties: ['openFile'] })
 
-        if (newFilePath === '' || newFilePath === undefined) {
+        if (newFilePath === undefined || newFilePath.toString() === '') {
           return
+        } else {
+          newFilePath = newFilePath.toString()
         }
 
         /* Get name of file from path. */
-        let lastIndex = newFilePath.lastIndexOf('/')
-        let newFileName = newFilePath.slice(lastIndex + 1, newFilePath.length)
+        let folderPath = newFilePath.split('/')
+        let newFileName = folderPath[folderPath.length - 1]
         let path = this.currPathString + newFileName
-        console.log('NEW FILE NAME: ' + newFileName) // TODO: fix path
 
-        fs.readFile(newFilePath, (err, data) => {
+        this.uploadFileHelper(newFilePath, path)
+      },
+
+      /**
+       * Upload new directory to server.
+       */
+      uploadDir () {
+        let newDir = dialog.showOpenDialog({ properties: ['openDirectory'] })
+
+        if (newDir === undefined || newDir[0].toString().toString() === '') {
+          return
+        } else {
+          newDir = newDir[0].toString().toString()
+        }
+
+        fs.readdir(newDir, {withFileTypes: true}, (err, files) => {
           if (err) {
             console.log(err)
             return
           }
 
-          fileManager.uploadFile(path, data)
+          let dirs = []
+          files.forEach(file => {
+            let localPath = `${newDir}/${file}`
+            let stat = fs.statSync(localPath)
+
+            /* Upload all files and make a list of the directories. */
+            if (stat.isDirectory()) {
+              dirs.push(localPath + '/')
+            } else {
+              /* Get name of file from path. */
+              let folderPath = newFilePath.split('/')
+              let newFileName = folderPath[folderPath.length - 1]
+              let path = this.currPathString + newFileName
+
+              this.uploadFileHelper()
+            }
+            console.log(`${newDir}/${file} is a dir? ${stat.isDirectory()}`)
+          })
+          // stat = fs.statSync(filePath)
+          // FIXME: dirs = ['src/map/', 'src/map2/', ...]
+          // if stat.isDirectory()
+          //     dirs.push(file)
+
+          console.log(typeof (files[1]))
+          console.log(typeof (files[0]))
+          console.log(files)
+          console.log(files[1].isDirectory())
         })
+
+        /* TODO: voor alle elementen in map: uploadDir op elke map en uploadFile
+         * op elk bestand (recursief). Let op currPathString...
+         */
       },
 
       /**
@@ -388,7 +446,6 @@
          * update the file tree.
          */
         connector.listenToMsg('file-change-broadcast', (content) => {
-          console.log('recieving file-change-broadcast')
           this.updateFileTree()
         })
         connector.addEventListener('open', () => {

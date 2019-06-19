@@ -46,6 +46,8 @@ export function newFile (path) {
  * @param {string} content content of file
  */
 export function uploadFile (path, content) {
+  console.log('Uploading: ' + path)
+  console.log('Content: ' + content)
   this.fileChangeRequest('', path, content)
 }
 
