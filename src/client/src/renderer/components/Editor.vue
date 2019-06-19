@@ -6,7 +6,6 @@
               :key="piece.pieceID"
               :index="index"
               :pieces="pieces"
-              :editable="index === 1"
               @lockDragStart="lockDragStart"
               @lockDragEnd="lockDragEnd"
       />
@@ -21,6 +20,8 @@
 <script>
   import EditorPiece from './Editor/EditorPiece'
   import {getRandomColor} from './Editor/RandomColor'
+  import connector from '../../main/connector'
+  import { convertChangeToJS, edit } from '../../main/pieceTable'
 
   export default {
     name: 'Editor',
@@ -65,6 +66,15 @@
         if (!this.lockDragRange) return
 
         console.log(`Request lock from ${this.lockDragRange.piece}:${this.lockDragRange.line} to ${index}:${line}`)
+
+        if (this.lockDragRange.piece !== index) alert('NOT SUPPORTED')
+
+        connector.request('file-lock-request', 'file-lock-response', {
+          file_path: this.$store.state.fileTracker.openFile,
+          piece_uuid: this.pieces[this.lockDragRange.piece].pieceID,
+          offset: Math.min(this.lockDragRange.line, line),
+          length: Math.abs(this.lockDragRange.line - line) + 1
+        }).then(response => console.log(response))
       },
       lockDragCancel () {
         // console.log('cancel')
@@ -79,6 +89,12 @@
 
       pieces () {
         return this.$store.state.fileTracker.pieces
+      },
+      pieceTable () {
+        return this.$store.state.fileTracker.pieceTable
+      },
+      filePath () {
+        return this.$store.state.fileTracker.openFile
       }
     },
 
@@ -97,6 +113,22 @@
       addEventListener('mouseup', (e) => {
         if (!e.composedPath()[0].classList.contains('user-gutter')) {
           this.lockDragCancel()
+        }
+      })
+
+      connector.listenToMsg('file-delta-broadcast', ({ content }) => {
+        if (content.file_path === this.filePath) {
+          const newPieceTable = edit(this.pieceTable, content.piece_uuid, content.content.split('\n').map(val => val + '\n'))
+          this.$store.dispatch('updatePieceTable', newPieceTable)
+        }
+      })
+
+      connector.listenToMsg('file-piece-table-change-broadcast', ({ content }) => {
+        console.log(content)
+        const { textBlocks } = this.pieceTable
+        const update = convertChangeToJS(textBlocks, content)
+        if (update.filePath === this.filePath) {
+          this.$store.dispatch('updatePieceTable', update.pieceTable)
         }
       })
     }

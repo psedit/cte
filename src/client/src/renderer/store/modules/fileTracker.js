@@ -1,6 +1,6 @@
 import Tab from '../../components/Tabs/tabType'
 import connector from '../../../main/connector'
-import { convertToJS, getFile } from '../../../main/pieceTable'
+import { convertToJS, getFile, create } from '../../../main/pieceTable'
 
 const state = {
   pieces: null,
@@ -13,10 +13,10 @@ const state = {
 const mutations = {
   /**
    * @param {Object} state
-   * @param {FilePiece} pieces
+   * @param {pieceTable} pieceTable
    */
-  updatePieces (state, pieces) {
-    state.pieces = pieces
+  updatePieces (state, pieceTable) {
+    state.pieces = getFile(pieceTable)
   },
   /**
    * @param {Object} state
@@ -80,9 +80,7 @@ const actions = {
       }
     ).then((data) => {
       const pieceTable = convertToJS(data)
-      const pieces = getFile(pieceTable)
-      store.commit('updatePieceTable', pieceTable)
-      store.commit('updatePieces', pieces)
+      store.dispatch('updatePieceTable', pieceTable)
 
       // fs.writeFile(filePath, data.file_content, (err) => {
       //   if (err) console.error(err)
@@ -106,6 +104,15 @@ const actions = {
       index = -1
     }
     store.dispatch('openFile', store.state.tabs[index + 1].filePath)
+  },
+  /**
+  * Updates pieces and piece table
+  * @param {Object} store
+  * @param {PieceTable} pieceTable
+  */
+  updatePieceTable (store, pieceTable) {
+    store.commit('updatePieceTable', pieceTable)
+    store.commit('updatePieces', pieceTable)
   },
   /**
    * Removes a tab from state and switches to a new tab if the tab was opened.

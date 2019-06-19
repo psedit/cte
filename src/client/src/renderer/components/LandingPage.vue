@@ -25,9 +25,12 @@
           'login-request',
           'login-response',
           {username}
-        ).then(({succeed, error}) => {
+        ).then(({succeed, new_username: newUsername}) => {
           if (!succeed) {
-            console.error(error)
+            // FIXME: do error screeen pls
+            console.error('hier graag')
+          } else {
+            this.$store.dispatch('login', newUsername)
           }
         })
       })

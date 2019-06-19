@@ -105,6 +105,7 @@ export default function bfTravellingSalesman(graph) {
 }`
 
 text = text.split('\n')
+text = text.map(val => val + '\n')
 
 export default {
   textBlocks: {
@@ -114,7 +115,7 @@ export default {
     }
   },
   table: [
-    { pieceID: '0', blockID: '0', start: 0, length: 20 },
+    { pieceID: '0', blockID: '0', start: 0, length: 20, username: 'Martijn' },
     { pieceID: '1', blockID: '0', start: 20, length: 20 },
     { pieceID: '2', blockID: '0', start: 40, length: 20 },
     { pieceID: '3', blockID: '0', start: 60, length: 20 },
