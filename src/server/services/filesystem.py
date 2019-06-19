@@ -23,7 +23,7 @@ class Filesystem(Service):
         super().__init__(*super_args)
         # Check server config for root directory
         # TODO: retrieve from server
-        self.root_dir: str = os.path.realpath('../test')
+        self.root_dir: str = os.path.realpath('../file_root')
         self.usernames: Dict[Address, str] = {}
 
         # Files sorted by path relative to root dir
@@ -147,7 +147,7 @@ class Filesystem(Service):
                                   *file.get_clients(exclude=[address]))
 
     @message_type("cursor-list-request")
-    async def _send_cursor_list(self, msg):
+    async def _clist_request_handler(self, msg):
         address = msg["sender"][0]
         content = msg["content"]
 
@@ -156,12 +156,26 @@ class Filesystem(Service):
         if not self._is_joined(address, path):
             return
 
-        curs_f = self.file_dict[path].get_cursors([address])
+        self._send_cursor_list(self, path, address, exclude=(address,))
+
+    def _send_cursor_list(self, path, *addrs, exclude=None):
+        """
+        Send the cursor list for a path to the given addresses.
+
+        If no addresses are passed, send the cursor list to everyone who
+        is joined to the file.
+        """
+        curs_f = self.file_dict[path].get_cursors(exclude)
         cursors = [[self.usernames[c]] + curs_f[c] for c in curs_f]
+
+        if not addrs:
+            addrs = curs_f.get_clients()
+            # broadcast
+            pass
 
         self._send_message_client("cursor-list-response",
                                   {"cursor_list": cursors},
-                                  address)
+                                  *addrs)
 
     @message_type("file-join")
     async def _file_add_client(self, msg) -> None:

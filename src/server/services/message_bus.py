@@ -59,6 +59,9 @@ class MessageBus(LoggerMixin):
         self._poll_ns_thread.daemon = True
         self._poll_ns_thread.start()
 
+        # Useful for testing, these URIs take all messages sent to the bus.
+        self._all_message_handlers: List[str] = []
+
     def _get_proxy(self, to_uri: str, name: str = None):
         """
         Get a proxy for a given Pyro URI. Adds it to the _proxy
@@ -121,7 +124,10 @@ class MessageBus(LoggerMixin):
         """ Registers which messages a new service wants to receive. """
         with self._handler_lock:
             for mtype in proxy.get_wanted_messages():
-                self.handlers[mtype].append(uri)
+                if mtype == 'all':
+                    self._all_message_handlers.append(uri)
+                else:
+                    self.handlers[mtype].append(uri)
 
     def _try_handle_response(self, message):
         if not message['type'].endswith('response'):
@@ -145,6 +151,10 @@ class MessageBus(LoggerMixin):
             handled = self._try_handle_response(message)
 
             with self._handler_lock:
+                for uri in self._all_message_handlers:
+                    handled = True
+                    self._get_proxy(uri).handle_message(message)
+
                 handlers = self.handlers[message["type"]]
                 for uri in handlers:
                     print(f"Calling handle_message on URI {uri}")
