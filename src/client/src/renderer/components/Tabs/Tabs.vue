@@ -15,8 +15,8 @@
     components: {
       CloseIcon
     },
-    data: {
-      scrollPosition: 0
+    data () {
+      return {scrollPosition: 0}
     },
     computed: {
       tabs () {
