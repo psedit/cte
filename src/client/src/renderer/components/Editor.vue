@@ -14,11 +14,12 @@
       />
     </div>
     <!--<div id="placeholder" v-if="!this.ready">⇚ Select a file</div>-->
-    <div class="user-list">
+    <div class="user-list" v-if="pieces.length > 0">
       <div
         class="user-list-item"
         v-for="cursor in cursors"
         :title="cursor.username"
+        :style="{borderColor: cursor.color}"
       >{{ cursor.username.toUpperCase() }}</div>
     </div>
   </div>
@@ -37,8 +38,6 @@
     },
     data () {
       return {
-        code: '',
-        activeUsers: [],
         lockDragStartLocation: null,
         lockDragEndLocation: null,
         dragList: null,
@@ -59,16 +58,6 @@
       }
     },
     methods: {
-      updateUsers (cursors) {
-        this.activeUsers = cursors.map((cursor) => {
-          return {
-            username: cursor.username,
-            line: cursor.line,
-            ch: cursor.ch,
-            color: getRandomColor(cursor.username)
-          }
-        })
-      },
       removeDragMarkers () {
         for (let key in this.components) {
           this.components[key].$options.cminstance.clearGutter('user-gutter')
@@ -134,7 +123,8 @@
           username,
           pieceID,
           offset,
-          column
+          column,
+          color: getRandomColor(username)
         }
       }
       // addCursor (username, filepath, pieceID, offset, column) {
@@ -236,10 +226,11 @@
   right: 1em;
 
   &-item {
+    border-style: solid;
+    border-width: 0.1em;
     display: inline-block;
-    width: 2em;
-    height: 2em;
-    border-radius: 1em;
+    padding: 0.05em 0.5em;
+    border-radius: 2em;
     margin-left: 0.5em;
     line-height: 2em;
     text-align: center;
