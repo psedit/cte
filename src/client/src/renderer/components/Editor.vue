@@ -53,24 +53,14 @@
           { file_path: this.filePath }
         ).then((response) => {
           this.cursors = response.cursor_list.map(x => {
-            return cursor(x[0], x[1], x[2], x[3])
+            return this.cursor(x[0], x[1], x[2], x[3])
           })
-          // for (const cursor of response.cursor_list) {
-            // if (this.cursors.some(x => x[0] == ))
-            // this.addCursor(
-            //   cursor[0],
-            //   this.filePath,
-            //   cursor[1],
-            //   cursor[2],
-            //   cursor[3]
-            // )
-          // }
         })
       }
     },
     methods: {
       updateUsers (cursors) {
-        this.activeUsers = cursors.map(cursor => {
+        this.activeUsers = cursors.map((cursor) => {
           return {
             username: cursor.username,
             line: cursor.line,
@@ -139,7 +129,7 @@
           this.components[key].$options.cminstance.clearGutter('user-gutter')
         }
       },
-      cursor(username, pieceID, offset, column) {
+      cursor (username, pieceID, offset, column) {
         return {
           username,
           pieceID,
@@ -196,8 +186,8 @@
           }
         })
         connector.listenToMsg('cursor-move-broadcast', ({content}) => {
-          if(content.filePath === this.filePath) {
-            this.cursors = [...this.cursors, cursor(content.username,content.pieceID, content.offset, cursor.column)]
+          if (content.filePath === this.filePath) {
+            this.cursors = [...this.cursors, this.cursor(content.username, content.pieceID, content.offset, content.column)]
           }
         })
       })
