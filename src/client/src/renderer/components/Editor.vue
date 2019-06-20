@@ -127,27 +127,15 @@
           color: getRandomColor(username)
         }
       }
-      // addCursor (username, filepath, pieceID, offset, column) {
-      //   this.cursors.push({username, filepath, offset, column})
-      // },
-      // moveCursor (username, filepath, pieceID, offset, column) {
-      //   for (let i = 0; i < this.cursors.length; i++) {
-      //     if (this.cursors[i].username === username) {
-      //       this.cursors[i].filepath = filepath
-      //       this.cursors[i].ch = column
-      //       this.cursors[i].line = offset
-      //       return
-      //     }
-      //   }
-      //   this.addCursor(username, filepath, pieceID, offset, column)
-      // }
     },
 
     computed: {
       ready () {
         return this.code !== undefined && this.code !== ''
       },
-
+      username () {
+        return this.$store.state.user.username
+      },
       pieces () {
         return this.$store.state.fileTracker.pieces
       },
@@ -176,8 +164,18 @@
           }
         })
         connector.listenToMsg('cursor-move-broadcast', ({content}) => {
-          if (content.filePath === this.filePath) {
-            this.cursors = [...this.cursors, this.cursor(content.username, content.pieceID, content.offset, content.column)]
+          console.log(this.filePath, content)
+          if (content.file_path === this.filePath && content.username !== this.username) {
+            this.cursors = [
+              ...this.cursors.filter(({username}) => username !== content.username),
+              this.cursor(content.username, content.pieceID, content.offset, content.column)]
+          }
+        })
+
+        connector.listenToMsg('file-leave-broadcast', ({content}) => {
+          console.log(content)
+          if (content.file_path === this.filePath) {
+            this.cursors = this.cursors.filter(({username}) => username !== content.username)
           }
         })
       })
