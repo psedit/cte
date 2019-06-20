@@ -9,6 +9,7 @@
   import 'codemirror/mode/javascript/javascript'
   import 'codemirror/mode/python/python'
   import { edit, indexOffsetRangeSort } from '../../../main/pieceTable'
+  import './multiEditor'
   import connector from '../../../main/connector'
   import {getRandomColor} from './RandomColor'
 
@@ -23,11 +24,14 @@
 
     data () {
       return {
+        lang: null
       }
     },
 
+    myPromise: null,
     cminstance: null,
     preText: null,
+    startState: null,
     watch: {
       code (val) {
         if (!this.editable) {
@@ -42,30 +46,14 @@
       }
     },
     mounted () {
-      setTimeout(() => this.initializeEditor(), 0)
+      this.$emit('mounted', this)
     },
     computed: {
-      textPiecesArray () {
-        return this.pieces.map(piece => piece.text)
-      },
-      textPieces () {
-        return this.textPiecesArray.join('').replace(/\n$/, '')
-      },
-
-      preCodeArray () {
-        return this.pieces.slice(0, this.index).reduce((acc, piece) => {
-          return acc.concat(piece.text)
-        }, [])
-      },
-      preCode () {
-        return this.preCodeArray.join('').replace(/\n$/, '')
-      },
-
       codeArray () {
         return this.pieces[this.index].text
       },
       code () {
-        return this.codeArray.join('').replace(/\n$/, '')
+        return this.codeArray.join('').replace(/\n$/g, '')
       },
 
       username () {
@@ -88,7 +76,7 @@
         } else if (start.piece === this.index) {
           return start.line
         }
-  
+
         return null
       },
       pieceDragLength () {
@@ -115,8 +103,26 @@
 
     methods: {
       initializeEditor () {
+        if (!this.$options.myPromise) {
+          this.$options.myPromise = new Promise(resolve => {
+            setTimeout(() => {
+              this._initializeEditor()
+              resolve(this.$options.cminstance)
+            }, 0)
+          })
+        }
+        return this.$options.myPromise
+      },
+
+      _initializeEditor () {
+        if (!window.CodeMirror) window.CodeMirror = CodeMirror
+        // debugger
         const cm = CodeMirror(this.$refs.cm, {
-          mode: 'javascript',
+          mode: {
+            name: 'multi_editor',
+            lang: this.lang,
+            startState: this.$options.startState
+          },
           lineNumbers: true,
           theme: 'monokai',
           smartIndent: true,
@@ -130,7 +136,7 @@
           gutters: ['user-gutter', 'CodeMirror-linenumbers'],
           extraKeys: {
             'Alt-R': () => {
-              this.updatePreviousText()
+              // this.updatePreviousText()
             }
           }
         })
@@ -138,48 +144,20 @@
         this.$options.cminstance = cm
 
         cm.setValue(this.code)
-        if (this.index !== 0) {
-          this.addPreviousText()
-        }
 
         cm.getGutterElement().querySelector('.user-gutter').style.backgroundColor = getRandomColor(this.username).string()
         cm.getGutterElement().setAttribute('title', this.username)
         this.initializeEvents()
       },
+
       setText () {
         const cm = this.$options.cminstance
 
-        cm.setValue(this.code)
-        if (this.index !== 0) {
-          this.addPreviousText()
-        }
+        const from = {line: 0, ch: 0}
+        const lastLine = cm.lastLine()
+        const to = {line: lastLine, ch: cm.getLine(lastLine).length}
+        cm.replaceRange(this.code, from, to)
       },
-      addPreviousText () {
-        if (this.preCode === '') return
-
-        const cm = this.$options.cminstance
-
-        this.insertText(this.preCode + '\n', {line: 0, ch: 0})
-
-        const lines = this.preCodeArray.length
-        this.$options.preText = cm.markText({line: 0, ch: 0}, {line: lines, ch: 0}, {
-          collapsed: true,
-          inclusiveLeft: true,
-          inclusiveRight: false,
-          selectLeft: false,
-          selectRight: true,
-          atomic: true,
-          readOnly: true
-        })
-      },
-      updatePreviousText () {
-        if (this.index === 0) return
-        const range = this.$options.preText.find()
-        this.$options.preText.clear()
-        this.deleteText(range.from, range.to)
-        this.addPreviousText()
-      },
-
       updateDragStart (newDragStart, oldDragStart) {
         const cm = this.$options.cminstance
         cm.clearGutter('user-gutter')
@@ -196,7 +174,6 @@
             this.gutterSelectMarker())
         }
       },
-
       lineToRelativeLine (line) {
         const cm = this.$options.cminstance
         return line - cm.firstLine()
@@ -231,7 +208,7 @@
 
         if (this.editable) {
           cm.on('changes', ({cminstance}) => {
-            const value = cm.getValue().slice(this.preCode.length)
+            const value = cm.getValue()
             const content = value.split('\n').map(val => val + '\n')
             const newPieceTable = edit(this.pieceTable, this.pieces[this.index].pieceID, content)
             this.$store.dispatch('updatePieceTable', newPieceTable)
@@ -279,10 +256,8 @@
       },
 
       lineNumberFormatter (line) {
-        if (line === 1 && this.index !== 0) {
-          return (this.preCodeArray.length + 1).toString()
-        }
-        return (line).toString()
+        const previousLines = this.pieces.slice(0, this.index).reduce((acc, val) => val.text.length + acc, 0)
+        return (previousLines + line).toString()
       }
     }
   }
