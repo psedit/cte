@@ -146,16 +146,14 @@
       },
       unlock () {
         console.log('hoi')
-        connector.addEventListener('open', () => {
-          connector.request('file-unlock-request', 'file-unlock-response', {
-            file_path: this.$store.state.fileTracker.openFile,
-            lock_id: this.pieces[this.index].pieceID
-          }).then(({succes}) => {
-            console.log(succes, 'hoi ik ben')
-            if (!succes) {
-              console.error('faal')
-            }
-          })
+        connector.request('file-unlock-request', 'file-unlock-response', {
+          file_path: this.$store.state.fileTracker.openFile,
+          lock_id: this.pieces[this.index].pieceID
+        }).then(({succes}) => {
+          console.log(succes, 'hoi ik ben')
+          if (!succes) {
+            console.error('faal')
+          }
         })
       },
       setText () {
