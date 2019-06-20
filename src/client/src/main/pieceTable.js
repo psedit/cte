@@ -188,6 +188,74 @@ export function len (table) {
   return table.reduce((total, curr) => total + curr.length, 0)
 }
 
+export function indexOffsetRangeSort (A, B) {
+  const comp = indexOffsetCompare(A, B)
+  if (comp > 0) {
+    return [ B, A ]
+  } else {
+    return [ A, B ]
+  }
+}
+
+export function indexOffsetCompare (A, B) {
+  if (A.piece < B.piece || (A.piece === B.piece && A.line < B.line)) {
+    return -1
+  } else if (A.piece > B.piece || (A.piece === B.piece && A.line > B.line)) {
+    return 1
+  } else {
+    return 0
+  }
+}
+
+/**
+ *
+ * @param {*} table
+ * @param {*} idxA
+ * @param {*} offsetA
+ * @param {*} idxB
+ * @param {*} offsetB
+ */
+export function rangeToAnchoredLength (table, idxA, offsetA,
+  idxB, offsetB) {
+  let startPiece, endPiece
+  if (idxA < idxB || (idxA === idxB && offsetA <= offsetB)) {
+    startPiece = { piece: idxA, offset: offsetA }
+    endPiece = { piece: idxB, offset: offsetB }
+  } else {
+    startPiece = { piece: idxB, offset: offsetB }
+    endPiece = { piece: idxA, offset: offsetA }
+  }
+
+  let interLines = 0
+  for (let i = startPiece.piece; i < endPiece.piece; i++) {
+    console.log(`interLines: ${interLines}, length: ${table.table[i].length}`)
+    console.log(table.table[i])
+    interLines += table.table[i].length
+  }
+
+  return {
+    index: startPiece.piece,
+    offset: startPiece.offset,
+    length: interLines - startPiece.offset + endPiece.offset + 1
+  }
+}
+
+/**
+ * Compute number of lines between two locations in the piece table
+ * @param {Piece[]} table
+ * @param {*} start
+ * @param {*} end
+ */
+export function lengthBetween (table, startpiece, startoffset,
+  endpiece, endoffset) {
+  let accumulator = 0
+  for (let i = getPieceIndexByPieceID(table, startpiece);
+    i < getPieceByPieceID(table, endpiece); i++) {
+    accumulator += table[i].length
+  }
+  return accumulator - startoffset + endoffset + 1
+}
+
 /**
  * Returns the corresponding piece index and piece offset
  * for a given file line. When line number is invalid returns 0, 0.
@@ -243,6 +311,22 @@ export function getRange (table, lineNumber, length) {
   return {
     start: index,
     end: index + lastOff
+  }
+}
+
+/**
+ * @param {Piece[]} table
+ * @param {PieceID} startPieceID
+ * @param {PieceID} endPieceID
+ * @returns {Range} a range of pieces which cover the given piece ID's
+ */
+export function getRangeById (table, startPieceID, endPieceID) {
+  const startPiece = getPieceIndexByPieceID(startPieceID)
+  const endPiece = getPieceIndexByPieceID(endPieceID)
+
+  return {
+    start: startPiece,
+    end: endPiece
   }
 }
 

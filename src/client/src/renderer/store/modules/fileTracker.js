@@ -1,6 +1,6 @@
 import Tab from '../../components/Tabs/tabType'
 import connector from '../../../main/connector'
-import { convertToJS, getFile, create } from '../../../main/pieceTable'
+import { convertToJS, getFile, create, lengthBetween } from '../../../main/pieceTable'
 
 const state = {
   pieces: null,
@@ -137,6 +137,27 @@ const actions = {
       }
     }
     store.commit('removeTab', tabToRemove)
+  },
+  updateCodeAction (state, newCode) {
+    state.commit('updateCode', newCode)
+  },
+  /**
+   * Sends a request for a lock to the server.
+   * @param {} state
+   * @param {start: {id, offset}, end: {id, offset}} payload
+   */
+  requestLockAction (state, payload) {
+    console.log('request Lock of length', lengthBetween(this.state.pieces, payload.start.id,
+      payload.start.offset, payload.end.start, payload.end.offset))
+    connector.request('file-lock-request', 'file-lock-response',
+      {
+        'file_path': state.openFile,
+        'piece_uuid': payload.start.id,
+        'offset': payload.start.offset,
+        'length': lengthBetween(this.state.pieces, payload.start.id,
+          payload.start.offset, payload.end.start, payload.end.offset)
+      }
+    )
   },
   /**
    * Moves from the current tab to another tab in the given direction.
