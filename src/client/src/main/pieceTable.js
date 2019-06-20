@@ -297,7 +297,7 @@ export function getTextByPieceID ({ textBlocks, table }, pieceID) {
  * @returns {FilePiece[]} a list of file pieces
  */
 export function getFile ({ textBlocks, table }) {
-  return table.map(({ pieceID, username }) => {
+  return table.filter(({ length }) => length > 0).map(({ pieceID, username }) => {
     return {
       pieceID,
       text: getTextByPieceID({ textBlocks, table }, pieceID),
