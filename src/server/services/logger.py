@@ -36,28 +36,28 @@ logsetup("server.log", FORMAT, LOGLEVEL)
 
 def logname_to_logger(fn):
     @functools.wraps(fn)
-    def new_fn(self, logname, msg, args):
-        return fn(self, logging.getLogger(logname), msg, *args)
+    def new_fn(self, logname, msg, args, kwargs):
+        return fn(self, logging.getLogger(logname), msg, *args, **kwargs)
     return new_fn
 
 
 @Pyro4.expose
 class Logger():
     @logname_to_logger
-    def debug(self, logger, msg, *args):
-        logger.debug(msg, *args)
+    def debug(self, logger, msg, *args, **kwargs):
+        logger.debug(msg, *args, **kwargs)
 
     @logname_to_logger
-    def info(self, logger, msg, *args):
-        logger.info(msg, *args)
+    def info(self, logger, msg, *args, **kwargs):
+        logger.info(msg, *args, **kwargs)
 
     @logname_to_logger
-    def warning(self, logger, msg, *args):
-        logger.warning(msg, *args)
+    def warning(self, logger, msg, *args, **kwargs):
+        logger.warning(msg, *args, **kwargs)
 
     @logname_to_logger
-    def error(self, logger, msg, *args):
-        logger.error(msg, *args)
+    def error(self, logger, msg, *args, **kwargs):
+        logger.error(msg, *args, **kwargs)
 
 
 if __name__ == '__main__':

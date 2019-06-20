@@ -32,7 +32,7 @@ class PieceTable:
         return sum(entry[3] for entry in self.table)
 
     def __str__(self) -> str:
-        fmt = "{:>38}" + "{:>10}"*4
+        fmt = "{:>38}" + "{:>10}"*5
         str_table = fmt.format("Piece ID", "Block ID", "Start",
                                "Length", "Owner", "Locked") + "\n"
 
@@ -99,7 +99,7 @@ class PieceTable:
         first, last = self.get_piece_range(start, length)
 
         for i in range(first, last + 1):
-            piece_id, block_id, line_s, line_c = self.table[i]
+            piece_id, block_id, line_s, line_c, _ = self.table[i]
             block = self.blocks[block_id]
 
             if i == first:
@@ -171,7 +171,7 @@ class PieceTable:
         """
         Returns the block id of a single piece in the table.
         """
-        for p_id, block_id, _, _ in self.table:
+        for p_id, block_id, _, _, _ in self.table:
             if p_id == piece_id:
                 return block_id
 
@@ -183,7 +183,7 @@ class PieceTable:
         """
         stitched_file: List[str] = []
         position = 0
-        for _, block_id, start, len in self.table:
+        for _, block_id, start, len, uname in self.table:
             position += len
 
             stitched_file.extend(self.blocks[block_id].get_lines(start, len))
@@ -274,13 +274,12 @@ class PieceTable:
         prev_len: int = self.table[index][3]
         self.table[index][0] = str(uuid.uuid4())
         self.table[index][3] = offset
-        self.table[index][4] = uname
 
         # Insert the new block in the table
         piece_id = str(uuid.uuid4())
         self.table.insert(index + 1, [piece_id,
                                       len(self.blocks) - 1,
-                                      0, length])
+                                      0, length, uname])
 
         # Update the rest of the table
         rem: int = prev_len - (offset + length)
@@ -290,7 +289,7 @@ class PieceTable:
 
             self.table.insert(index + 2, [str(uuid.uuid4()),
                                           self.table[index][1],
-                                          n_start, rem])
+                                          n_start, rem, ""])
         else:
             # Cut or shrink the next couple blocks to make space
             length_rem: int = -1 * rem

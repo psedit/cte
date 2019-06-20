@@ -2,6 +2,7 @@ from server_file import ServerFile, LockError
 from typedefs import Address
 from typing import Dict, List
 from service import Service, message_type
+import traceback
 import os
 import shutil
 import Pyro4
@@ -181,7 +182,7 @@ class Filesystem(Service):
                                   *addrs)
 
     def _broadcast_file_cursors(self, file):
-        for client, loc in file.client.items():
+        for client, loc in file.clients.items():
             uname = self.usernames[client]
             self._send_message_client("cursor-move-broadcast",
                                       {
@@ -191,7 +192,7 @@ class Filesystem(Service):
                                           "offset": loc[1],
                                           "column": loc[2]
                                       },
-                                      file.get_clients(exclude=client))
+                                      *file.get_clients(exclude=client))
 
     @message_type("file-join")
     async def _file_add_client(self, msg) -> None:
@@ -317,6 +318,7 @@ class Filesystem(Service):
             lock_id = self.file_dict[path].add_lock(address, piece_id,
                                                     offset, length, username)
         except ValueError as e:
+            print(traceback.print_exc())
             self._send_message_client("error-response",
                                       {
                                           "message": str(e),
@@ -527,7 +529,7 @@ class Filesystem(Service):
         file = self.file_dict[file_path]
 
         try:
-            file.update_content(address, piece_uuid, block_content)
+            file.update_content(username, piece_uuid, block_content)
         except LockError as e:
             #TODO send lock error
             return

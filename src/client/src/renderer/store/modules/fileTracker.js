@@ -1,6 +1,6 @@
 import Tab from '../../components/Tabs/tabType'
 import connector from '../../../main/connector'
-import { convertToJS, getFile, create } from '../../../main/pieceTable'
+import { convertToJS, getFile, create, lengthBetween } from '../../../main/pieceTable'
 
 const state = {
   pieces: null,
@@ -128,11 +128,44 @@ const actions = {
    * @param {Tab} tabToRemove the tab that needs to be removed
    */
   removeTab (store, tabToRemove) {
+    connector.send('file-save', {
+      file_path: store.state.openFile
+    })
+    connector.send('file-leave', {
+      file_path: store.state.openFile,
+      force_exit: 1
+    })
     if (tabToRemove.filePath === store.state.openFile) {
-      const i = store.state.tabs.indexOf(tabToRemove)
-      store.dispatch('prevTab', i)
+      if (store.state.tabs.length === 1) {
+        store.commit('updateOpenFile', '')
+        store.dispatch('updatePieceTable', create(''))
+      } else {
+        const i = store.state.tabs.indexOf(tabToRemove)
+        store.dispatch('prevTab', i)
+      }
     }
     store.commit('removeTab', tabToRemove)
+  },
+  updateCodeAction (state, newCode) {
+    state.commit('updateCode', newCode)
+  },
+  /**
+   * Sends a request for a lock to the server.
+   * @param {} state
+   * @param {start: {id, offset}, end: {id, offset}} payload
+   */
+  requestLockAction (state, payload) {
+    console.log('request Lock of length', lengthBetween(this.state.pieces, payload.start.id,
+      payload.start.offset, payload.end.start, payload.end.offset))
+    connector.request('file-lock-request', 'file-lock-response',
+      {
+        'file_path': state.openFile,
+        'piece_uuid': payload.start.id,
+        'offset': payload.start.offset,
+        'length': lengthBetween(this.state.pieces, payload.start.id,
+          payload.start.offset, payload.end.start, payload.end.offset)
+      }
+    )
   },
   /**
    *
