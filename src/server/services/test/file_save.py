@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 import asyncio
 import websockets
 from api import open_file, save_file
