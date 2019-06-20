@@ -8,15 +8,18 @@
   import 'codemirror/theme/monokai.css'
   import 'codemirror/mode/javascript/javascript'
   import 'codemirror/mode/python/python'
+  import { edit, indexOffsetRangeSort } from '../../../main/pieceTable'
   import './multiEditor'
-  import { edit } from '../../../main/pieceTable'
   import connector from '../../../main/connector'
+  import {getRandomColor} from './RandomColor'
 
   export default {
     name: 'EditorPiece.vue',
     props: {
       pieces: Array,
-      index: Number
+      index: Number,
+      dragStart: Object,
+      dragEnd: Object
     },
 
     data () {
@@ -34,6 +37,12 @@
         if (!this.editable) {
           this.setText()
         }
+      },
+      pieceDragStart: function (newDragStart, oldDragStart) {
+        this.updateDragStart(oldDragStart, newDragStart)
+      },
+      pieceDragLength: function (newDragEnd, oldDragEnd) {
+        this.updateDragLength(oldDragEnd, newDragEnd)
       }
     },
     mounted () {
@@ -55,6 +64,40 @@
       },
       pieceTable () {
         return this.$store.state.fileTracker.pieceTable
+      },
+
+      pieceDragStart () {
+        if (!(this.dragStart || this.dragEnd)) {
+          return null
+        }
+        let start = indexOffsetRangeSort(this.dragStart, this.dragEnd)[0]
+        if (start.piece < this.index) {
+          return 0
+        } else if (start.piece === this.index) {
+          return start.line
+        }
+
+        return null
+      },
+      pieceDragLength () {
+        const cm = this.$options.cminstance
+        if (!(this.dragStart && this.dragEnd)) {
+          return -1
+        }
+        let range = indexOffsetRangeSort(this.dragStart, this.dragEnd)
+        let start = range[0]
+        let end = range[1]
+        if (start.piece > this.index || end.piece < this.index) {
+          return -1
+        } else if (end.piece > this.index) {
+          return cm.lineCount() - this.pieceDragStart
+        } else {
+          if (start.line < this.index) {
+            return end.line + 1
+          } else {
+            return end.line - start.line + 1
+          }
+        }
       }
     },
 
@@ -102,7 +145,7 @@
 
         cm.setValue(this.code)
 
-        this.$el.style.setProperty('--gutter-hue', Math.round(Math.random() * 360))
+        cm.getGutterElement().querySelector('.user-gutter').style.backgroundColor = getRandomColor(this.username).string()
         cm.getGutterElement().setAttribute('title', this.username)
         this.initializeEvents()
       },
@@ -115,20 +158,39 @@
         const to = {line: lastLine, ch: cm.getLine(lastLine).length}
         cm.replaceRange(this.code, from, to)
       },
-
+      updateDragStart (newDragStart, oldDragStart) {
+        const cm = this.$options.cminstance
+        cm.clearGutter('user-gutter')
+        for (let i = this.pieceDragStart; i < this.pieceDragStart + this.pieceDragLength; i++) {
+          cm.setGutterMarker(this.relativeLineToLine(i), 'user-gutter',
+            this.gutterSelectMarker())
+        }
+      },
+      updateDragLength (newDragLength, oldDragLength) {
+        const cm = this.$options.cminstance
+        cm.clearGutter('user-gutter')
+        for (let i = this.pieceDragStart; i < this.pieceDragStart + this.pieceDragLength; i++) {
+          cm.setGutterMarker(this.relativeLineToLine(i), 'user-gutter',
+            this.gutterSelectMarker())
+        }
+      },
       lineToRelativeLine (line) {
-        if (line === 0) return 0
-        const mark = this.$options.cminstance.getAllMarks()[0]
-        if (!mark) return line
-
-        return line - mark.lines.length + 1
+        const cm = this.$options.cminstance
+        return line - cm.firstLine()
       },
       relativeLineToLine (line) {
-        if (line === 0) return 0
-        const mark = this.$options.cminstance.getAllMarks()[0]
-        if (!mark) return line
+        const cm = this.$options.cminstance
+        return (cm.firstLine() + line)
+      },
 
-        return line + mark.lines.length - 1
+      gutterSelectMarker () {
+        var marker = document.createElement('div')
+        marker.style.backgroundColor = 'white'
+        marker.style.pointerEvents = 'none'
+        marker.style.position = 'absolute'
+        marker.style.width = '100%'
+        marker.innerHTML = '●'
+        return marker
       },
 
       initializeEvents () {
@@ -163,17 +225,19 @@
         gutter.addEventListener('mousedown', (e) => {
           const line = cm.lineAtHeight(e.pageY)
           const relLine = this.lineToRelativeLine(line)
-          // console.log('mouse up at', line)
           this.$emit('lockDragStart', relLine, this.index, e)
+        })
+        gutter.addEventListener('mousemove', (e) => {
+          const line = cm.lineAtHeight(e.pageY)
+          const relLine = this.lineToRelativeLine(line)
+          this.$emit('lockDragUpdate', relLine, this.index, e)
         })
         gutter.addEventListener('mouseup', (e) => {
           const line = cm.lineAtHeight(e.pageY)
           const relLine = this.lineToRelativeLine(line)
-          // console.log('mouse down at', line)
           this.$emit('lockDragEnd', relLine, this.index, e)
         })
       },
-
       insertText (text, pos) {
         const cm = this.$options.cminstance
         pos.line = this.relativeLineToLine(pos.line)
@@ -192,9 +256,6 @@
       },
 
       lineNumberFormatter (line) {
-        // if (line === 1 && this.index !== 0) {
-        //   return (this.preCodeArray.length + 1).toString()
-        // }
         const previousLines = this.pieces.slice(0, this.index).reduce((acc, val) => val.text.length + acc, 0)
         return (previousLines + line).toString()
       }
@@ -230,7 +291,6 @@
 }
 
 .user-gutter {
-  background-color: hsl(var(--gutter-hue), 90%, 60%);
   width: 1em;
 }
 

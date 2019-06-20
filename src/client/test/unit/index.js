@@ -1,13 +1,18 @@
-import Vue from 'vue'
-Vue.config.devtools = true
-Vue.config.productionTip = false
+'use strict'
 
-// require all test files (files that ends with .spec.js)
-const testsContext = require.context('./specs', true, /\.spec$/)
-testsContext.keys().forEach(testsContext)
+// Set BABEL_ENV to use proper env config
+process.env.BABEL_ENV = 'test'
 
-// require all src files except main.js for coverage.
-// you can also change this to match only the subset of files that
-// you want coverage for.
-const srcContext = require.context('../../src/renderer', true, /^\.\/(?!main(\.js)?$)/)
-srcContext.keys().forEach(srcContext)
+// Enable use of ES6+ on required files
+require('babel-register')({
+  ignore: /node_modules/
+})
+
+// Attach Chai APIs to global scope
+const { expect, should, assert } = require('chai')
+global.expect = expect
+global.should = should
+global.assert = assert
+
+// Require all JS files in `./specs` for Mocha to consume
+require('require-dir')('./specs')

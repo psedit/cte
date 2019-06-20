@@ -7,7 +7,10 @@
               :key="piece.pieceID"
               :index="index"
               :pieces="pieces"
+              :dragStart="lockDragStartLocation"
+              :dragEnd="lockDragEndLocation"
               @lockDragStart="lockDragStart"
+              @lockDragUpdate="lockDragUpdate"
               @lockDragEnd="lockDragEnd"
               @mounted="editorMount"
               ref="editorPieces"
@@ -24,8 +27,7 @@
   import EditorPiece from './Editor/EditorPiece'
   import {getRandomColor} from './Editor/RandomColor'
   import connector from '../../main/connector'
-  import {convertChangeToJS, edit} from '../../main/pieceTable'
-  // import Vue from 'vue'
+  import { convertChangeToJS, edit, rangeToAnchoredLength } from '../../main/pieceTable'
 
   export default {
     name: 'Editor',
@@ -36,9 +38,10 @@
     data () {
       return {
         code: '',
-        // pieces: pieces,
         activeUsers: [],
-        lockDragRange: null
+        lockDragStartLocation: null,
+        lockDragEndLocation: null,
+        dragList: null
       }
     },
     methods: {
@@ -70,9 +73,6 @@
       },
 
       /** Updates the code that is viewed by the editor. */
-      updateCode () {
-        this.code = this.$store.state.fileTracker.code
-      },
       updateUsers (cursors) {
         this.activeUsers = cursors.map(cursor => {
           return {
@@ -83,6 +83,16 @@
           }
         })
       },
+      removeDragMarkers () {
+        for (let key in this.components) {
+          this.components[key].$options.cminstance.clearGutter('user-gutter')
+        }
+      },
+      requestLock (startId, startOffset, endId, endOffset) {
+        let payload = { start: {id: startId, offset: startOffset},
+          end: {id: endId, offset: endOffset}}
+        this.$store.dispatch('requestLock', payload)
+      },
       userStyle (user) {
         return {
           backgroundColor: user.color
@@ -90,25 +100,48 @@
       },
       lockDragStart (line, index) {
         // console.log('start', line, index)
-        this.lockDragRange = {piece: index, line}
+        this.lockDragStartLocation = {piece: index, line}
+        this.lockDragEndLocation = {piece: index, line}
+      },
+      lockDragUpdate (line, index) {
+        if (this.lockDragStartLocation) {
+          this.lockDragEndLocation = {piece: index, line}
+          // this.updateDrag()
+        }
       },
       lockDragEnd (line, index) {
-        console.log(this.lockDragRange)
-        if (!this.lockDragRange) return
+        if (this.lockDragStartLocation === null) return
 
-        console.log(`Request lock from ${this.lockDragRange.piece}:${this.lockDragRange.line} to ${index}:${line}`)
+        console.log(`Request lock from ${this.lockDragStartLocation.piece}:${this.lockDragStartLocation.line} to ${index}:${line}`)
 
-        if (this.lockDragRange.piece !== index) alert('NOT SUPPORTED')
+        let draggedLock = rangeToAnchoredLength(this.$store.state.fileTracker.pieceTable,
+          this.lockDragStartLocation.piece, this.lockDragStartLocation.line,
+          this.lockDragEndLocation.piece, this.lockDragEndLocation.line)
+
+        console.log(`PieceIdx: ${draggedLock.index}, Offset: ${draggedLock.offset}, Length: ${draggedLock.length}`)
 
         connector.request('file-lock-request', 'file-lock-response', {
           file_path: this.$store.state.fileTracker.openFile,
-          piece_uuid: this.pieces[this.lockDragRange.piece].pieceID,
-          offset: Math.min(this.lockDragRange.line, line),
-          length: Math.abs(this.lockDragRange.line - line) + 1
+          piece_uuid: this.pieces[draggedLock.index].pieceID,
+          offset: draggedLock.offset,
+          length: draggedLock.length
         }).then(response => console.log(response))
+
+        this.lockDragCancel()
+      },
+      showPieceLengths () {
+        const table = this.$store.state.fileTracker.pieceTable
+        for (let i = 0; i < table.table.length; i++) {
+          console.log(`piece ${i} has length ${table.table[i].length}`)
+        }
       },
       lockDragCancel () {
-        this.lockDragRange = null
+        console.log('cancel')
+        this.lockDragStartLocation = null
+        this.lockDragEndLocation = null
+        for (let key in this.components) {
+          this.components[key].$options.cminstance.clearGutter('user-gutter')
+        }
       }
     },
 
@@ -138,13 +171,6 @@
     },
 
     mounted () {
-      this.updateCode()
-      this.$store.subscribe((mutation, state) => {
-        if (mutation.type === 'updateCode') {
-          this.updateCode()
-        }
-      })
-
       addEventListener('mouseup', (e) => {
         if (!e.composedPath()[0].classList.contains('user-gutter')) {
           this.lockDragCancel()
@@ -159,7 +185,6 @@
       })
 
       connector.listenToMsg('file-piece-table-change-broadcast', ({ content }) => {
-        console.log(content)
         const { textBlocks } = this.pieceTable
         const update = convertChangeToJS(textBlocks, content)
         if (update.filePath === this.filePath) {

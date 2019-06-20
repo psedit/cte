@@ -1,6 +1,7 @@
 'use strict'
 
 import { app, BrowserWindow, Menu } from 'electron'
+const prompt = require('electron-prompt')
 
 /**
  * Set `__static` path to static files in production
@@ -16,30 +17,6 @@ const winURL = process.env.NODE_ENV === 'development'
   : `file://${__dirname}/index.html`
 
 function createWindow () {
-  const menu = Menu.buildFromTemplate([
-    {
-      label: 'File',
-      submenu: [
-        { label: 'Open file' },
-        { label: 'Open folder' }
-      ]
-    },
-    {
-      label: 'Edit',
-      submenu: [
-        { label: 'Undo' },
-        { label: 'Redo' }
-      ]
-    },
-    {
-      label: 'Help',
-      submenu: [
-        { label: 'Exit' }
-      ]
-    }
-  ])
-  Menu.setApplicationMenu(menu)
-
   /**
    * Initial window options
    */
@@ -55,6 +32,29 @@ function createWindow () {
   mainWindow.setFullScreenable(true)
 
   mainWindow.loadURL(winURL)
+  const menu = Menu.buildFromTemplate([
+    {
+      label: 'Server Connection',
+      submenu: [
+        {
+          label: 'Change Server',
+          click () {
+            prompt({
+              title: 'New Server URL',
+              label: 'URL',
+              value: 'ws://segfault.party:12345'
+            }).then((newURLString) => {
+              if (newURLString === undefined) {
+                return
+              }
+              mainWindow.webContents.send('changeURL', newURLString)
+            })
+          }
+        }
+      ]
+    }
+  ])
+  Menu.setApplicationMenu(menu)
 
   mainWindow.on('closed', () => {
     mainWindow = null
