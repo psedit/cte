@@ -52,10 +52,9 @@ export function uploadFile (path, content) {
 /**
  * Remove file from server.
  *
- * @param {string} path path on server of file to be deleted
+ * @param {string} path path on server of file or directory to be deleted
  */
-export function removeFile (path) {
-  console.log('Removing ' + path)
+export function removeItem (path) {
   this.fileChangeRequest(path, '', '')
 }
 
@@ -67,7 +66,6 @@ export function removeFile (path) {
  * @param {string} newName new name of file
  */
 export function nameChange (pathToDir, oldName, newName) {
-  console.log(`RENAMING pathToDir: ${pathToDir}, oldName: ${oldName}, newName: ${newName}`) // FIXME:
   this.locationChange(pathToDir + oldName, pathToDir + newName, '')
 }
 

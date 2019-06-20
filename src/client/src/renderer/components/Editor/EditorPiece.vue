@@ -10,6 +10,7 @@
   import 'codemirror/mode/python/python'
   import { edit, indexOffsetRangeSort } from '../../../main/pieceTable'
   import connector from '../../../main/connector'
+  import {getRandomColor} from './RandomColor'
 
   export default {
     name: 'EditorPiece.vue',
@@ -146,7 +147,7 @@
           this.addPreviousText()
         }
 
-        this.$el.style.setProperty('--gutter-hue', Math.round(Math.random() * 360))
+        cm.getGutterElement().querySelector('.user-gutter').style.backgroundColor = getRandomColor(this.username).string()
         cm.getGutterElement().setAttribute('title', this.username)
         this.initializeEvents()
       },
@@ -376,7 +377,6 @@
 }
 
 .user-gutter {
-  background-color: hsl(var(--gutter-hue), 90%, 60%);
   width: 1em;
 }
 
