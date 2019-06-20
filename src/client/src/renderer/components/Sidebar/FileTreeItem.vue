@@ -1,5 +1,5 @@
 <template>
-  <li class="filetreeitem" :class="{file:!isFolder, dir:isFolder}" @click="$emit('click', {name, isFolder})">
+  <li class="filetreeitem" :class="{file:!isFolder, dir:isFolder}" @click="$emit('click', {name, isFolder})" @contextmenu.prevent.stop="$emit('rightClick', $event, {name, isFolder})" >
     <folder-icon v-if="isFolder"/>
     <file-icon v-else />
     <span>{{ name }}</span>
