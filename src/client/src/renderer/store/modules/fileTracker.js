@@ -129,6 +129,14 @@ const actions = {
         store.dispatch('prevTab', i)
       }
     }
+
+    connector.send('file-save', {
+      file_path: store.state.openFile
+    })
+    connector.send('file-leave', {
+      file_path: store.state.openFile,
+      force_exit: 1
+    })
     store.commit('removeTab', tabToRemove)
   },
   /**
