@@ -11,5 +11,5 @@ class LoggerMixin:
 
         self._logname = 'unnamed logger'
 
-    def _log(self, level: str, msg: str, *args):
-        getattr(self._logger, level)(self._logname, msg, args)
+    def _log(self, level: str, msg: str, *args, **kwargs):
+        getattr(self._logger, level)(self._logname, msg, args, kwargs)

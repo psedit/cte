@@ -60,6 +60,10 @@ describe('create', function () {
   it('should generate an UUID', function () {
     expect(create('').table[0].pieceID.length).to.equal(36)
   })
+
+  it('should create a piece of lenght zero for a empty string', () => {
+    expect(create('').table[0].length).to.deep.equal(0)
+  })
 })
 
 describe('convertToJS', function () {
@@ -185,12 +189,33 @@ describe('getBlock', function () {
   })
 })
 
+const emptyTable = {
+  textBlocks: {
+    '0': {
+      open: true,
+      lines: ['print("print")\n', 'print("python is cool")\n']
+    }
+  },
+  table: [
+    {
+      pieceID: 'ab003168-dfcf-49f3-8f8a-eb43e558f42a',
+      blockID: 0,
+      start: 0,
+      length: 0,
+      username: ''
+    }
+  ]
+}
+
 describe('getText', function () {
   it('should return the text of the block given an pieceID', function () {
     expect(getTextByPieceID(largePieceTable, '1')).to.deep.equal([
       ' 123 ',
       ' 😀'
     ])
+  })
+  it('should give an empty array when text length is zero', function () {
+    expect(getTextByPieceID(emptyTable, 'ab003168-dfcf-49f3-8f8a-eb43e558f42a')).to.deep.equal([])
   })
 })
 
@@ -212,6 +237,9 @@ describe('getFile', function () {
       { pieceID: '2', text: [' g😀'], open: false, username: 'a' },
       { pieceID: '3', text: ['fabc '], open: false, username: 's' }
     ])
+  })
+  it('should exclude empty pieces', function () {
+    expect(getFile(emptyTable)).to.deep.equal([])
   })
 })
 

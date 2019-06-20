@@ -3,7 +3,7 @@ const uuid = require('uuid/v4')
 
 // FIXME: Change path to server path.
 // const path = new URL('ws://bami.party:12345')
-const path = new URL('ws://segfault.party:12345')
+const path = 'ws://segfault.party:12345'
 // const path = new URL('ws://localhost:8080')
 
 /**
@@ -50,15 +50,29 @@ class Connector {
   ws;
 
   /**
+   *
+   * @type {string} URLString
+   */
+  URLString;
+
+  /**
    * Creates a connection and setups listeners.
    * @param {string | URL} path - The path to the websocket server.
    */
   constructor (path) {
+    this.setUp(path)
+  }
+  /**
+   * Sets up the connector.
+   * @param {string} pathString string of URL for websocket.
+   */
+  setUp (pathString) {
+    this.URLString = pathString
+
     // Setup websocket
-    this.ws = new WebSocket(path, {
+    this.ws = new WebSocket(pathString, {
       perMessageDeflate: false
     })
-
     // Setup listeners
     for (let type in this.listeners) {
       if (type === 'message') {
@@ -85,6 +99,13 @@ class Connector {
     }
   }
 
+  /**
+   * Change the server URL
+   * @param {string} newPathString string with path for new url
+   */
+  reload (newPathString) {
+    this.setUp(newPathString)
+  }
   /**
    * Closes connection to websocket server
    *
@@ -152,6 +173,12 @@ class Connector {
   }
 
   /**
+   * Return the String of the URL
+   */
+  getURLString () {
+    return this.URLString
+  }
+  /**
    * Send some content to the websocket server.
    *
    * @param {string} type - The type of the message.
@@ -213,4 +240,5 @@ class Connector {
  * An instance of Connector.
  * Use this to interact with this API.
  */
-export default new Connector(path)
+const inst = new Connector(path)
+export default inst

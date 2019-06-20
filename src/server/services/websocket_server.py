@@ -180,7 +180,7 @@ class WSServer(Service):
 
     @message_type("client-list-request")
     async def _send_client_list(self, msg):
-        clients = self.clients.keys()
+        clients = list(self.clients.keys())
 
         content = {
             "client_list": clients
