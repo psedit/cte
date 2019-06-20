@@ -42,10 +42,6 @@
       }
     },
     methods: {
-      /** Updates the code that is viewed by the editor. */
-      updateCode () {
-        this.code = this.$store.state.fileTracker.code
-      },
       updateUsers (cursors) {
         this.activeUsers = cursors.map(cursor => {
           return {
@@ -135,13 +131,6 @@
     },
 
     mounted () {
-      this.updateCode()
-      this.$store.subscribe((mutation, state) => {
-        if (mutation.type === 'updateCode') {
-          this.updateCode()
-        }
-      })
-
       addEventListener('mouseup', (e) => {
         if (!e.composedPath()[0].classList.contains('user-gutter')) {
           this.lockDragCancel()
