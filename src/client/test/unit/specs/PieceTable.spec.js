@@ -60,6 +60,10 @@ describe('create', function () {
   it('should generate an UUID', function () {
     expect(create('').table[0].pieceID.length).to.equal(36)
   })
+
+  it('should create a piece of lenght zero for a empty string', () => {
+    expect(create('').table[0].length).to.deep.equal(0)
+  })
 })
 
 describe('convertToJS', function () {
@@ -184,6 +188,7 @@ describe('getBlock', function () {
     })
   })
 })
+
 const emptyTable = {
   textBlocks: {
     '0': {

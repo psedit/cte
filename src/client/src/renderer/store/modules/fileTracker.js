@@ -1,6 +1,6 @@
 import Tab from '../../components/Tabs/tabType'
 import connector from '../../../main/connector'
-import { convertToJS, getFile, lengthBetween } from '../../../main/pieceTable'
+import { convertToJS, getFile, create, lengthBetween } from '../../../main/pieceTable'
 
 const state = {
   pieces: null,
@@ -120,9 +120,21 @@ const actions = {
    * @param {Tab} tabToRemove the tab that needs to be removed
    */
   removeTab (store, tabToRemove) {
+    connector.send('file-save', {
+      file_path: store.state.openFile
+    })
+    connector.send('file-leave', {
+      file_path: store.state.openFile,
+      force_exit: 1
+    })
     if (tabToRemove.filePath === store.state.openFile) {
-      const i = store.state.tabs.indexOf(tabToRemove)
-      store.dispatch('prevTab', i)
+      if (store.state.tabs.length === 1) {
+        store.commit('updateOpenFile', '')
+        store.dispatch('updatePieceTable', create(''))
+      } else {
+        const i = store.state.tabs.indexOf(tabToRemove)
+        store.dispatch('prevTab', i)
+      }
     }
     store.commit('removeTab', tabToRemove)
   },

@@ -70,7 +70,13 @@ export function _create (UUID) {
           lines: lines
         }
       },
-      table: [{ pieceID: UUID(), blockID: 0, start: 0, length: lines.length, username: 'hans' }]
+      table: [{
+        pieceID: UUID(),
+        blockID: 0,
+        start: 0,
+        length: text.length === 0 ? 0 : lines.length,
+        username: 'hans'
+      }]
     }
   }
 }
