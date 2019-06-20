@@ -21,6 +21,7 @@
 
     data () {
       return {
+        lang: null
       }
     },
 
@@ -59,7 +60,7 @@
 
     methods: {
       initializeEditor () {
-        console.log(this)
+        console.log(this.lang)
         if (!this.$options.myPromise) {
           this.$options.myPromise = new Promise(resolve => {
             setTimeout(() => {
@@ -77,7 +78,7 @@
         const cm = CodeMirror(this.$refs.cm, {
           mode: {
             name: 'multi_editor',
-            lang: 'python',
+            lang: this.lang,
             startState: this.$options.startState
           },
           lineNumbers: true,

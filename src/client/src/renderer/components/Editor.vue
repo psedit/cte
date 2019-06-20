@@ -51,7 +51,9 @@
       },
 
       async initializeEditor (index) {
+        console.log('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA', this.lang)
         const piece = this.$refs.editorPieces[index]
+        piece.lang = this.lang
         if (index === 0) {
           return piece.initializeEditor()
         }
@@ -68,25 +70,7 @@
         }
         return cm.getStateAfter(cm.lastLine(), true)
       },
-      // editorReady (index, endState) {
-      //   if (index >= this.$refs.editorPieces.length - 1) return;
-      //   const nextEditor = this.$refs.editorPieces[index]
-      //   if (nextEditor.$options.cminstance) return
-      //     editorPiece.initializeEditor().then((cm) => {
-      //       prevState = cm.getStateAfter(cm.lastLine(), true)
-      //     })
-      //   }
 
-      async initalizeEditors () {
-        let prevState
-        for (const editorPiece of this.$refs.editorPieces) {
-          editorPiece.$options.startState = prevState
-          const cm = await editorPiece.initializeEditor()
-          // debugger
-          prevState = cm.getStateAfter(cm.lastLine(), true)
-          console.log(prevState, editorPiece.$el)
-        }
-      },
       /** Updates the code that is viewed by the editor. */
       updateCode () {
         this.code = this.$store.state.fileTracker.code
@@ -143,6 +127,16 @@
       },
       filePath () {
         return this.$store.state.fileTracker.openFile
+      },
+      lang () {
+        if (!this.filePath) return null
+        const ext = this.filePath.match(/\.\w+/)[0].toLowerCase()
+        if (ext === '.py') {
+          return 'python'
+        } else if (ext === '.js') {
+          return 'javascript'
+        }
+        return null
       }
     },
 
