@@ -1,7 +1,7 @@
 <template>
   <div class="sidenav">
     <div id="toolbar">
-      <span class="curr-folder">./{{this.currPath.join('/')}}</span>
+      <span class="curr-folder" :title="`./${this.currPath.join('/')}`">./{{this.displayPath}}</span>
       <back-icon title="Go to previous folder" class="button" @click="previous"/>
       <home-icon title="Go to home folder" class="button" @click="home"/>
     </div>
@@ -75,6 +75,9 @@
         return items
       },
 
+      /**
+       * Return the current path string.
+       */
       currPathString () {
         /* The path string has to and on a '/' so we can append a file
          * name directly to when we want the path of that file. */
@@ -84,6 +87,19 @@
         }
 
         return pathString
+      },
+
+      /**
+       * Return the path string that will be displayed at top of the sidebar.
+       * There is a maximum length, to avoid style problems.
+       */
+      displayPath () {
+        let path = this.currPath.join('/')
+        if (path.length > 13) {
+          return path.substr(0, 4) + '...' + path.substr(path.length - 8, path.length)
+        }
+
+        return path
       }
     },
     methods: {
