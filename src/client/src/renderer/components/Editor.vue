@@ -105,6 +105,7 @@
       lockDragStart (line, index) {
         // console.log('start', line, index)
         this.lockDragStartLocation = {piece: index, line}
+        this.lockDragEndLocation = {piece: index, line}
       },
       lockDragUpdate (line, index) {
         if (this.lockDragStartLocation) {
@@ -114,8 +115,6 @@
       },
       lockDragEnd (line, index) {
         if (this.lockDragStartLocation === null) return
-        console.log(this.lockDragStartLocation.piece)
-        console.log(this.lockDragStartLocation.line)
 
         console.log(`Request lock from ${this.lockDragStartLocation.piece}:${this.lockDragStartLocation.line} to ${index}:${line}`)
         // this.requestLock(this.lockDragStartLocation, this.lockDragEndLocation)
@@ -138,6 +137,12 @@
         }).then(response => console.log(response))
 
         this.lockDragCancel()
+      },
+      showPieceLengths () {
+        const table = this.$store.state.fileTracker.pieceTable
+        for (let i = 0; i < table.table.length; i++) {
+          console.log(`piece ${i} has length ${table.table[i].length}`)
+        }
       },
       lockDragCancel () {
         console.log('cancel')

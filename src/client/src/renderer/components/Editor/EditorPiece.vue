@@ -86,7 +86,7 @@
         // let range = indexOffsetRangeSort(this.dragStart, this.dragEnd)[0]
         // console.log(range)
         let start = indexOffsetRangeSort(this.dragStart, this.dragEnd)[0]
-        console.log('pieceDragStart()', start.line, this.dragStart.line, this.dragEnd.line, indexOffsetRangeSort(this.dragStart, this.dragEnd))
+        // console.log('pieceDragStart()', start.line, this.dragStart.line, this.dragEnd.line, indexOffsetRangeSort(this.dragStart, this.dragEnd))
         if (start.piece < this.index) {
           return 0
         } else if (start.piece === this.index) {
@@ -96,22 +96,23 @@
         return null
       },
       pieceDragLength () {
+        const cm = this.$options.cminstance
         if (!(this.dragStart && this.dragEnd)) {
-          return 0
+          return -1
         }
         let range = indexOffsetRangeSort(this.dragStart, this.dragEnd)
         let start = range[0]
         let end = range[1]
-        if (start.piece > this.index) {
-          return 0
+        if (start.piece > this.index || end.piece < this.index) {
+          return -1
         } else if (end.piece > this.index) {
-          return this.textPiecesArray.length
+          return cm.lineCount() - this.pieceDragStart
         } else {
-          if (start.offset < this.index) {
-            console.log('pieceDragLength()', end.line + 1)
+          if (start.line < this.index) {
+            // console.log('pieceDragLength()', end.line + 1)
             return end.line + 1
           } else {
-            console.log('pieceDragLength()', end.line - start.line + 1)
+            // console.log('pieceDragLength()', end.line - start.line + 1)
             return end.line - start.line + 1
           }
         }
@@ -208,7 +209,7 @@
         //   }
         // }
         cm.clearGutter('user-gutter')
-        console.log(`drag ${this.pieceDragStart}:${this.pieceDragLength}`)
+        // console.log(`drag in piece ${this.index} is ${this.pieceDragStart}:${this.pieceDragLength}`)
         for (let i = this.pieceDragStart; i < this.pieceDragStart + this.pieceDragLength; i++) {
           // console.log(`setting marker at ${this.index}:${i}:${this.relativeLineToLine(i)}`)
           cm.setGutterMarker(this.relativeLineToLine(i), 'user-gutter',
@@ -236,7 +237,7 @@
         //   }
         // }
         cm.clearGutter('user-gutter')
-        console.log(`drag ${this.pieceDragStart}:${this.pieceDragLength}`)
+        // console.log(`drag in piece ${this.index} is ${this.pieceDragStart}:${this.pieceDragLength}`)
         for (let i = this.pieceDragStart; i < this.pieceDragStart + this.pieceDragLength; i++) {
           // console.log(`setting marker at ${this.index}:${i}:${this.relativeLineToLine(i)}`)
           cm.setGutterMarker(this.relativeLineToLine(i), 'user-gutter',
@@ -245,19 +246,12 @@
       },
 
       lineToRelativeLine (line) {
-        if (line === 0) return 0
-        const mark = this.$options.cminstance.getAllMarks()[0]
-        if (!mark) return line
-
-        return line - mark.lines.length + 1
+        const cm = this.$options.cminstance
+        return line - cm.firstLine()
       },
       relativeLineToLine (line) {
-        // if (line === 0) return 0
-        // const mark = this.$options.cminstance.getAllMarks()[0]
-        // if (!mark) return line
-
-        // return line + mark.lines.length - 1
-        return (this.preCodeArray.length + line)
+        const cm = this.$options.cminstance
+        return (cm.firstLine() + line)
       },
 
       gutterSelectMarker () {

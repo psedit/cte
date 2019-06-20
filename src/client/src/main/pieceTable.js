@@ -184,12 +184,9 @@ export function len (table) {
 
 export function indexOffsetRangeSort (A, B) {
   const comp = indexOffsetCompare(A, B)
-  console.log('comp', comp)
   if (comp > 0) {
-    console.log('sort a', [B, A])
     return [ B, A ]
   } else {
-    console.log('sort b', [A, B])
     return [ A, B ]
   }
 }
@@ -203,16 +200,6 @@ export function indexOffsetCompare (A, B) {
     return 0
   }
 }
-
-// export function indexOffsetCompare (A, B) {
-//   if (A.piece < B.piece || (A.piece === B.piece && A.offset < B.offset)) {
-//     return -1
-//   } else if (A.piece > B.piece || (A.piece === B.piece && A.offset > B.offset)) {
-//     return 1
-//   } else {
-//     return 0
-//   }
-// }
 
 /**
  *
@@ -234,7 +221,7 @@ export function rangeToAnchoredLength (table, idxA, offsetA,
   }
 
   let interLines = 0
-  for (let i = startPiece.piece + 1; i < endPiece.piece; i++) {
+  for (let i = startPiece.piece; i < endPiece.piece; i++) {
     console.log(`interLines: ${interLines}, length: ${table.table[i].length}`)
     console.log(table.table[i])
     interLines += table.table[i].length
