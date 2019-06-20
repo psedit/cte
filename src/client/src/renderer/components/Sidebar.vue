@@ -81,6 +81,18 @@
             }
           }
         }
+
+        /* Sort the items alphabetically, but with all folders on top and all
+         * other files below. */
+        items.sort(function (a, b) {
+          if (a instanceof Array && !(b instanceof Array)) {
+            return -1
+          } else if (!(a instanceof Array) && b instanceof Array) {
+            return 1
+          }
+          return a > b
+        })
+
         return items
       },
 
