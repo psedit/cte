@@ -3,7 +3,7 @@
     <div class="editor-pieces">
       <editor-piece
         v-for="(piece, index) in pieces"
-        :key="piece.pieceID"
+        :key="piece.pieceID + piece.username"
         :index="index"
         :pieces="pieces"
         :dragStart="lockDragStartLocation"
