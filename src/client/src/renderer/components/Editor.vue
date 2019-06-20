@@ -106,7 +106,6 @@
       lockDragUpdate (line, index) {
         if (this.lockDragStartLocation) {
           this.lockDragEndLocation = {piece: index, line}
-          // this.updateDrag()
         }
       },
       lockDragEnd (line, index) {
