@@ -51,7 +51,6 @@
       },
 
       async initializeEditor (index) {
-        console.log('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA', this.lang)
         const piece = this.$refs.editorPieces[index]
         piece.lang = this.lang
         if (index === 0) {
@@ -63,7 +62,6 @@
       async getPreviousState (index) {
         if (index === 0) return undefined
         const prevPiece = this.$refs.editorPieces[index - 1]
-        // debugger
         let cm = prevPiece.$options.cminstance
         if (!cm) {
           cm = await this.initializeEditor(index - 1)
@@ -110,7 +108,6 @@
         }).then(response => console.log(response))
       },
       lockDragCancel () {
-        // console.log('cancel')
         this.lockDragRange = null
       }
     },
@@ -145,10 +142,6 @@
       this.$store.subscribe((mutation, state) => {
         if (mutation.type === 'updateCode') {
           this.updateCode()
-          // cm.ghostCursors.changeFilepath(this.$store.state.fileTracker.openFile).then(cursors => {
-          //   console.log(cursors)
-          //   this.updateUsers(cursors)
-          // })
         }
       })
 

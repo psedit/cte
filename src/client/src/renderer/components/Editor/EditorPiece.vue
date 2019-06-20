@@ -60,7 +60,6 @@
 
     methods: {
       initializeEditor () {
-        console.log(this.lang)
         if (!this.$options.myPromise) {
           this.$options.myPromise = new Promise(resolve => {
             setTimeout(() => {
@@ -111,7 +110,10 @@
       setText () {
         const cm = this.$options.cminstance
 
-        cm.setValue(this.code)
+        const from = {line: 0, ch: 0}
+        const lastLine = cm.lastLine()
+        const to = {line: lastLine, ch: cm.getLine(lastLine).length}
+        cm.replaceRange(this.code, from, to)
       },
 
       lineToRelativeLine (line) {
@@ -145,7 +147,6 @@
         if (this.editable) {
           cm.on('changes', ({cminstance}) => {
             const value = cm.getValue()
-            console.log(value)
             const content = value.split('\n').map(val => val + '\n')
             const newPieceTable = edit(this.pieceTable, this.pieces[this.index].pieceID, content)
             this.$store.dispatch('updatePieceTable', newPieceTable)
