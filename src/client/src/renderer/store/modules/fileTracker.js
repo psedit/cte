@@ -120,6 +120,13 @@ const actions = {
    * @param {Tab} tabToRemove the tab that needs to be removed
    */
   removeTab (store, tabToRemove) {
+    connector.send('file-save', {
+      file_path: store.state.openFile
+    })
+    connector.send('file-leave', {
+      file_path: store.state.openFile,
+      force_exit: 1
+    })
     if (tabToRemove.filePath === store.state.openFile) {
       if (store.state.tabs.length === 1) {
         store.commit('updateOpenFile', '')
@@ -129,14 +136,6 @@ const actions = {
         store.dispatch('prevTab', i)
       }
     }
-
-    connector.send('file-save', {
-      file_path: store.state.openFile
-    })
-    connector.send('file-leave', {
-      file_path: store.state.openFile,
-      force_exit: 1
-    })
     store.commit('removeTab', tabToRemove)
   },
   /**
