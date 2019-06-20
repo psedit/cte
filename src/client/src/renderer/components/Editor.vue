@@ -2,20 +2,24 @@
   <div class="editor">
     <div class="editor-pieces">
       <editor-piece
-              v-for="(piece, index) in pieces"
-              :key="piece.pieceID"
-              :index="index"
-              :pieces="pieces"
-              :dragStart="lockDragStartLocation"
-              :dragEnd="lockDragEndLocation"
-              @lockDragStart="lockDragStart"
-              @lockDragUpdate="lockDragUpdate"
-              @lockDragEnd="lockDragEnd"
+        v-for="(piece, index) in pieces"
+        :key="piece.pieceID"
+        :index="index"
+        :pieces="pieces"
+        :dragStart="lockDragStartLocation"
+        :dragEnd="lockDragEndLocation"
+        @lockDragStart="lockDragStart"
+        @lockDragUpdate="lockDragUpdate"
+        @lockDragEnd="lockDragEnd"
       />
     </div>
     <!--<div id="placeholder" v-if="!this.ready">⇚ Select a file</div>-->
     <div class="user-list">
-      <div class="user-list-item" v-for="user in activeUsers" :title="user.username" :style="userStyle(user)">{{ user.username[0].toUpperCase() }}</div>
+      <div
+        class="user-list-item"
+        v-for="cursor in cursors"
+        :title="cursor.username"
+      >{{ cursor.username.toUpperCase() }}</div>
     </div>
   </div>
 </template>
@@ -28,7 +32,6 @@
 
   export default {
     name: 'Editor',
-
     components: {
       EditorPiece
     },
@@ -38,7 +41,31 @@
         activeUsers: [],
         lockDragStartLocation: null,
         lockDragEndLocation: null,
-        dragList: null
+        dragList: null,
+        cursors: []
+      }
+    },
+    watch: {
+      filePath () {
+        connector.request(
+          'cursor-list-request',
+          'cursor-list-response',
+          { file_path: this.filePath }
+        ).then((response) => {
+          this.cursors = response.cursor_list.map(x => {
+            return cursor(x[0], x[1], x[2], x[3])
+          })
+          // for (const cursor of response.cursor_list) {
+            // if (this.cursors.some(x => x[0] == ))
+            // this.addCursor(
+            //   cursor[0],
+            //   this.filePath,
+            //   cursor[1],
+            //   cursor[2],
+            //   cursor[3]
+            // )
+          // }
+        })
       }
     },
     methods: {
@@ -111,7 +138,29 @@
         for (let key in this.components) {
           this.components[key].$options.cminstance.clearGutter('user-gutter')
         }
+      },
+      cursor(username, pieceID, offset, column) {
+        return {
+          username,
+          pieceID,
+          offset,
+          column
+        }
       }
+      // addCursor (username, filepath, pieceID, offset, column) {
+      //   this.cursors.push({username, filepath, offset, column})
+      // },
+      // moveCursor (username, filepath, pieceID, offset, column) {
+      //   for (let i = 0; i < this.cursors.length; i++) {
+      //     if (this.cursors[i].username === username) {
+      //       this.cursors[i].filepath = filepath
+      //       this.cursors[i].ch = column
+      //       this.cursors[i].line = offset
+      //       return
+      //     }
+      //   }
+      //   this.addCursor(username, filepath, pieceID, offset, column)
+      // }
     },
 
     computed: {
@@ -131,24 +180,30 @@
     },
 
     mounted () {
+      connector.addEventListener('open', () => {
+        connector.listenToMsg('file-delta-broadcast', ({ content }) => {
+          if (content.file_path === this.filePath) {
+            const newPieceTable = edit(this.pieceTable, content.piece_uuid, content.content.split('\n').map(val => val + '\n'))
+            this.$store.dispatch('updatePieceTable', newPieceTable)
+          }
+        })
+
+        connector.listenToMsg('file-piece-table-change-broadcast', ({ content }) => {
+          const { textBlocks } = this.pieceTable
+          const update = convertChangeToJS(textBlocks, content)
+          if (update.filePath === this.filePath) {
+            this.$store.dispatch('updatePieceTable', update.pieceTable)
+          }
+        })
+        connector.listenToMsg('cursor-move-broadcast', ({content}) => {
+          if(content.filePath === this.filePath) {
+            this.cursors = [...this.cursors, cursor(content.username,content.pieceID, content.offset, cursor.column)]
+          }
+        })
+      })
       addEventListener('mouseup', (e) => {
         if (!e.composedPath()[0].classList.contains('user-gutter')) {
           this.lockDragCancel()
-        }
-      })
-
-      connector.listenToMsg('file-delta-broadcast', ({ content }) => {
-        if (content.file_path === this.filePath) {
-          const newPieceTable = edit(this.pieceTable, content.piece_uuid, content.content.split('\n').map(val => val + '\n'))
-          this.$store.dispatch('updatePieceTable', newPieceTable)
-        }
-      })
-
-      connector.listenToMsg('file-piece-table-change-broadcast', ({ content }) => {
-        const { textBlocks } = this.pieceTable
-        const update = convertChangeToJS(textBlocks, content)
-        if (update.filePath === this.filePath) {
-          this.$store.dispatch('updatePieceTable', update.pieceTable)
         }
       })
     }
@@ -156,51 +211,51 @@
 </script>
 
 <style scoped lang="scss">
-  .editor{
-    width: 100%;
-    overflow-y: hidden;
-    background-color: #272822;
-  }
+.editor {
+  width: 100%;
+  overflow-y: hidden;
+  background-color: #272822;
+}
 
-  .editor-pieces {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    overflow-y: auto;
-  }
+.editor-pieces {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow-y: auto;
+}
 
-  #placeholder{
-    font-size: 3em;
+#placeholder {
+  font-size: 3em;
+  height: 100%;
+  width: 100%;
+  line-height: 100%;
+  color: #555;
+  text-align: center;
+
+  &:before {
+    content: "";
+    display: inline-block;
     height: 100%;
-    width: 100%;
-    line-height: 100%;
-    color: #555;
+    vertical-align: middle;
+  }
+}
+
+.user-list {
+  position: fixed;
+  bottom: 1em;
+  right: 1em;
+
+  &-item {
+    display: inline-block;
+    width: 2em;
+    height: 2em;
+    border-radius: 1em;
+    margin-left: 0.5em;
+    line-height: 2em;
     text-align: center;
-
-    &:before {
-      content: "";
-      display: inline-block;
-      height: 100%;
-      vertical-align: middle;
-    }
+    background: black;
+    color: #fff;
+    cursor: pointer;
   }
-
-  .user-list {
-    position: fixed;
-    bottom: 1em;
-    right: 1em;
-
-    &-item {
-      display: inline-block;
-      width: 2em;
-      height: 2em;
-      border-radius: 1em;
-      margin-left: 0.5em;
-      line-height: 2em;
-      text-align: center;
-      background: black;
-      color: #fff;
-      cursor: pointer;
-    }
-  }
+}
 </style>
