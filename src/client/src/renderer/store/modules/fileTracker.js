@@ -1,6 +1,6 @@
 import Tab from '../../components/Tabs/tabType'
 import connector from '../../../main/connector'
-import { convertToJS, getFile } from '../../../main/pieceTable'
+import { convertToJS, getFile, create } from '../../../main/pieceTable'
 
 const state = {
   pieces: null,
@@ -121,8 +121,13 @@ const actions = {
    */
   removeTab (store, tabToRemove) {
     if (tabToRemove.filePath === store.state.openFile) {
-      const i = store.state.tabs.indexOf(tabToRemove)
-      store.dispatch('prevTab', i)
+      if (store.state.tabs.length === 1) {
+        store.commit('updateOpenFile', '')
+        store.dispatch('updatePieceTable', create(''))
+      } else {
+        const i = store.state.tabs.indexOf(tabToRemove)
+        store.dispatch('prevTab', i)
+      }
     }
     store.commit('removeTab', tabToRemove)
   },
