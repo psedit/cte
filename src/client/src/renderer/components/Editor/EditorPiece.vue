@@ -202,6 +202,17 @@
           })
         })
 
+        cm.on('cursorActivity', () => {
+          const cursorPos = cm.doc.getCursor()
+          console.log(cursorPos, this.pieces[this.index])
+          connector.send('cursor-move', {
+            file_path: this.$store.state.fileTracker.openFile,
+            piece_id: this.pieces[this.index].pieceID,
+            offset: cursorPos.line,
+            column: cursorPos.ch
+          })
+        })
+
         cm.on('scrollCursorIntoView', (_, e) => {
           e.preventDefault()
         })

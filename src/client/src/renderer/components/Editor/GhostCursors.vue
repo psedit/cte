@@ -3,6 +3,7 @@
     <ghost-cursor v-for="(cursor, index) in cursors"
                  :filepath="cursor.filepath"
                  :username="cursor.username"
+                 :piece_id="cursor.pieceID"
                  :line="cursor.line"
                  :ch="cursor.ch"
                  :cminstance="cminstance"
@@ -25,22 +26,24 @@
 
     data () {
       return {
-        cursors: []
+        cursors: {}
       }
     },
     mounted () {
-      Connector.addEventListener('open', this.initializeListeners)
+      this.initializeListeners()
+      // Connector.addEventListener('open', this.initializeListeners)
     },
 
     methods: {
       initializeListeners () {
         Connector.listenToMsg('cursor-move-broadcast', ({content}) => {
+          console.log(content)
           this.moveCursor(content.username, content.file_path, content.row, content.column)
         })
       },
 
-      addCursor (username, filepath, line, ch) {
-        this.cursors.push({username, filepath, line, ch})
+      addCursor (username, filepath, pieceID, line, ch) {
+        this.cursors.push({username, filepath, pieceID, line, ch})
       },
 
       moveCursor (username, filepath, row, column) {

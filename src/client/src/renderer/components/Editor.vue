@@ -16,6 +16,8 @@
               ref="editorPieces"
       />
     </div>
+
+    <ghost-cursors />
     <!--<div id="placeholder" v-if="!this.ready">⇚ Select a file</div>-->
     <div class="user-list">
       <div class="user-list-item" v-for="user in activeUsers" :title="user.username" :style="userStyle(user)">{{ user.username[0].toUpperCase() }}</div>
@@ -28,11 +30,13 @@
   import {getRandomColor} from './Editor/RandomColor'
   import connector from '../../main/connector'
   import { convertChangeToJS, edit, rangeToAnchoredLength } from '../../main/pieceTable'
+  import GhostCursors from './Editor/GhostCursors'
 
   export default {
     name: 'Editor',
 
     components: {
+      GhostCursors,
       EditorPiece
     },
     data () {
