@@ -211,7 +211,7 @@ export function indexOffsetCompare (A, B) {
  */
 export function rangeToAnchoredLength (table, idxA, offsetA,
   idxB, offsetB) {
-  var startPiece, endPiece
+  let startPiece, endPiece
   if (idxA < idxB || (idxA === idxB && offsetA <= offsetB)) {
     startPiece = { piece: idxA, offset: offsetA }
     endPiece = { piece: idxB, offset: offsetB }
