@@ -1,7 +1,7 @@
 <template>
   <div class="sidenav">
     <div id="toolbar">
-      <span class="curr-folder">./{{this.currPath.join('/')}}</span>
+      <span class="curr-folder" :title="`./${this.currPath.join('/')}`">./{{this.displayPath}}</span>
       <back-icon title="Go to previous folder" class="button" @click="previous"/>
       <home-icon title="Go to home folder" class="button" @click="home"/>
     </div>
@@ -9,30 +9,24 @@
       <upload title="Upload directory" class="button" @click="uploadDir"/>
       <file-upload title="Upload file" class="button" @click="uploadFile"/>
       <file-plus title="Add new file/directory" class="button" @click="createItem"/>
-      <file-document-edit title="Rename file/directory" class="button" @click="renameItem"/>
-      <file-move title="Relocate file/directory" class="button" @click="relocate"/>
-      <file-remove title="Remove file/directory" class="button" @click="removeItem"/>
-      <file-download title="Download file" class="button" @click="downloadFile"/>
     </div>
 
 
-    <file-tree id="file-list" :file-list="currItems" @openFolder="openFolder" @openFile="openFile"/>
+    <file-tree id="file-list" :file-list="currItems" @openFolder="openFolder" @openFile="openFile"
+      @renameItem="renameItem" @relocate="relocate" @removeItem="removeItem" @download="downloadFile"/>
   </div>
 </template>
 
 <script>
   import HomeIcon from 'vue-material-design-icons/Home'
   import BackIcon from 'vue-material-design-icons/ArrowLeft'
-  import FileRemove from 'vue-material-design-icons/FileRemove'
   import FilePlus from 'vue-material-design-icons/FilePlus'
-  import FileDocumentEdit from 'vue-material-design-icons/FileDocumentEdit'
-  import FileMove from 'vue-material-design-icons/FileMove'
   import FileUpload from 'vue-material-design-icons/FileUpload'
-  import FileDownload from 'vue-material-design-icons/Download'
   import Upload from 'vue-material-design-icons/Upload'
   import connector from '../../main/connector'
   import FileTree from './Sidebar/FileTree'
   import * as fileManager from './Sidebar/fileManager'
+  import VueSimpleContextMenu from 'vue-simple-context-menu'
   import {convertToJS, stitch} from '../../main/pieceTable'
   const {dialog} = require('electron').remote
   const dialogs = require('dialogs')
@@ -50,13 +44,10 @@
       FileTree,
       HomeIcon,
       BackIcon,
-      FileRemove,
       FilePlus,
-      FileDocumentEdit,
-      FileMove,
       Upload,
       FileUpload,
-      FileDownload
+      VueSimpleContextMenu
     },
     computed: {
       /**
@@ -84,6 +75,9 @@
         return items
       },
 
+      /**
+       * Return the current path string.
+       */
       currPathString () {
         /* The path string has to and on a '/' so we can append a file
          * name directly to when we want the path of that file. */
@@ -93,9 +87,37 @@
         }
 
         return pathString
+      },
+
+      /**
+       * Return the path string that will be displayed at top of the sidebar.
+       * There is a maximum length, to avoid style problems.
+       */
+      displayPath () {
+        let path = this.currPath.join('/')
+        if (path.length > 13) {
+          return path.substr(0, 4) + '...' + path.substr(path.length - 8, path.length)
+        }
+
+        return path
       }
     },
     methods: {
+      /**
+       * Gives the file path of an item. If directory, it needs
+       * to end on a '/'.
+       *
+       * @param {object} item file or directory (members: name, isFolder)
+       * @return {string} file path to current file or directory
+       */
+      getFilePath (item) {
+        /* If item is a directory, add a '/'. */
+        let filePath = `${this.currPathString}${item.name}`
+        filePath = item.isFolder ? filePath + '/' : filePath
+
+        return filePath
+      },
+
       /**
        * When clicking on a folder, push the folder name to currPath.
        *
@@ -104,61 +126,63 @@
       openFolder (name) {
         this.currPath.push(name)
       },
+
       /**
        * Lets the user select a local map and a file on the server.
        * The user then downloads the file.
+       *
+       * @param {object} item file or directory that will be downloaded
        */
-      downloadFile () {
-        /**
-         * Is called when the file has been selected
-         * @param {string} filePath path to the file that is to be downloaded
+      downloadFile (item) {
+        let filePath = this.getFilePath(item)
+
+        /* Download the file by selecting a local file and putting the content
+         * of the server file in it.
          */
-        let fileToLocal = (filePath) => {
-          if (filePath === undefined) {
+        if (filePath === undefined) {
+          return
+        }
+
+        /* Select a local file. */
+        let options = {
+          title: 'Download location',
+          message: 'Select where to download file',
+          defaultPath: item.name
+        }
+
+        dialog.showSaveDialog(null, options, (downloadPath) => {
+          if (downloadPath === undefined) {
             return
           }
-          /* Select a local file
-           */
-          let options = {
-            title: 'Download location',
-            message: 'Select where to download file',
-            defaultPath: 'default.txt'
-          }
-          dialog.showSaveDialog(null, options, (downloadPath) => {
-            if (downloadPath === undefined) {
-              return
-            }
 
-            /* Join the file
-             */
-            connector.send(
-              'file-join',
-              {
-                'file_path': filePath
-              }
-            )
-            /* Get the file from
-             */
-            connector.request(
-              'file-content-request',
-              'file-content-response',
-              {
-                'file_path': filePath,
-                'start': 0,
-                'length': -1
-              }
-            ).then((data) => {
-              let fileContent = stitch(convertToJS(data)).join('')
-              fs.writeFile(downloadPath, fileContent, (err) => {
+          /* Join the file. */
+          connector.send(
+            'file-join',
+            {
+              'file_path': filePath
+            }
+          )
+
+          /* Get the file from. */
+          connector.request(
+            'file-content-request',
+            'file-content-response',
+            {
+              'file_path': filePath,
+              'start': 0,
+              'length': -1
+            }
+          ).then((data) => {
+            let fileContent = stitch(convertToJS(data)).join('')
+            fs.writeFile(downloadPath, fileContent, (err) => {
+              if (err) {
                 console.log('error', err)
-              })
+              }
             })
           })
-        }
-        /* Let the user select a file
-         */
-        this.selectItem('Download file', 'Select a file to download', '', this.currItems, 'file', fileToLocal)
+        })
       },
+
       /**
        * Open a prompt box and ask user for input.
        *
@@ -213,68 +237,51 @@
 
       /**
        * Change name of file or directory.
+       *
+       * @param {object} item file or directory that will be renamed
        */
-      renameItem () {
-        /* Let user select file or directory from current folder.
-         * First get all files and directories. */
-        let items = ['cancel']
-        items = items.concat(this.itemNames())
+      renameItem (item) {
+        let oldName = item.name
 
-        /* Options needed for the message box. */
-        let options = {
-          type: 'question',
-          buttons: items,
-          defaultId: 0,
-          title: 'Rename file or directory',
-          message: 'Select item to rename'
-        }
-
-        /* Let user choose which file to rename. */
-        dialog.showMessageBox(null, options, (response) => {
-          /* When user selects 'cancel', do nothing. */
-          if (response === 0) {
+        /* Define a function to change name. Assure that a file gets
+         * changed into a file and a directory into a directory.
+         */
+        let changeName = (newName) => {
+          if (newName === '' || newName === undefined) {
             return
           }
 
-          let oldName = items[response]
-
-          /* Define a function to change name. Assure that a file gets
-           * changed into a file and a directory into a directory.
+          /* If oldName is a directory, add a '/' to the new name.
+           * If not, but newName is a directory, throw an error.
            */
-          let changeName = (newName) => {
-            if (newName === '' || newName === undefined) {
-              return
-            }
-
-            /* If oldName is a directory, add a '/' to the new name.
-             * If not, but newName is a directory, throw an error. */
-            if (oldName.slice(-1) === '/') {
-              newName = newName.slice(-1) !== '/' ? newName + '/' : newName
-            } else if (newName.slice(-1) === '/') {
-              console.log('A file cannot be changed into a directory!')
-              return
-            }
-
-            fileManager.nameChange(this.currPathString, oldName, newName)
+          if (oldName.slice(-1) === '/') {
+            newName = newName.slice(-1) !== '/' ? newName + '/' : newName
+          } else if (newName.slice(-1) === '/') {
+            console.log('A file cannot be changed into a directory!')
+            return
           }
 
-          this.promptBox('Enter new name', oldName, changeName)
-        })
+          fileManager.nameChange(this.currPathString, oldName, newName)
+        }
+
+        this.promptBox('Enter new name', oldName, changeName)
       },
 
       /**
        * Change location of file or directory.
+       *
+       * @param {object} item file or directory that will be relocated
        */
-      relocate () {
-        let selectFolder = (filePath, payload) => {
-          this.promptBox('Enter path', filePath, (response) => {
-            if (response === undefined || response === '') {
-              return
-            }
-            fileManager.locationChange(filePath, response)
-          })
-        }
-        this.selectItem('File move', 'select a file to move', '', this.currItems, 'all', selectFolder)
+      relocate (item) {
+        let filePath = this.getFilePath(item)
+
+        this.promptBox('Enter new path', filePath, (response) => {
+          if (response === undefined || response === '') {
+            return
+          }
+
+          fileManager.locationChange(filePath, response)
+        })
       },
 
       /* Let the user select a file.
@@ -310,8 +317,7 @@
           }
         })
 
-        /* Add a cancel button
-          */
+        /* Add a cancel button. */
         let buttonOptions = ['cancel', ...filterItems]
 
         /* Options needed for the message box. */
@@ -462,14 +468,34 @@
 
       /**
        * Let user choose a file and remove that file from the server.
+       *
+       * @param {object} item file or directory that will be removed
        */
-      removeItem () {
-        this.selectItem('Delete file', 'Select file to delete', 'This cannot be undone!', this.currItems, 'all', (filePath) => {
-          /* When user selects 'cancel', do nothing. */
-          if (filePath === undefined) {
-            return
+      removeItem (item) {
+        let filePath = this.getFilePath(item)
+
+        /* Options for promt box. */
+        let buttonOptions = ['No', 'Yes']
+        let title = `Deletion confirmation`
+        let message = `Are you sure you want to delete ${item.name}?`
+        let detail = `This cannot be undone!`
+
+        /* Options needed for the message box. */
+        let options = {
+          type: 'question',
+          buttons: buttonOptions,
+          defaultId: 0,
+          title: title,
+          message: message,
+          detail: detail
+        }
+
+        /* Ask user for confirmation. */
+        dialog.showMessageBox(null, options, (response) => {
+          /* When user selects 'No', do nothing. Otherwise remove item. */
+          if (response !== 0) {
+            fileManager.removeItem(filePath)
           }
-          fileManager.removeItem(filePath)
         })
       },
 
@@ -558,7 +584,7 @@
   .file-tools {
     background-color: #555;
     display: grid;
-    grid-template-columns: 1fr auto auto auto auto auto auto auto;
+    grid-template-columns: 1fr auto auto auto;
     grid-gap: 0.5em;
     align-items: center;
     color: #fff;
