@@ -11,6 +11,8 @@
         @lockDragStart="lockDragStart"
         @lockDragUpdate="lockDragUpdate"
         @lockDragEnd="lockDragEnd"
+        @mounted="editorMount"
+        ref="editorPieces"
       />
     </div>
     <!--<div id="placeholder" v-if="!this.ready">⇚ Select a file</div>-->
@@ -58,6 +60,32 @@
       }
     },
     methods: {
+      editorMount (editorPiece) {
+        const index = this.$refs.editorPieces.indexOf(editorPiece)
+        this.initializeEditor(index)
+        if (index === this.pieces.length - 1) {
+          // this.initalizeEditors()
+        }
+      },
+
+      async initializeEditor (index) {
+        const piece = this.$refs.editorPieces[index]
+        piece.lang = this.lang
+        if (index === 0) {
+          return piece.initializeEditor()
+        }
+        piece.$options.startState = await this.getPreviousState(index)
+        return piece.initializeEditor()
+      },
+      async getPreviousState (index) {
+        if (index === 0) return undefined
+        const prevPiece = this.$refs.editorPieces[index - 1]
+        let cm = prevPiece.$options.cminstance
+        if (!cm) {
+          cm = await this.initializeEditor(index - 1)
+        }
+        return cm.getStateAfter(cm.lastLine(), true)
+      },
       removeDragMarkers () {
         for (let key in this.components) {
           this.components[key].$options.cminstance.clearGutter('user-gutter')
@@ -68,11 +96,6 @@
           end: {id: endId, offset: endOffset}}
         this.$store.dispatch('requestLock', payload)
       },
-      userStyle (user) {
-        return {
-          backgroundColor: user.color
-        }
-      },
       lockDragStart (line, index) {
         // console.log('start', line, index)
         this.lockDragStartLocation = {piece: index, line}
@@ -81,7 +104,6 @@
       lockDragUpdate (line, index) {
         if (this.lockDragStartLocation) {
           this.lockDragEndLocation = {piece: index, line}
-          this.updateDrag()
         }
       },
       lockDragEnd (line, index) {
@@ -144,9 +166,18 @@
       },
       filePath () {
         return this.$store.state.fileTracker.openFile
+      },
+      lang () {
+        if (!this.filePath) return null
+        const ext = this.filePath.match(/\.\w+/)[0].toLowerCase()
+        if (ext === '.py') {
+          return 'python'
+        } else if (ext === '.js') {
+          return 'javascript'
+        }
+        return null
       }
     },
-
     mounted () {
       connector.addEventListener('open', () => {
         connector.listenToMsg('file-delta-broadcast', ({ content }) => {

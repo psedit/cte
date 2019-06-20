@@ -179,7 +179,7 @@ class ServerFile:
         Checks if the given address has a lock on the given piece id
         """
 
-        return self.get_piece(piece_id)[4] == uname
+        return self.file_pt.get_piece(piece_id)[4] == uname
 
     def update_content(self, uname: str, piece_id: str, content: str) -> None:
         """
@@ -189,7 +189,7 @@ class ServerFile:
             self.file_pt.set_piece_content(piece_id, content)
         if not self.file_pt.get_piece(piece_id):
             raise ValueError("The piece uuid is not present within the table.")
-        elif self._has_lock(address, piece_id):
+        elif self._has_lock(uname, piece_id):
             self.file_pt.set_piece_content(piece_id, content)
         else:
             raise LockError(f"{address} has no lock on {piece_id}")

@@ -42,6 +42,12 @@
         default: false
       }
     },
+    mounted () {
+      addEventListener('click', (e) => {
+        this.$refs.vueSimpleContextMenuDir.hideContextMenu()
+        this.$refs.vueSimpleContextMenuFile.hideContextMenu()
+      })
+    },
     data () {
       return {
         isOpen: this.startOpen,
@@ -70,6 +76,8 @@
        * @param {object} item file or directory
        */
       rightClick (event, item) {
+        this.$refs.vueSimpleContextMenuDir.hideContextMenu()
+        this.$refs.vueSimpleContextMenuFile.hideContextMenu()
         if (item.isFolder) {
           this.$refs.vueSimpleContextMenuDir.showMenu(event, item)
         } else {

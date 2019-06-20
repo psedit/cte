@@ -159,7 +159,7 @@ class PieceTable:
         """
         Sets the contents of a piece in the piecetable
         """
-        _, block_id, start, _ = self.get_piece(piece_id)
+        _, block_id, start, _, _ = self.get_piece(piece_id)
 
         text_block = self.blocks[block_id]
 
