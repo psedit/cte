@@ -6,9 +6,9 @@
       <home-icon title="Go to home folder" class="button" @click="home"/>
     </div>
     <div class="file-tools">
+      <file-plus title="Add new file/directory" class="button" @click="createItem"/>
       <upload title="Upload directory" class="button" @click="uploadDir"/>
       <file-upload title="Upload file" class="button" @click="uploadFile"/>
-      <file-plus title="Add new file/directory" class="button" @click="createItem"/>
     </div>
 
 
@@ -26,7 +26,7 @@
   import connector from '../../main/connector'
   import FileTree from './Sidebar/FileTree'
   import * as fileManager from './Sidebar/fileManager'
-  import VueSimpleContextMenu from 'vue-simple-context-menu'
+  // import VueSimpleContextMenu from 'vue-simple-context-menu'
   import {convertToJS, stitch} from '../../main/pieceTable'
   const {dialog} = require('electron').remote
   const dialogs = require('dialogs')
@@ -46,8 +46,8 @@
       BackIcon,
       FilePlus,
       Upload,
-      FileUpload,
-      VueSimpleContextMenu
+      FileUpload
+      // VueSimpleContextMenu
     },
     computed: {
       /**
