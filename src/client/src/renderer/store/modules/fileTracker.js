@@ -1,6 +1,6 @@
 import Tab from '../../components/Tabs/tabType'
 import connector from '../../../main/connector'
-import { convertToJS, getFile } from '../../../main/pieceTable'
+import { convertToJS, getFile, create } from '../../../main/pieceTable'
 
 const state = {
   pieces: null,
@@ -17,6 +17,14 @@ const mutations = {
    */
   updatePieces (state, pieceTable) {
     state.pieces = getFile(pieceTable)
+  },
+
+  /**
+   *  Removes all tabs
+   * @param {Object} state
+   */
+  clearTabs (state) {
+    state.tabs = []
   },
   /**
    * @param {Object} state
@@ -125,6 +133,15 @@ const actions = {
       store.dispatch('prevTab', i)
     }
     store.commit('removeTab', tabToRemove)
+  },
+  /**
+   *
+   * @param {Object} store
+   */
+  clearTabs (store) {
+    store.commit('updateOpenFile', '')
+    store.commit('clearTabs')
+    store.dispatch('updatePieceTable', create(''))
   },
   /**
    * Moves from the current tab to another tab in the given direction.
