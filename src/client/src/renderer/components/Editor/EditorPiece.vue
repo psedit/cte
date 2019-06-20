@@ -8,6 +8,7 @@
   import 'codemirror/theme/monokai.css'
   import 'codemirror/mode/javascript/javascript'
   import 'codemirror/mode/python/python'
+  import './multiEditor'
   import { edit } from '../../../main/pieceTable'
   import connector from '../../../main/connector'
 
@@ -23,8 +24,10 @@
       }
     },
 
+    myPromise: null,
     cminstance: null,
     preText: null,
+    startState: null,
     watch: {
       code (val) {
         if (!this.editable) {
@@ -33,30 +36,14 @@
       }
     },
     mounted () {
-      setTimeout(() => this.initializeEditor(), 0)
+      this.$emit('mounted', this)
     },
     computed: {
-      textPiecesArray () {
-        return this.pieces.map(piece => piece.text)
-      },
-      textPieces () {
-        return this.textPiecesArray.join('').replace(/\n$/, '')
-      },
-
-      preCodeArray () {
-        return this.pieces.slice(0, this.index).reduce((acc, piece) => {
-          return acc.concat(piece.text)
-        }, [])
-      },
-      preCode () {
-        return this.preCodeArray.join('').replace(/\n$/, '')
-      },
-
       codeArray () {
         return this.pieces[this.index].text
       },
       code () {
-        return this.codeArray.join('').replace(/\n$/, '')
+        return this.codeArray.join('').replace(/\n$/g, '')
       },
 
       username () {
@@ -72,8 +59,27 @@
 
     methods: {
       initializeEditor () {
+        console.log(this)
+        if (!this.$options.myPromise) {
+          this.$options.myPromise = new Promise(resolve => {
+            setTimeout(() => {
+              this._initializeEditor()
+              resolve(this.$options.cminstance)
+            }, 0)
+          })
+        }
+        return this.$options.myPromise
+      },
+
+      _initializeEditor () {
+        if (!window.CodeMirror) window.CodeMirror = CodeMirror
+        // debugger
         const cm = CodeMirror(this.$refs.cm, {
-          mode: 'javascript',
+          mode: {
+            name: 'multi_editor',
+            lang: 'python',
+            startState: this.$options.startState
+          },
           lineNumbers: true,
           theme: 'monokai',
           smartIndent: true,
@@ -87,7 +93,7 @@
           gutters: ['user-gutter', 'CodeMirror-linenumbers'],
           extraKeys: {
             'Alt-R': () => {
-              this.updatePreviousText()
+              // this.updatePreviousText()
             }
           }
         })
@@ -95,48 +101,16 @@
         this.$options.cminstance = cm
 
         cm.setValue(this.code)
-        if (this.index !== 0) {
-          this.addPreviousText()
-        }
 
         this.$el.style.setProperty('--gutter-hue', Math.round(Math.random() * 360))
         cm.getGutterElement().setAttribute('title', this.username)
         this.initializeEvents()
       },
+
       setText () {
         const cm = this.$options.cminstance
 
         cm.setValue(this.code)
-        if (this.index !== 0) {
-          this.addPreviousText()
-        }
-      },
-      addPreviousText () {
-        if (this.preCode === '') return
-
-        const cm = this.$options.cminstance
-
-        this.insertText(this.preCode + '\n', {line: 0, ch: 0})
-
-        const lines = this.preCodeArray.length
-        this.$options.preText = cm.markText({line: 0, ch: 0}, {line: lines, ch: 0}, {
-          collapsed: true,
-          inclusiveLeft: true,
-          inclusiveRight: false,
-          selectLeft: false,
-          selectRight: true,
-          atomic: true,
-          readOnly: true
-        })
-      },
-      updatePreviousText () {
-        if (this.index === 0) return
-        const range = this.$options.preText.find()
-        this.$options.preText.clear()
-        this.deleteText(range.from, range.to)
-        this.addPreviousText()
-        // this.$options.preText.changed()
-        // console.log(this.$options.cminstance.getValue())
       },
 
       lineToRelativeLine (line) {
@@ -169,8 +143,8 @@
 
         if (this.editable) {
           cm.on('changes', ({cminstance}) => {
-            const value = cm.getValue().slice(this.preCode.length)
-            // console.log(value)
+            const value = cm.getValue()
+            console.log(value)
             const content = value.split('\n').map(val => val + '\n')
             const newPieceTable = edit(this.pieceTable, this.pieces[this.index].pieceID, content)
             this.$store.dispatch('updatePieceTable', newPieceTable)
@@ -216,10 +190,11 @@
       },
 
       lineNumberFormatter (line) {
-        if (line === 1 && this.index !== 0) {
-          return (this.preCodeArray.length + 1).toString()
-        }
-        return (line).toString()
+        // if (line === 1 && this.index !== 0) {
+        //   return (this.preCodeArray.length + 1).toString()
+        // }
+        const previousLines = this.pieces.slice(0, this.index).reduce((acc, val) => val.text.length + acc, 0)
+        return (previousLines + line).toString()
       }
     }
   }

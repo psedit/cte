@@ -3,11 +3,14 @@
     <div class="editor-pieces">
       <editor-piece
               v-for="(piece, index) in pieces"
+              v-if="piece.text.length > 0"
               :key="piece.pieceID"
               :index="index"
               :pieces="pieces"
               @lockDragStart="lockDragStart"
               @lockDragEnd="lockDragEnd"
+              @mounted="editorMount"
+              ref="editorPieces"
       />
     </div>
     <!--<div id="placeholder" v-if="!this.ready">⇚ Select a file</div>-->
@@ -21,7 +24,8 @@
   import EditorPiece from './Editor/EditorPiece'
   import {getRandomColor} from './Editor/RandomColor'
   import connector from '../../main/connector'
-  import { convertChangeToJS, edit } from '../../main/pieceTable'
+  import {convertChangeToJS, edit} from '../../main/pieceTable'
+  // import Vue from 'vue'
 
   export default {
     name: 'Editor',
@@ -38,6 +42,51 @@
       }
     },
     methods: {
+      editorMount (editorPiece) {
+        const index = this.$refs.editorPieces.indexOf(editorPiece)
+        this.initializeEditor(index)
+        if (index === this.pieces.length - 1) {
+          // this.initalizeEditors()
+        }
+      },
+
+      async initializeEditor (index) {
+        const piece = this.$refs.editorPieces[index]
+        if (index === 0) {
+          return piece.initializeEditor()
+        }
+        piece.$options.startState = await this.getPreviousState(index)
+        return piece.initializeEditor()
+      },
+      async getPreviousState (index) {
+        if (index === 0) return undefined
+        const prevPiece = this.$refs.editorPieces[index - 1]
+        // debugger
+        let cm = prevPiece.$options.cminstance
+        if (!cm) {
+          cm = await this.initializeEditor(index - 1)
+        }
+        return cm.getStateAfter(cm.lastLine(), true)
+      },
+      // editorReady (index, endState) {
+      //   if (index >= this.$refs.editorPieces.length - 1) return;
+      //   const nextEditor = this.$refs.editorPieces[index]
+      //   if (nextEditor.$options.cminstance) return
+      //     editorPiece.initializeEditor().then((cm) => {
+      //       prevState = cm.getStateAfter(cm.lastLine(), true)
+      //     })
+      //   }
+
+      async initalizeEditors () {
+        let prevState
+        for (const editorPiece of this.$refs.editorPieces) {
+          editorPiece.$options.startState = prevState
+          const cm = await editorPiece.initializeEditor()
+          // debugger
+          prevState = cm.getStateAfter(cm.lastLine(), true)
+          console.log(prevState, editorPiece.$el)
+        }
+      },
       /** Updates the code that is viewed by the editor. */
       updateCode () {
         this.code = this.$store.state.fileTracker.code
@@ -86,7 +135,6 @@
       ready () {
         return this.code !== undefined && this.code !== ''
       },
-
       pieces () {
         return this.$store.state.fileTracker.pieces
       },
