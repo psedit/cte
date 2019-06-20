@@ -48,9 +48,12 @@
     },
     methods: {
       updateCoords () {
+        debugger
         const pos = this.cminstance.charCoords({line: this.line, ch: this.ch}, 'local')
+        const wrapper = this.cminstance.getWrapperElement()
+        console.log(wrapper)
         this.left = pos.left + this.gutterWidth
-        this.top = pos.top
+        this.top = pos.top + wrapper.offsetTop
       }
     },
     watch: {
@@ -59,7 +62,6 @@
     },
     mounted () {
       console.log()
-      this.cminstance.on('update', this.updateCoords)
       this.updateCoords()
     }
   }

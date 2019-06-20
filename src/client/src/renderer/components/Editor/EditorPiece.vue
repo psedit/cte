@@ -1,5 +1,7 @@
 <template>
-  <div ref="cm" class="editor-piece" :class="{editable}"></div>
+  <div ref="cm" class="editor-piece" :class="{editable}">
+    <ghost-cursors ref="ghostCursors"/>
+  </div>
 </template>
 
 <script>
@@ -12,9 +14,13 @@
   import './multiEditor'
   import connector from '../../../main/connector'
   import {getRandomColor} from './RandomColor'
+  import GhostCursors from './GhostCursors'
 
   export default {
     name: 'EditorPiece.vue',
+    components: {
+      GhostCursors
+    },
     props: {
       pieces: Array,
       index: Number,
@@ -56,6 +62,9 @@
         return this.codeArray.join('').replace(/\n$/g, '')
       },
 
+      piece () {
+        return this.pieces[this.index]
+      },
       username () {
         return this.pieces[this.index].username
       },
@@ -110,6 +119,8 @@
               resolve(this.$options.cminstance)
             }, 0)
           })
+
+          this.$options.myPromise.then((cm) => this.$refs.ghostCursors.init(cm, this.piece))
         }
         return this.$options.myPromise
       },
@@ -201,10 +212,14 @@
             scroll: false
           })
         })
+        cm.on('update', () => {
+          this.$emit('update')
+        })
 
         cm.on('cursorActivity', () => {
           const cursorPos = cm.doc.getCursor()
-          console.log(cursorPos, this.pieces[this.index])
+          console.log(cursorPos, this.pieces[this.index].pieceID)
+          // const message =
           connector.send('cursor-move', {
             file_path: this.$store.state.fileTracker.openFile,
             piece_id: this.pieces[this.index].pieceID,
