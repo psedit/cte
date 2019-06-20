@@ -79,14 +79,10 @@
       },
 
       pieceDragStart () {
-        // console.log(this.dragStart, this.dragEnd)
         if (!(this.dragStart || this.dragEnd)) {
           return null
         }
-        // let range = indexOffsetRangeSort(this.dragStart, this.dragEnd)[0]
-        // console.log(range)
         let start = indexOffsetRangeSort(this.dragStart, this.dragEnd)[0]
-        // console.log('pieceDragStart()', start.line, this.dragStart.line, this.dragEnd.line, indexOffsetRangeSort(this.dragStart, this.dragEnd))
         if (start.piece < this.index) {
           return 0
         } else if (start.piece === this.index) {
@@ -109,10 +105,8 @@
           return cm.lineCount() - this.pieceDragStart
         } else {
           if (start.line < this.index) {
-            // console.log('pieceDragLength()', end.line + 1)
             return end.line + 1
           } else {
-            // console.log('pieceDragLength()', end.line - start.line + 1)
             return end.line - start.line + 1
           }
         }
@@ -184,62 +178,20 @@
         this.$options.preText.clear()
         this.deleteText(range.from, range.to)
         this.addPreviousText()
-        // this.$options.preText.changed()
-        // console.log(this.$options.cminstance.getValue())
       },
 
       updateDragStart (newDragStart, oldDragStart) {
         const cm = this.$options.cminstance
-        // if (newDragStart === null) {
-        //   cm.clearGutter('user-gutter')
-        // } else {
-        //   if (newDragStart < oldDragStart) {
-        //     /* Extend highlight to include earlier start */
-        //     for (let i = newDragStart; i < oldDragStart; i++) {
-        //       cm.setGutterMarker(this.relativeLineToLine(i), 'user-gutter',
-        //         this.gutterSelectMarker())
-        //       console.log(`setting marker at ${this.index}:${i}:${this.relativeLineToLine(i)}`)
-        //     }
-        //   } else if (oldDragStart < newDragStart) {
-        //     for (let i = newDragStart; i < oldDragStart; i++) {
-        //       cm.setGutterMarker(this.relativeLineToLine(i), 'user-gutter',
-        //         null)
-        //       console.log(`unsetting marker at ${this.index}:${i}:${this.relativeLineToLine(i)}`)
-        //     }
-        //   }
-        // }
         cm.clearGutter('user-gutter')
-        // console.log(`drag in piece ${this.index} is ${this.pieceDragStart}:${this.pieceDragLength}`)
         for (let i = this.pieceDragStart; i < this.pieceDragStart + this.pieceDragLength; i++) {
-          // console.log(`setting marker at ${this.index}:${i}:${this.relativeLineToLine(i)}`)
           cm.setGutterMarker(this.relativeLineToLine(i), 'user-gutter',
             this.gutterSelectMarker())
         }
       },
       updateDragLength (newDragLength, oldDragLength) {
         const cm = this.$options.cminstance
-        // if (newDragLength === null || newDragLength === 0) {
-        //   cm.clearGutter('user-gutter')
-        // } else {
-        //   if (newDragLength < oldDragLength) {
-        //     /* Extend highlight to include earlier start */
-        //     for (let i = this.pieceDragStart; i < this.pieceDragStart + this.pieceDragLength; i++) {
-        //       cm.setGutterMarker(this.relativeLineToLine(i), 'user-gutter',
-        //         this.gutterSelectMarker())
-        //       console.log(`setting marker at ${this.index}:${i}:${this.relativeLineToLine(i)}`)
-        //     }
-        //   } else if (oldDragLength < newDragLength) {
-        //     for (let i = this.pieceDragStart + newDragLength; i < this.pieceDragStart + oldDragLength; i++) {
-        //       cm.setGutterMarker(this.relativeLineToLine(i), 'user-gutter',
-        //         null)
-        //       console.log(`unsetting marker at ${this.index}:${i}:${this.relativeLineToLine(i)}`)
-        //     }
-        //   }
-        // }
         cm.clearGutter('user-gutter')
-        // console.log(`drag in piece ${this.index} is ${this.pieceDragStart}:${this.pieceDragLength}`)
         for (let i = this.pieceDragStart; i < this.pieceDragStart + this.pieceDragLength; i++) {
-          // console.log(`setting marker at ${this.index}:${i}:${this.relativeLineToLine(i)}`)
           cm.setGutterMarker(this.relativeLineToLine(i), 'user-gutter',
             this.gutterSelectMarker())
         }
@@ -257,7 +209,6 @@
       gutterSelectMarker () {
         var marker = document.createElement('div')
         marker.style.backgroundColor = 'white'
-        // marker.style.cssText = 'backgroundColor: white; pointer-events: none'
         marker.style.pointerEvents = 'none'
         marker.style.position = 'absolute'
         marker.style.width = '100%'
@@ -281,7 +232,6 @@
         if (this.editable) {
           cm.on('changes', ({cminstance}) => {
             const value = cm.getValue().slice(this.preCode.length)
-            // console.log(value)
             const content = value.split('\n').map(val => val + '\n')
             const newPieceTable = edit(this.pieceTable, this.pieces[this.index].pieceID, content)
             this.$store.dispatch('updatePieceTable', newPieceTable)
@@ -295,24 +245,19 @@
         }
 
         const gutter = cm.getGutterElement()
-        // const gutterId = cm.getGutterElement().gutterId
         gutter.addEventListener('mousedown', (e) => {
           const line = cm.lineAtHeight(e.pageY)
           const relLine = this.lineToRelativeLine(line)
-          // console.log('mouse up at', line)
           this.$emit('lockDragStart', relLine, this.index, e)
         })
         gutter.addEventListener('mousemove', (e) => {
           const line = cm.lineAtHeight(e.pageY)
           const relLine = this.lineToRelativeLine(line)
-          // console.log('mousemove at', relLine, line)
-          // cm.setGutterMarker(line, 'user-gutter', this.gutterSelectMarker())
           this.$emit('lockDragUpdate', relLine, this.index, e)
         })
         gutter.addEventListener('mouseup', (e) => {
           const line = cm.lineAtHeight(e.pageY)
           const relLine = this.lineToRelativeLine(line)
-          // console.log('mouse down at', line)
           this.$emit('lockDragEnd', relLine, this.index, e)
         })
       },

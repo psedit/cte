@@ -35,7 +35,6 @@
     data () {
       return {
         code: '',
-        // pieces: pieces,
         activeUsers: [],
         lockDragStartLocation: null,
         lockDragEndLocation: null,
@@ -62,36 +61,6 @@
           this.components[key].$options.cminstance.clearGutter('user-gutter')
         }
       },
-      updateDrag () {
-        // this.removeDragMarkers()
-        // let start = this.lockDragStartLocation
-        // let end = this.lockDragEndLocation
-        // console.log(start, end)
-        // // let lastLine = 0
-        // if (indexOffsetCompare(this.lockDragStartLocation, this.lockDragEndLocation) > 0) {
-        //   start = this.lockDragEndLocation
-        //   end = this.lockDragStartLocation
-        // }
-        // if (start.piece === end.piece) {
-        //   lastLine = end.offset
-        // }
-        // console.log('components', this.components)
-        // for (let line = start.offset;
-        //   line < Math.max(this.components[start.piece].$options.cminstance.lineCount(), lastLine); line++) {
-        //   this.$components[start.piece].$options.cminstance.setGutterMarker(line, 'user-gutter', this.gutterSelectMarker())
-        // }
-        // for (let i = start.piece + 1; i < end.piece; i++) {
-        //   for (let line = 0; line < this.components[i].$options.cminstance.lineCount(); line++) {
-        //     this.$components[i].$options.cminstance.setGutterMarker(line, 'user-gutter', this.gutterSelectMarker())
-        //   }
-        // }
-        // if (start.piece !== end.piece) {
-        //   for (let line = end.offset;
-        //     line < Math.max(this.components[start.piece].$options.cminstance.lineCount(), end.offset); line++) {
-        //     this.$components[end.piece].$options.cminstance.setGutterMarker(line, 'user-gutter', this.gutterSelectMarker())
-        //   }
-        // }
-      },
       requestLock (startId, startOffset, endId, endOffset) {
         let payload = { start: {id: startId, offset: startOffset},
           end: {id: endId, offset: endOffset}}
@@ -117,11 +86,6 @@
         if (this.lockDragStartLocation === null) return
 
         console.log(`Request lock from ${this.lockDragStartLocation.piece}:${this.lockDragStartLocation.line} to ${index}:${line}`)
-        // this.requestLock(this.lockDragStartLocation, this.lockDragEndLocation)
-
-        // console.log(`Request lock from ${this.lockDragStartLocation.piece}:${this.LockDragStartLocation.line} to ${index}:${line}`)
-
-        // if (this.lockDragRange.piece !== index) alert('NOT SUPPORTED')
 
         let draggedLock = rangeToAnchoredLength(this.$store.state.fileTracker.pieceTable,
           this.lockDragStartLocation.piece, this.lockDragStartLocation.line,
@@ -175,10 +139,6 @@
       this.$store.subscribe((mutation, state) => {
         if (mutation.type === 'updateCode') {
           this.updateCode()
-          // cm.ghostCursors.changeFilepath(this.$store.state.fileTracker.openFile).then(cursors => {
-          //   console.log(cursors)
-          //   this.updateUsers(cursors)
-          // })
         }
       })
 
