@@ -22,7 +22,7 @@ require('electron').ipcRenderer.on('changeURL', (event, message) => {
   connector.addEventListener('open', () => {})
   /* Remove all tabs
    */
-  store.dispatch('clearTabs')
+  store.dispatch('serverURLChange')
 })
 
 /* eslint-disable no-new */

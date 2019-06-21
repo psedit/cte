@@ -565,6 +565,16 @@
     },
     mounted () {
       this.openSocketUpdateTree()
+      /* When the server URL is changes,
+       * reset the directory tracker.
+       */
+      this.$store.subscribe((mutation, state) => {
+        if (mutation.type === 'serverURLChange') {
+          connector.waitUntillOpen(() => {
+            this.home()
+          })
+        }
+      })
     }
   }
 </script>
