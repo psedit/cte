@@ -48,6 +48,7 @@
     },
     methods: {
       updateCoords () {
+        if (!this.cminstance) return
         const pos = this.cminstance.charCoords({line: this.line, ch: this.ch}, 'local')
         const wrapper = this.cminstance.getWrapperElement()
         console.log(wrapper)
@@ -57,7 +58,8 @@
     },
     watch: {
       line () { this.updateCoords() },
-      ch () { this.updateCoords() }
+      ch () { this.updateCoords() },
+      cminstance () { this.updateCoords() }
     },
     mounted () {
       console.log()

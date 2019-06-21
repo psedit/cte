@@ -1,6 +1,6 @@
 <template>
   <div ref="cm" class="editor-piece" :class="{editable}">
-    <ghost-cursors ref="ghostCursors"/>
+    <ghost-cursors ref="ghostCursors" :piece="piece"/>
   </div>
 </template>
 

@@ -22,12 +22,11 @@
       GhostCursor
     },
 
-    props: [],
+    props: ['piece'],
 
     data () {
       return {
         cursors: [],
-        piece: null,
         cm: null
       }
     },
@@ -39,7 +38,7 @@
     methods: {
       init (cm, piece) {
         console.log(cm, piece)
-        this.piece = piece
+        // this.piece = piece
         this.cm = cm
       },
       initializeListeners () {
