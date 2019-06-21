@@ -58,6 +58,7 @@
 
       addCursor (username, filepath, pieceID, line, ch) {
         if (pieceID !== this.piece.pieceID) return
+        if (this.$store.state.user.username === username) return
         this.cursors.push({username, filepath, pieceID, line, ch})
       },
 
@@ -107,7 +108,7 @@
 
 <style scoped>
   .ghost-cursors {
-    position: absolute;
+    position: relative;
     top: 0;
     z-index: 4;
   }

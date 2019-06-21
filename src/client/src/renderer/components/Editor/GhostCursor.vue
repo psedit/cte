@@ -53,7 +53,7 @@
         const wrapper = this.cminstance.getWrapperElement()
         console.log(wrapper)
         this.left = pos.left + this.gutterWidth
-        this.top = pos.top + wrapper.offsetTop
+        this.top = pos.top
       }
     },
     watch: {
