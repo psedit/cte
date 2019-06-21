@@ -4,7 +4,6 @@
 
 <script>
   import {getRandomColor} from './RandomColor'
-  // import CodeMirror from 'codemirror/lib/codemirror'
 
   export default {
     name: 'GhostCursor',
@@ -28,7 +27,6 @@
       },
 
       color () {
-        console.log(this.backgroundColor.luminosity(), this.backgroundColor.isLight())
         return this.backgroundColor.isLight() ? '#151515' : '#fff'
       },
 
@@ -50,8 +48,6 @@
       updateCoords () {
         if (!this.cminstance) return
         const pos = this.cminstance.charCoords({line: this.line, ch: this.ch}, 'local')
-        const wrapper = this.cminstance.getWrapperElement()
-        console.log(wrapper)
         this.left = pos.left + this.gutterWidth
         this.top = pos.top
       }
@@ -62,7 +58,6 @@
       cminstance () { this.updateCoords() }
     },
     mounted () {
-      console.log()
       this.updateCoords()
     }
   }

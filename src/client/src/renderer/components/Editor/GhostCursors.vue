@@ -32,13 +32,10 @@
     },
     mounted () {
       this.initializeListeners()
-      // Connector.addEventListener('open', this.initializeListeners)
     },
 
     methods: {
       init (cm, piece) {
-        console.log(cm, piece)
-        // this.piece = piece
         this.cm = cm
       },
       initializeListeners () {
@@ -49,8 +46,6 @@
         this.$store.subscribeAction({
           after: (action, state) => {
             if (action.type !== 'openFile') return
-
-            console.log(action, state)
             this.changeFilepath(action.payload)
           }
         })
@@ -77,13 +72,11 @@
             this.cursors[i].pieceID = pieceID
             this.cursors[i].ch = column
             this.cursors[i].line = row
-            console.log(username, column, row)
             return
           }
         }
         this.addCursor(username, filepath, pieceID, row, column)
       },
-      // updateOpenFile
       changeFilepath (path) {
         this.cursors.splice(0, this.cursors.length)
         return Connector.request(
