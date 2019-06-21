@@ -2,17 +2,19 @@
   <div class="editor">
     <div class="editor-pieces">
       <editor-piece
-        v-for="(piece, index) in pieces"
-        :key="piece.pieceID + piece.username"
-        :index="index"
-        :pieces="pieces"
-        :dragStart="lockDragStartLocation"
-        :dragEnd="lockDragEndLocation"
-        @lockDragStart="lockDragStart"
-        @lockDragUpdate="lockDragUpdate"
-        @lockDragEnd="lockDragEnd"
-        @mounted="editorMount"
-        ref="editorPieces"
+              v-for="(piece, index) in pieces"
+              v-if="piece.text.length > 0"
+              :key="piece.pieceID + piece.username"
+              :index="index"
+              :pieces="pieces"
+              :dragStart="lockDragStartLocation"
+              :dragEnd="lockDragEndLocation"
+              @lockDragStart="lockDragStart"
+              @lockDragUpdate="lockDragUpdate"
+              @lockDragEnd="lockDragEnd"
+              @mounted="editorMount"
+              @update="editorUpdate"
+              ref="editorPieces"
       />
     </div>
     <!--<div id="placeholder" v-if="!this.ready">⇚ Select a file</div>-->
@@ -60,12 +62,12 @@
       }
     },
     methods: {
+      editorUpdate () {
+      },
+
       editorMount (editorPiece) {
         const index = this.$refs.editorPieces.indexOf(editorPiece)
         this.initializeEditor(index)
-        if (index === this.pieces.length - 1) {
-          // this.initalizeEditors()
-        }
       },
 
       async initializeEditor (index) {

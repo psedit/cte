@@ -1,12 +1,13 @@
 <template>
-  <div id="ghost-cursors">
+  <div class="ghost-cursors">
     <ghost-cursor v-for="(cursor, index) in cursors"
                  :filepath="cursor.filepath"
                  :username="cursor.username"
                  :line="cursor.line"
                  :ch="cursor.ch"
-                 :cminstance="cminstance"
-                 :key="index"/>
+                 :cminstance="cm"
+                 :key="index"
+    />
   </div>
 </template>
 
@@ -21,40 +22,61 @@
       GhostCursor
     },
 
-    props: ['cminstance'],
+    props: ['piece'],
 
     data () {
       return {
-        cursors: []
+        cursors: [],
+        cm: null
       }
     },
     mounted () {
-      Connector.addEventListener('open', this.initializeListeners)
+      this.initializeListeners()
     },
 
     methods: {
+      init (cm, piece) {
+        this.cm = cm
+      },
       initializeListeners () {
         Connector.listenToMsg('cursor-move-broadcast', ({content}) => {
-          this.moveCursor(content.username, content.file_path, content.row, content.column)
+          this.moveCursor(content.username, content.file_path, content.piece_id, content.offset, content.column)
+        })
+
+        this.$store.subscribeAction({
+          after: (action, state) => {
+            if (action.type !== 'openFile') return
+            this.changeFilepath(action.payload)
+          }
         })
       },
 
-      addCursor (username, filepath, line, ch) {
-        this.cursors.push({username, filepath, line, ch})
+      addCursor (username, filepath, pieceID, line, ch) {
+        if (pieceID !== this.piece.pieceID) return
+        if (this.$store.state.user.username === username) return
+        this.cursors.push({username, filepath, pieceID, line, ch})
       },
 
-      moveCursor (username, filepath, row, column) {
+      moveCursor (username, filepath, pieceID, row, column) {
+        if (pieceID !== this.piece.pieceID) {
+          // if t
+          const index = this.cursors.findIndex((cursor) => cursor.username === username && cursor.filepath === filepath)
+          if (index >= 0) {
+            this.$delete(this.cursors, index)
+          }
+          return
+        }
         for (let i = 0; i < this.cursors.length; i++) {
           if (this.cursors[i].username === username) {
             this.cursors[i].filepath = filepath
+            this.cursors[i].pieceID = pieceID
             this.cursors[i].ch = column
             this.cursors[i].line = row
             return
           }
         }
-        this.addCursor(username, filepath, row, column)
+        this.addCursor(username, filepath, pieceID, row, column)
       },
-
       changeFilepath (path) {
         this.cursors.splice(0, this.cursors.length)
         return Connector.request(
@@ -67,10 +89,10 @@
               cursor[0],
               path,
               cursor[1],
-              cursor[2]
+              cursor[2],
+              cursor[3]
             )
           }
-          return this.cursors
         })
       }
     }
@@ -78,8 +100,8 @@
 </script>
 
 <style scoped>
-  #ghost-cursors {
-    position: absolute;
+  .ghost-cursors {
+    position: relative;
     top: 0;
     z-index: 4;
   }
