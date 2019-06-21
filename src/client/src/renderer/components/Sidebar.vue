@@ -507,6 +507,7 @@
           /* When user selects 'No', do nothing. Otherwise remove item. */
           if (response !== 0) {
             fileManager.removeItem(filePath)
+            this.$store.dispatch('removeTabByPath', filePath)
           }
         })
       },

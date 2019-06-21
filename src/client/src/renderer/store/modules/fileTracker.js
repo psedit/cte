@@ -44,8 +44,8 @@ const mutations = {
       state.tabs = [...state.tabs, newTab]
     }
   },
-  removeTab (state, tabToRemove) {
-    state.tabs = state.tabs.filter(x => x.filePath !== tabToRemove.filePath)
+  removeTab (state, tabPath) {
+    state.tabs = state.tabs.filter(x => x.filePath !== tabPath)
   },
   /**
    * Updates the filepaths
@@ -123,7 +123,9 @@ const actions = {
     store.commit('updatePieces', pieceTable)
   },
   /**
-   * Removes a tab from state and switches to a new tab if the tab was opened.
+   * Removes a tab from state and switches to a new tab if the tab was the
+   * currently opened tab. The changes made to the tab are also saved, and
+   * after closing the user is removed from the list of users in a tab.
    * @param {Object} store vuex store
    * @param {Tab} tabToRemove the tab that needs to be removed
    */
@@ -144,7 +146,32 @@ const actions = {
         store.dispatch('prevTab', i)
       }
     }
-    store.commit('removeTab', tabToRemove)
+    store.commit('removeTab', tabToRemove.filePath)
+  },
+  /**
+   * Removes a tab from state and switches to a new tab if the tab was opened.
+   * This function only needs the file to be removed, and doesn't save changes or
+   * update the user list like removeTab does.
+   * @param {Object} store vuex store
+   * @param {Tab} tabPath the path to the tab that needs to be removed
+   */
+  removeTabByPath (store, tabPath) {
+    if (tabPath === store.state.openFile) {
+      if (store.state.tabs.length === 1) {
+        store.commit('updateOpenFile', '')
+        store.dispatch('updatePieceTable', create(''))
+      } else {
+        let i = 0
+        for (let tab of store.state.tabs) {
+          if (tab.filePath == tabPath) {
+            break
+          }
+          i++
+        }
+        store.dispatch('prevTab', i)
+      }
+    }
+    store.commit('removeTab', tabPath)
   },
   updateCodeAction (state, newCode) {
     state.commit('updateCode', newCode)
@@ -182,7 +209,7 @@ const actions = {
    * @param {Tab} direction 1 for moving to the next tab, 0 for to the previous
    */
   scrollTab (store, direction) {
-    var i = 0
+    let i = 0
     for (let tab of store.state.tabs) {
       if (tab.filePath === store.state.openFile) {
         if (direction) {
