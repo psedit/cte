@@ -208,10 +208,20 @@
         const cm = this.$options.cminstance
 
         cm.on('blur', () => {
-          cm.setCursor({line: 0, ch: 0}, {
-            scroll: false
+          // cm.setCursor({line: 0, ch: 0}, {
+          //   scroll: false
+          // })
+        })
+        cm.on('focus', () => {
+          const cursorPos = cm.doc.getCursor()
+          connector.send('cursor-move', {
+            file_path: this.$store.state.fileTracker.openFile,
+            piece_id: this.pieces[this.index].pieceID,
+            offset: cursorPos.line,
+            column: cursorPos.ch
           })
         })
+
         cm.on('update', () => {
           this.$emit('update')
         })

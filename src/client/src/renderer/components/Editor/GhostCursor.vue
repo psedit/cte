@@ -48,7 +48,6 @@
     },
     methods: {
       updateCoords () {
-        debugger
         const pos = this.cminstance.charCoords({line: this.line, ch: this.ch}, 'local')
         const wrapper = this.cminstance.getWrapperElement()
         console.log(wrapper)

@@ -44,8 +44,6 @@
       },
       initializeListeners () {
         Connector.listenToMsg('cursor-move-broadcast', ({content}) => {
-          if (content.piece_id !== this.piece.pieceID) return
-          console.log(content)
           this.moveCursor(content.username, content.file_path, content.piece_id, content.offset, content.column)
         })
 
@@ -61,12 +59,18 @@
 
       addCursor (username, filepath, pieceID, line, ch) {
         if (pieceID !== this.piece.pieceID) return
-        debugger
         this.cursors.push({username, filepath, pieceID, line, ch})
       },
 
       moveCursor (username, filepath, pieceID, row, column) {
-        if (pieceID !== this.piece.pieceID) return
+        if (pieceID !== this.piece.pieceID) {
+          // if t
+          const index = this.cursors.findIndex((cursor) => cursor.username === username && cursor.filepath === filepath)
+          if (index >= 0) {
+            this.$delete(this.cursors, index)
+          }
+          return
+        }
         for (let i = 0; i < this.cursors.length; i++) {
           if (this.cursors[i].username === username) {
             this.cursors[i].filepath = filepath
