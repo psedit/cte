@@ -14,6 +14,7 @@
          * when receiving an error.
          */
         connector.listenToMsg('error-response', ({content}) => {
+          if (content.error_code === 2) return
           let message = `Error: ${content.message}\n\nError code: ${content.error_code}`
           dialog.showErrorBox('Oops! We messed up...', message)
         })

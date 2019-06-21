@@ -49,6 +49,8 @@ const { mergeLeft, clone } = require('ramda')
  * @typedef FilePiece
  * @property {string} pieceID
  * @property {string[]} text the text of the file
+ * @property {boolean} open whether the block is open
+ * @property {string} username username of the person that locked the piece
  */
 
 /**

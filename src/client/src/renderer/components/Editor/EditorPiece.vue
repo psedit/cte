@@ -144,12 +144,7 @@
           lineNumberFormatter: this.lineNumberFormatter,
           viewportMargin: Infinity,
           cursorBlinkRate: 0,
-          gutters: ['user-gutter', 'CodeMirror-linenumbers'],
-          extraKeys: {
-            'Alt-R': () => {
-              // this.updatePreviousText()
-            }
-          }
+          gutters: ['user-gutter', 'CodeMirror-linenumbers']
         })
 
         this.$options.cminstance = cm
@@ -160,7 +155,18 @@
         cm.getGutterElement().setAttribute('title', this.username)
         this.initializeEvents()
       },
-
+      unlock () {
+        console.log('hoi')
+        connector.request('file-unlock-request', 'file-unlock-response', {
+          file_path: this.$store.state.fileTracker.openFile,
+          lock_id: this.pieces[this.index].pieceID
+        }).then(({succes}) => {
+          console.log(succes, 'hoi ik ben')
+          if (!succes) {
+            console.error('faal')
+          }
+        })
+      },
       setText () {
         const cm = this.$options.cminstance
 
@@ -258,21 +264,26 @@
         }
 
         const gutter = cm.getGutterElement()
-        gutter.addEventListener('mousedown', (e) => {
-          const line = cm.lineAtHeight(e.pageY)
-          const relLine = this.lineToRelativeLine(line)
-          this.$emit('lockDragStart', relLine, this.index, e)
-        })
-        gutter.addEventListener('mousemove', (e) => {
-          const line = cm.lineAtHeight(e.pageY)
-          const relLine = this.lineToRelativeLine(line)
-          this.$emit('lockDragUpdate', relLine, this.index, e)
-        })
-        gutter.addEventListener('mouseup', (e) => {
-          const line = cm.lineAtHeight(e.pageY)
-          const relLine = this.lineToRelativeLine(line)
-          this.$emit('lockDragEnd', relLine, this.index, e)
-        })
+        if (!this.editable) {
+          gutter.addEventListener('mousedown', (e) => {
+            const line = cm.lineAtHeight(e.pageY)
+            const relLine = this.lineToRelativeLine(line)
+            this.$emit('lockDragStart', relLine, this.index, e)
+          })
+          gutter.addEventListener('mousemove', (e) => {
+            const line = cm.lineAtHeight(e.pageY)
+            const relLine = this.lineToRelativeLine(line)
+            this.$emit('lockDragUpdate', relLine, this.index, e)
+          })
+          gutter.addEventListener('mouseup', (e) => {
+            const line = cm.lineAtHeight(e.pageY)
+            const relLine = this.lineToRelativeLine(line)
+            this.$emit('lockDragEnd', relLine, this.index, e)
+          })
+        }
+        if (this.editable) {
+          gutter.addEventListener('contextmenu', this.unlock)
+        }
       },
       insertText (text, pos) {
         const cm = this.$options.cminstance

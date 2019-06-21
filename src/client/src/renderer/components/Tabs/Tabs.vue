@@ -59,6 +59,7 @@
     height: 2em;
     white-space: nowrap;
     overflow: hidden;
+    cursor: pointer;
   }
   li {
     display: inline-grid;
@@ -80,7 +81,6 @@
   }
 
   .close-tab {
-    cursor: pointer;
     padding: 2px 6px;
   }
 
