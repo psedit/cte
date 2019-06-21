@@ -194,6 +194,15 @@
             this.$store.dispatch('updatePieceTable', update.pieceTable)
           }
         })
+
+        connector.listenToMsg('file-join-broadcast', ({content}) => {
+          if (content.file_path === this.filePath && content.username !== this.username) {
+            this.cursors = [
+              ...this.cursors.filter(({username}) => username !== content.username),
+              this.cursor(content.username, 0, 0, 0)]
+          }
+        })
+
         connector.listenToMsg('cursor-move-broadcast', ({content}) => {
           console.log(this.filePath, content)
           if (content.file_path === this.filePath && content.username !== this.username) {
