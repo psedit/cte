@@ -26,14 +26,20 @@
 
     data () {
       return {
-        cursors: [],
         cm: null
       }
     },
     mounted () {
       this.initializeListeners()
     },
-
+    computed: {
+      allCursors () {
+        return this.$store.state.user.cursors
+      },
+      cursors () {
+        return this.cursors.filter(({pieceID}) => pieceID === this.piece.pieceID)
+      }
+    },
     methods: {
       init (cm, piece) {
         this.cm = cm

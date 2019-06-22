@@ -2,19 +2,19 @@
   <div class="editor">
     <div class="editor-pieces">
       <editor-piece
-              v-for="(piece, index) in pieces"
-              v-if="piece.text.length > 0"
-              :key="piece.pieceID + piece.username"
-              :index="index"
-              :pieces="pieces"
-              :dragStart="lockDragStartLocation"
-              :dragEnd="lockDragEndLocation"
-              @lockDragStart="lockDragStart"
-              @lockDragUpdate="lockDragUpdate"
-              @lockDragEnd="lockDragEnd"
-              @mounted="editorMount"
-              @update="editorUpdate"
-              ref="editorPieces"
+        v-for="(piece, index) in pieces"
+        v-if="piece.text.length > 0"
+        :key="piece.pieceID + piece.username"
+        :index="index"
+        :pieces="pieces"
+        :dragStart="lockDragStartLocation"
+        :dragEnd="lockDragEndLocation"
+        @lockDragStart="lockDragStart"
+        @lockDragUpdate="lockDragUpdate"
+        @lockDragEnd="lockDragEnd"
+        @mounted="editorMount"
+        @update="editorUpdate"
+        ref="editorPieces"
       />
     </div>
     <!--<div id="placeholder" v-if="!this.ready">⇚ Select a file</div>-->
@@ -56,7 +56,7 @@
           { file_path: this.filePath }
         ).then((response) => {
           this.cursors = response.cursor_list.map(x => {
-            return this.cursor(x[0], x[1], x[2], x[3])
+            return this.cursor(x[0], x[1], x[2], x[3]).sort(this.compareUsername)
           })
         })
       }
@@ -178,6 +178,9 @@
           return 'javascript'
         }
         return null
+      },
+      compareUsername ({username: a}, {username: b}) {
+        return a < b ? -1 : a > b ? 1 : 0
       }
     },
     mounted () {
@@ -201,7 +204,7 @@
           if (content.file_path === this.filePath && content.username !== this.username) {
             this.cursors = [
               ...this.cursors.filter(({username}) => username !== content.username),
-              this.cursor(content.username, 0, 0, 0)]
+              this.cursor(content.username, 0, 0, 0)].sort(this.compareUsername)
           }
         })
 
@@ -210,7 +213,7 @@
           if (content.file_path === this.filePath && content.username !== this.username) {
             this.cursors = [
               ...this.cursors.filter(({username}) => username !== content.username),
-              this.cursor(content.username, content.pieceID, content.offset, content.column)]
+              this.cursor(content.username, content.pieceID, content.offset, content.column)].sort(this.compareUsername)
           }
         })
 
