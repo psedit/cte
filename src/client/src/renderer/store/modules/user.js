@@ -1,11 +1,3 @@
-/**
- * @typedef Cursor
- * @property {string} username
- * @property {string} pieceID
- * @property {number} ch the character index in the line
- * @property {number} line the line index in the piece
- */
-
 const state = {
   username: '',
   cursors: []
@@ -39,12 +31,28 @@ const mutations = {
   updateCursor (state, { index, cursor }) {
     state.cursors[index] = cursor
   },
+  /**
+   * Removes a cursor with a certain username and filepath from state.cursors
+   * @param {Object} state
+   * @param {Cursor} cursor
+   */
   removeCursor (state, { username, filepath }) {
     state.cursors = state.cursors.filter(cursor => cursor.username !== username && cursor.filepath !== filepath)
+  },
+  /**
+   * Removes all cursors
+   */
+  emptyCursors (state) {
+    state.cursors.splice(0)
   }
 }
 
 const actions = {
+  /**
+   * Updates cursor if it exists, otherwhise adds a new cursor
+   * @param {Object} store
+   * @param {Cursor} cursor
+   */
   moveCursor (store, cursor) {
     const index = store.state.cursors.findIndex(
       ({ username, filepath }) =>

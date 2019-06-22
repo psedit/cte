@@ -13,7 +13,7 @@ const cursor = {
 }
 
 describe('mutations', () => {
-  const { addCursor, removeCursor } = mutations
+  const { addCursor, removeCursor, emptyCursors } = mutations
   describe('addCursor', () => {
     it('should add cursor to the list of cursors', () => {
       const state = {
@@ -32,6 +32,7 @@ describe('mutations', () => {
       expect(state.cursors.length).to.equal(0)
     })
   })
+
   describe('removeCursor', () => {
     it('should filter a cursor from state.cursors based on its username and filepath', () => {
       const state = {
@@ -53,6 +54,15 @@ describe('mutations', () => {
       }
       removeCursor(state, { cursor, username: '' })
       expect(state.cursors.length).to.equal(1)
+    })
+  })
+  describe('emptyCursors', () => {
+    it('should remove all cursors', () => {
+      const state = {
+        cursors: [cursor]
+      }
+      emptyCursors(state)
+      expect(state.cursors.length).to.equal(0)
     })
   })
 })

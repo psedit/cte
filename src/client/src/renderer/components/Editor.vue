@@ -22,6 +22,7 @@
       <div
         class="user-list-item"
         v-for="cursor in cursors"
+        :key="cursor.username"
         :title="cursor.username"
         :style="{borderColor: cursor.color}"
       >{{ cursor.username.toUpperCase() }}</div>
@@ -31,8 +32,9 @@
 
 <script>
   import EditorPiece from './Editor/EditorPiece'
-  import {getRandomColor} from './Editor/RandomColor'
+  import convert from './Editor/cursor'
   import connector from '../../main/connector'
+  import { getRandomColor } from './Editor/RandomColor'
   import { convertChangeToJS, edit, rangeToAnchoredLength } from '../../main/pieceTable'
 
   export default {
@@ -44,27 +46,35 @@
       return {
         lockDragStartLocation: null,
         lockDragEndLocation: null,
-        dragList: null,
-        cursors: []
+        dragList: null
       }
     },
     watch: {
-      filePath () {
+      filePath (val) {
+        this.$store.commit('emptyCursors')
+        if (val === '') return
+
         connector.request(
           'cursor-list-request',
           'cursor-list-response',
-          { file_path: this.filePath }
-        ).then((response) => {
-          this.cursors = response.cursor_list.map(x => {
-            return this.cursor(x[0], x[1], x[2], x[3]).sort(this.compareUsername)
-          })
+          { file_path: val }
+        ).then(({cursor_list: cursorList}) => {
+          for (const [username, pieceID, line, ch] of cursorList) {
+            console.log(cursorList)
+            this.$store.commit('addCursor', {
+              username,
+              pieceID,
+              line,
+              ch,
+              filepath: val,
+              color: getRandomColor(username)
+            })
+          }
         })
       }
     },
     methods: {
-      editorUpdate () {
-      },
-
+      editorUpdate () {},
       editorMount (editorPiece) {
         const index = this.$refs.editorPieces.indexOf(editorPiece)
         this.initializeEditor(index)
@@ -141,15 +151,6 @@
         for (let key in this.components) {
           this.components[key].$options.cminstance.clearGutter('user-gutter')
         }
-      },
-      cursor (username, pieceID, offset, column) {
-        return {
-          username,
-          pieceID,
-          offset,
-          column,
-          color: getRandomColor(username)
-        }
       }
     },
 
@@ -169,6 +170,9 @@
       filePath () {
         return this.$store.state.fileTracker.openFile
       },
+      cursors () {
+        return this.$store.state.user.cursors.filter(({filepath}) => filepath === this.filePath)
+      },
       lang () {
         if (!this.filePath) return null
         const ext = this.filePath.match(/\.\w+/)[0].toLowerCase()
@@ -178,9 +182,6 @@
           return 'javascript'
         }
         return null
-      },
-      compareUsername ({username: a}, {username: b}) {
-        return a < b ? -1 : a > b ? 1 : 0
       }
     },
     mounted () {
@@ -201,29 +202,18 @@
         })
 
         connector.listenToMsg('file-join-broadcast', ({content}) => {
-          if (content.file_path === this.filePath && content.username !== this.username) {
-            this.cursors = [
-              ...this.cursors.filter(({username}) => username !== content.username),
-              this.cursor(content.username, 0, 0, 0)].sort(this.compareUsername)
-          }
+          this.$store.dispatch('moveCursor', {...convert(content), ch: 0, line: 0})
         })
 
         connector.listenToMsg('cursor-move-broadcast', ({content}) => {
-          console.log(this.filePath, content)
-          if (content.file_path === this.filePath && content.username !== this.username) {
-            this.cursors = [
-              ...this.cursors.filter(({username}) => username !== content.username),
-              this.cursor(content.username, content.pieceID, content.offset, content.column)].sort(this.compareUsername)
-          }
+          this.$store.dispatch('moveCursor', convert(content))
         })
 
         connector.listenToMsg('file-leave-broadcast', ({content}) => {
-          console.log(content)
-          if (content.file_path === this.filePath) {
-            this.cursors = this.cursors.filter(({username}) => username !== content.username)
-          }
+          this.$store.commit('removeCursor', convert(content))
         })
       })
+
       addEventListener('mouseup', (e) => {
         if (!e.composedPath()[0].classList.contains('user-gutter')) {
           this.lockDragCancel()

@@ -3,8 +3,6 @@
 </template>
 
 <script>
-  import {getRandomColor} from './RandomColor'
-
   export default {
     name: 'GhostCursor',
     props: {
@@ -12,6 +10,7 @@
       filepath: String,
       line: Number,
       ch: Number,
+      backGroundColor: String,
       cminstance: Object
     },
     data () {
@@ -20,12 +19,7 @@
         left: 0
       }
     },
-
     computed: {
-      backgroundColor () {
-        return getRandomColor(this.username)
-      },
-
       color () {
         return this.backgroundColor.isLight() ? '#151515' : '#fff'
       },
