@@ -57,6 +57,26 @@ const mutations = {
   },
   updateOpenFile (state, filePath) {
     state.openFile = filePath
+  },
+  /**
+   * Renames a given tab.
+   * @param {Object} store vuex store
+   * @param {Object} payload a key array with keys pathToDir, the path to the
+   * directory in which the file is located (has to end on '/'), oldName, the
+   * current name of the file, and newName, the new name of the file.
+   * They are stored in one object because this can't be done differently for mutations.
+   */
+  renameTab (state, payload) {
+    if (payload.pathToDir + payload.oldName === state.openFile) {
+      state.openFile = payload.pathToDir + payload.newName
+    }
+    for (let tab of state.tabs) {
+      if (tab.fileName === payload.oldName) {
+        tab.filePath = payload.pathToDir + payload.newName
+        tab.fileName = payload.newName
+        break
+      }
+    }
   }
 }
 
@@ -153,7 +173,7 @@ const actions = {
    * This function only needs the file to be removed, and doesn't save changes or
    * update the user list like removeTab does.
    * @param {Object} store vuex store
-   * @param {Tab} tabPath the path to the tab that needs to be removed
+   * @param {string} tabPath the path to the tab that needs to be removed
    */
   removeTabByPath (store, tabPath) {
     if (tabPath === store.state.openFile) {
@@ -163,7 +183,7 @@ const actions = {
       } else {
         let i = 0
         for (let tab of store.state.tabs) {
-          if (tab.filePath == tabPath) {
+          if (tab.filePath === tabPath) {
             break
           }
           i++
@@ -206,7 +226,7 @@ const actions = {
   /**
    * Moves from the current tab to another tab in the given direction.
    * @param {Object} store vuex store
-   * @param {Tab} direction 1 for moving to the next tab, 0 for to the previous
+   * @param {int} direction 1 for moving to the next tab, 0 for to the previous
    */
   scrollTab (store, direction) {
     let i = 0
