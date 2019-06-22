@@ -1,21 +1,23 @@
 <template>
   <div class="editor">
     <div class="editor-pieces">
-      <editor-piece
-        v-for="(piece, index) in pieces"
-        v-if="piece.text.length > 0"
-        :key="piece.pieceID + piece.username"
-        :index="index"
-        :pieces="pieces"
-        :dragStart="lockDragStartLocation"
-        :dragEnd="lockDragEndLocation"
-        @lockDragStart="lockDragStart"
-        @lockDragUpdate="lockDragUpdate"
-        @lockDragEnd="lockDragEnd"
-        @mounted="editorMount"
-        @update="editorUpdate"
-        ref="editorPieces"
-      />
+      <transition name="transition">
+        <editor-piece 
+          v-for="(piece, index) in pieces"
+          v-if="piece.text.length > 0"
+          :key="piece.pieceID + piece.username"
+          :index="index"
+          :pieces="pieces"
+          :dragStart="lockDragStartLocation"
+          :dragEnd="lockDragEndLocation"
+          @lockDragStart="lockDragStart"
+          @lockDragUpdate="lockDragUpdate"
+          @lockDragEnd="lockDragEnd"
+          @mounted="editorMount"
+          @update="editorUpdate"
+          ref="editorPieces"
+        />
+      </transition>
     </div>
     <!--<div id="placeholder" v-if="!this.ready">⇚ Select a file</div>-->
     <div class="user-list" v-if="pieces.length > 0">
@@ -224,6 +226,13 @@
 </script>
 
 <style scoped lang="scss">
+.transition-leave-active {
+  transition-delay: opacity 0s 0.5s;
+}
+.fade-leave-to {
+  opacity: 0;
+}
+
 .editor {
   width: 100%;
   overflow-y: hidden;
