@@ -1,5 +1,5 @@
 <template>
-  <div class="ghostCursor" :style="style"></div>
+  <div class="ghostCursor" :style="style" v-if="line > -1"></div>
 </template>
 
 <script>
@@ -10,7 +10,7 @@
       filepath: String,
       line: Number,
       ch: Number,
-      backGroundColor: String,
+      backgroundColor: Object,
       cminstance: Object
     },
     data () {

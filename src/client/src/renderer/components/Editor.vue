@@ -202,7 +202,7 @@
         })
 
         connector.listenToMsg('file-join-broadcast', ({content}) => {
-          this.$store.dispatch('moveCursor', {...convert(content), ch: 0, line: 0})
+          this.$store.dispatch('moveCursor', {...convert(content), ch: -1, line: -1})
         })
 
         connector.listenToMsg('cursor-move-broadcast', ({content}) => {

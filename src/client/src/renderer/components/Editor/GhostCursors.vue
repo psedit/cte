@@ -5,7 +5,7 @@
                  :username="cursor.username"
                  :line="cursor.line"
                  :ch="cursor.ch"
-                 :color="cursor.color"
+                 :backgroundColor="cursor.color"
                  :cminstance="cm"
                  :key="index"
     />
