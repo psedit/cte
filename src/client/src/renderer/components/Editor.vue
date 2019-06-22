@@ -1,7 +1,7 @@
 <template>
   <div class="editor">
     <div class="editor-pieces">
-      <transition name="transition">
+      <transition-group name="swap" tag="editor-piece">
         <editor-piece 
           v-for="(piece, index) in pieces"
           v-if="piece.text.length > 0"
@@ -17,7 +17,7 @@
           @update="editorUpdate"
           ref="editorPieces"
         />
-      </transition>
+      </transition-group>
     </div>
     <!--<div id="placeholder" v-if="!this.ready">⇚ Select a file</div>-->
     <div class="user-list" v-if="pieces.length > 0">
@@ -226,10 +226,31 @@
 </script>
 
 <style scoped lang="scss">
-.transition-leave-active {
-  transition-delay: opacity 0s 0.5s;
+.swap-enter-to {
+  opacity: 1;
+  max-height: 10000px;
+  margin-bottom: 0px;
+  // display: block;
 }
-.fade-leave-to {
+
+.swap-enter {
+  opacity: 0;
+  max-height: 0px;
+  margin-bottom: -1px;
+}
+
+.swap-enter-active {
+  // display: none;
+  // transition: opacity 1s 5s;
+  transition: all 0s 0.35s;
+}
+
+.swap-leave-active {
+  // transition: opacity 0s 0.5s;
+  transition: opacity 0s 0.35s;
+}
+
+.swap-leave-to {
   opacity: 0;
 }
 
