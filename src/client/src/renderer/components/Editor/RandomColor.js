@@ -1,5 +1,5 @@
 import Color from 'color'
-const pearsonTable = [...new Array(360)].map((_, i) => i).sort(() => 0.5 - Math.random())
+const pearsonTable = [...new Array(360)].map((_, i) => i)
 
 // Peason hash to generate hue
 export function getRandomColor (seed) {
