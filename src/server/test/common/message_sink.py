@@ -25,7 +25,6 @@ class MessageSink():
             self._sink_thread.start()
             self._start_finished_condition.wait()
 
-
     def get_wanted_messages(self):
         return self._wanted_messages
 

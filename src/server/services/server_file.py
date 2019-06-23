@@ -1,8 +1,7 @@
-from typing import Any, Dict, List, Tuple, Iterable
+from typing import Any, Dict, List, Iterable
 from typedefs import Address
 from piece_table import PieceTable
 import os
-import uuid
 
 
 Cursors = Dict[Address, List[Any]]
@@ -62,9 +61,9 @@ class ServerFile:
         pass
 
     def add_lock(self, client: Address,
-                       piece_id: str,
-                       offset: int,
-                       length: int) -> str:
+                 piece_id: str,
+                 offset: int,
+                 length: int) -> str:
         """
         Tries to create the block within the piece table.
         Returns the block ID of the created block when successful, None
@@ -100,15 +99,15 @@ class ServerFile:
         the form [username of the address, piece_id].
         """
         return [[usernames[addr], lock_id] for addr in self.locks
-                 for lock_id in self.locks[addr]]
+                for lock_id in self.locks[addr]]
 
     def join_file(self, client: Address) -> None:
         self.clients[client] = [self.file_pt.table[0][0], 0, 0, False]
 
     def move_cursor(self, client: Address,
-                          piece_id: str,
-                          offset: int,
-                          column: int) -> None:
+                    piece_id: str,
+                    offset: int,
+                    column: int) -> None:
         self.clients[client] = [piece_id, offset, column, False]
 
     def get_cursor(self, client: Address) -> List[Any]:

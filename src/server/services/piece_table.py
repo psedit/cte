@@ -291,4 +291,3 @@ class PieceTable:
         for piece in self.table:
             if piece[0] == piece_id:
                 self.blocks[piece[1]].close()
-
