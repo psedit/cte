@@ -82,7 +82,7 @@ class MessageBus(LoggerMixin):
 
         if isinstance(msg['sender'], str) and msg['type'].endswith('request'):
             print(f"Request sent with uuid: {msg['uuid']}")
-            self.response_map[msg['uuid']] = msg['sender']
+            self.response_map[msg['uuid']] = 'PYRONAME:' + msg['sender']
 
         if msg['type'].endswith('response'):
             self._info(f"Response received to uuid {msg.get('response_uuid')}")
@@ -117,6 +117,7 @@ class MessageBus(LoggerMixin):
                 continue
             if (not name.startswith('service')):
                 continue
+            name = 'PYRONAME:' + name
             proxy = self._get_proxy(uri, name)
             self._register_service_handlers(proxy, uri)
 
@@ -140,9 +141,30 @@ class MessageBus(LoggerMixin):
             return False
 
         self._info(f"Sending response to uuid {response_uuid}")
-        self._proxies[request_sender].handle_message(message)
+        if not self._try_call_handle_message(request_sender, message):
+            return False
         del self.response_map[response_uuid]
         return True
+
+    def _try_call_handle_message(self, name, message):
+        try:
+            self._get_proxy(name).handle_message(message)
+        except Pyro4.errors.CommunicationError:
+            self._warning("Error communicating with %s, removing proxy...", name)
+            self._remove_service(name)
+            return False
+        else:
+            return True
+
+    def _remove_service(self, name):
+        with self._proxy_lock:
+            del self._proxies[name]
+
+            for k, v in self.handlers.items():
+                if name in v:
+                    v.remove(name)
+            if name in self._all_message_handlers:
+                self._all_message_handlers.remove(name)
 
     def _handle_messages(self):
         """ Waits for new messages in the message queue. """
@@ -153,6 +175,7 @@ class MessageBus(LoggerMixin):
             with self._handler_lock:
                 for uri in self._all_message_handlers:
                     handled = True
+                    self._try_call_handle_message(uri, message)
                     self._get_proxy(uri).handle_message(message)
 
                 handlers = self.handlers[message["type"]]
