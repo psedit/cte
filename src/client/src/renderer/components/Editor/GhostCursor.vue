@@ -1,11 +1,8 @@
 <template>
-  <div class="ghostCursor" :style="style"></div>
+  <div class="ghostCursor" :style="style" v-if="line > -1"></div>
 </template>
 
 <script>
-  import {getRandomColor} from './RandomColor'
-  // import CodeMirror from 'codemirror/lib/codemirror'
-
   export default {
     name: 'GhostCursor',
     props: {
@@ -13,6 +10,7 @@
       filepath: String,
       line: Number,
       ch: Number,
+      backgroundColor: Object,
       cminstance: Object
     },
     data () {
@@ -21,14 +19,8 @@
         left: 0
       }
     },
-
     computed: {
-      backgroundColor () {
-        return getRandomColor(this.username)
-      },
-
       color () {
-        console.log(this.backgroundColor.luminosity(), this.backgroundColor.isLight())
         return this.backgroundColor.isLight() ? '#151515' : '#fff'
       },
 
@@ -48,6 +40,7 @@
     },
     methods: {
       updateCoords () {
+        if (!this.cminstance) return
         const pos = this.cminstance.charCoords({line: this.line, ch: this.ch}, 'local')
         this.left = pos.left + this.gutterWidth
         this.top = pos.top
@@ -55,11 +48,10 @@
     },
     watch: {
       line () { this.updateCoords() },
-      ch () { this.updateCoords() }
+      ch () { this.updateCoords() },
+      cminstance () { this.updateCoords() }
     },
     mounted () {
-      console.log()
-      this.cminstance.on('update', this.updateCoords)
       this.updateCoords()
     }
   }

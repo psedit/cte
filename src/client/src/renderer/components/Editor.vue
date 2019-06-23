@@ -1,25 +1,30 @@
 <template>
   <div class="editor">
     <div class="editor-pieces">
-      <editor-piece
-        v-for="(piece, index) in pieces"
-        :key="piece.pieceID + piece.username"
-        :index="index"
-        :pieces="pieces"
-        :dragStart="lockDragStartLocation"
-        :dragEnd="lockDragEndLocation"
-        @lockDragStart="lockDragStart"
-        @lockDragUpdate="lockDragUpdate"
-        @lockDragEnd="lockDragEnd"
-        @mounted="editorMount"
-        ref="editorPieces"
-      />
+      <transition-group name="swap" tag="editor-piece">
+        <editor-piece 
+          v-for="(piece, index) in pieces"
+          v-if="piece.text.length > 0"
+          :key="piece.pieceID + piece.username"
+          :index="index"
+          :pieces="pieces"
+          :dragStart="lockDragStartLocation"
+          :dragEnd="lockDragEndLocation"
+          @lockDragStart="lockDragStart"
+          @lockDragUpdate="lockDragUpdate"
+          @lockDragEnd="lockDragEnd"
+          @mounted="editorMount"
+          @update="editorUpdate"
+          ref="editorPieces"
+        />
+      </transition-group>
     </div>
     <!--<div id="placeholder" v-if="!this.ready">⇚ Select a file</div>-->
     <div class="user-list" v-if="pieces.length > 0">
       <div
         class="user-list-item"
         v-for="cursor in cursors"
+        :key="cursor.username"
         :title="cursor.username"
         :style="{borderColor: cursor.color}"
       >{{ cursor.username.toUpperCase() }}</div>
@@ -29,8 +34,9 @@
 
 <script>
   import EditorPiece from './Editor/EditorPiece'
-  import {getRandomColor} from './Editor/RandomColor'
+  import convert from './Editor/cursor'
   import connector from '../../main/connector'
+  import { getRandomColor } from './Editor/RandomColor'
   import { convertChangeToJS, edit, rangeToAnchoredLength } from '../../main/pieceTable'
 
   export default {
@@ -42,30 +48,38 @@
       return {
         lockDragStartLocation: null,
         lockDragEndLocation: null,
-        dragList: null,
-        cursors: []
+        dragList: null
       }
     },
     watch: {
-      filePath () {
+      filePath (val) {
+        this.$store.commit('emptyCursors')
+        if (val === '') return
+
         connector.request(
           'cursor-list-request',
           'cursor-list-response',
-          { file_path: this.filePath }
-        ).then((response) => {
-          this.cursors = response.cursor_list.map(x => {
-            return this.cursor(x[0], x[1], x[2], x[3])
-          })
+          { file_path: val }
+        ).then(({cursor_list: cursorList}) => {
+          for (const [username, pieceID, line, ch] of cursorList) {
+            console.log(cursorList)
+            this.$store.commit('addCursor', {
+              username,
+              pieceID,
+              line,
+              ch,
+              filepath: val,
+              color: getRandomColor(username)
+            })
+          }
         })
       }
     },
     methods: {
+      editorUpdate () {},
       editorMount (editorPiece) {
         const index = this.$refs.editorPieces.indexOf(editorPiece)
         this.initializeEditor(index)
-        if (index === this.pieces.length - 1) {
-          // this.initalizeEditors()
-        }
       },
 
       async initializeEditor (index) {
@@ -139,15 +153,6 @@
         for (let key in this.components) {
           this.components[key].$options.cminstance.clearGutter('user-gutter')
         }
-      },
-      cursor (username, pieceID, offset, column) {
-        return {
-          username,
-          pieceID,
-          offset,
-          column,
-          color: getRandomColor(username)
-        }
       }
     },
 
@@ -166,6 +171,9 @@
       },
       filePath () {
         return this.$store.state.fileTracker.openFile
+      },
+      cursors () {
+        return this.$store.state.user.cursors.filter(({filepath}) => filepath === this.filePath)
       },
       lang () {
         if (!this.filePath) return null
@@ -196,29 +204,18 @@
         })
 
         connector.listenToMsg('file-join-broadcast', ({content}) => {
-          if (content.file_path === this.filePath && content.username !== this.username) {
-            this.cursors = [
-              ...this.cursors.filter(({username}) => username !== content.username),
-              this.cursor(content.username, 0, 0, 0)]
-          }
+          this.$store.dispatch('moveCursor', {...convert(content), ch: -1, line: -1})
         })
 
         connector.listenToMsg('cursor-move-broadcast', ({content}) => {
-          console.log(this.filePath, content)
-          if (content.file_path === this.filePath && content.username !== this.username) {
-            this.cursors = [
-              ...this.cursors.filter(({username}) => username !== content.username),
-              this.cursor(content.username, content.pieceID, content.offset, content.column)]
-          }
+          this.$store.dispatch('moveCursor', convert(content))
         })
 
         connector.listenToMsg('file-leave-broadcast', ({content}) => {
-          console.log(content)
-          if (content.file_path === this.filePath) {
-            this.cursors = this.cursors.filter(({username}) => username !== content.username)
-          }
+          this.$store.commit('removeCursor', convert(content))
         })
       })
+
       addEventListener('mouseup', (e) => {
         if (!e.composedPath()[0].classList.contains('user-gutter')) {
           this.lockDragCancel()
@@ -229,6 +226,34 @@
 </script>
 
 <style scoped lang="scss">
+.swap-enter-to {
+  opacity: 1;
+  max-height: 10000px;
+  margin-bottom: 0px;
+  // display: block;
+}
+
+.swap-enter {
+  opacity: 0;
+  max-height: 0px;
+  margin-bottom: -1px;
+}
+
+.swap-enter-active {
+  // display: none;
+  // transition: opacity 1s 5s;
+  transition: all 0s 0.35s;
+}
+
+.swap-leave-active {
+  // transition: opacity 0s 0.5s;
+  transition: opacity 0s 0.35s;
+}
+
+.swap-leave-to {
+  opacity: 0;
+}
+
 .editor {
   width: 100%;
   overflow-y: hidden;
