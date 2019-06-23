@@ -274,6 +274,11 @@
           }
 
           fileManager.nameChange(this.currPathString, oldName, newName)
+
+          /* Functions in the store can only take one argument, so we have to
+           * pass arguments like this. */
+          let payload = {pathToDir: this.currPathString, oldName: oldName, newName: newName}
+          this.$store.commit('renameTab', payload)
         }
 
         this.promptBox('Enter new name', oldName, changeName)
@@ -507,6 +512,7 @@
           /* When user selects 'No', do nothing. Otherwise remove item. */
           if (response !== 0) {
             fileManager.removeItem(filePath)
+            this.$store.dispatch('removeTabByPath', filePath)
           }
         })
       },

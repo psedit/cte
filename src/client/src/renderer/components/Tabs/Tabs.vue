@@ -28,7 +28,7 @@
     },
     methods: {
       scrollTabs (e) {
-        var direction = 1
+        let direction = 1
         if (e.deltaY < 0) {
           direction = 0
         }
