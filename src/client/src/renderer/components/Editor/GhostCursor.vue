@@ -1,10 +1,8 @@
 <template>
-  <div class="ghostCursor" :style="style"></div>
+  <div class="ghostCursor" :style="style" v-if="line > -1"></div>
 </template>
 
 <script>
-  import {getRandomColor} from './RandomColor'
-
   export default {
     name: 'GhostCursor',
     props: {
@@ -12,6 +10,7 @@
       filepath: String,
       line: Number,
       ch: Number,
+      backgroundColor: Object,
       cminstance: Object
     },
     data () {
@@ -20,12 +19,7 @@
         left: 0
       }
     },
-
     computed: {
-      backgroundColor () {
-        return getRandomColor(this.username)
-      },
-
       color () {
         return this.backgroundColor.isLight() ? '#151515' : '#fff'
       },
