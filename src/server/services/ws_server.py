@@ -83,7 +83,6 @@ class WSServer(Service):
         """
         while True:
             msg = await self.messages_to_send.get()
-            print(f"Got message: {msg}")
             recipients = msg["content"]["response_addrs"]
             self._info("Sending message %r to clients %r", msg, recipients)
             for recipient in recipients:
@@ -181,7 +180,7 @@ class WSServer(Service):
 
     @message_type("client-list-request")
     async def _send_client_list(self, msg):
-        clients = self.clients.keys()
+        clients = list(self.clients.keys())
 
         content = {
             "client_list": clients

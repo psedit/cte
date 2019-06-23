@@ -1,16 +1,20 @@
-from server_file import ServerFile
+from server_file import ServerFile, LockError
 from typedefs import Address
 from typing import Dict, List
 from service import Service, message_type
+import traceback
 import os
 import shutil
 import Pyro4
 
 # TODO: dit is vast lelijk
-ERROR_FILE_NOT_IN_RAM = 1
-ERROR_FILE_NOT_JOINED = 2
-ERROR_FILE_NOT_PRESENT = 3
-ERROR_FILE_ILLEGAL_LOCK = 4
+ERROR_WRONG_MESSAGE = 1
+ERROR_FILE_NOT_IN_RAM = 2
+ERROR_FILE_NOT_JOINED = 3
+ERROR_FILE_NOT_PRESENT = 4
+ERROR_FILE_ILLEGAL_LOCK = 5
+ERROR_NOT_LOCKED = 6
+ERROR_ILLEGAL_PIECE_ID = 7
 
 
 @Pyro4.expose
@@ -156,7 +160,7 @@ class Filesystem(Service):
         if not self._is_joined(address, path):
             return
 
-        self._send_cursor_list(self, path, address, exclude=(address,))
+        self._send_cursor_list(path, address, exclude=(address,))
 
     def _send_cursor_list(self, path, *addrs, exclude=None):
         """
@@ -176,6 +180,19 @@ class Filesystem(Service):
         self._send_message_client("cursor-list-response",
                                   {"cursor_list": cursors},
                                   *addrs)
+
+    def _broadcast_file_cursors(self, file):
+        for client, loc in file.clients.items():
+            uname = self.usernames[client]
+            self._send_message_client("cursor-move-broadcast",
+                                      {
+                                          "username": uname,
+                                          "file_path": file.file_path_relative,
+                                          "piece_id": loc[0],
+                                          "offset": loc[1],
+                                          "column": loc[2]
+                                      },
+                                      *file.get_clients(exclude=client))
 
     @message_type("file-join")
     async def _file_add_client(self, msg) -> None:
@@ -242,7 +259,10 @@ class Filesystem(Service):
 
         # Broadcast the change and remove the username
         self._send_file_leave_broadcast(path, address)
-        del self.usernames[address]
+        self._send_piece_table_change_broadcast(path)
+
+        if self.usernames[address]:
+            del self.usernames[address]
 
     @message_type("client-disconnect")
     async def _remove_client(self, msg) -> None:
@@ -252,11 +272,13 @@ class Filesystem(Service):
 
         for path, f in self.file_dict.items():
             if f.is_joined(address):
+                # Remove the client from the file and broadcast the change.
                 f.drop_client(address)
                 self._send_file_leave_broadcast(path, address)
+                self._send_piece_table_change_broadcast(path)
 
-        # Broadcast the change and remove the username
-        del self.usernames[address]
+        if address in self.usernames:
+            del self.usernames[address]
 
     def _send_file_join_broadcast(self, file_path: str, client: Address):
         file = self.file_dict[file_path]
@@ -294,8 +316,9 @@ class Filesystem(Service):
 
         try:
             lock_id = self.file_dict[path].add_lock(address, piece_id,
-                                                    offset, length)
+                                                    offset, length, username)
         except ValueError as e:
+            print(traceback.print_exc())
             self._send_message_client("error-response",
                                       {
                                           "message": str(e),
@@ -308,6 +331,7 @@ class Filesystem(Service):
 
         self._send_lock_response(path, True, lock_id, address)
         self._send_piece_table_change_broadcast(path, lock_id, True)
+        self._broadcast_file_cursors(self.file_dict[path])
 
     @message_type("file-unlock-request")
     async def _file_remove_lock(self, msg) -> None:
@@ -340,15 +364,20 @@ class Filesystem(Service):
 
     def _send_piece_table_change_broadcast(self,
                                            file_path: str,
-                                           lock_id: str,
-                                           is_locked: bool) -> None:
+                                           lock_id: str = "",
+                                           is_locked: bool = False) -> None:
         """
         Send the new table from the piece table to all clients within the file.
+        Also sends the updated cursor positions.
         """
         file = self.file_dict[file_path]
 
         lines = file.file_pt.get_piece_content(lock_id)
-        block_id = file.file_pt.get_piece_block_id(lock_id)
+        if lock_id:
+            block_id = file.file_pt.get_piece_block_id(lock_id)
+        else:
+            block_id = -1  # Signals no block is changed
+
         content = {
                     "file_path": file_path,
                     "piece_table": file.file_pt.table,
@@ -356,6 +385,8 @@ class Filesystem(Service):
                   }
         self._send_message_client("file-piece-table-change-broadcast", content,
                                   *file.get_clients())
+
+        self._broadcast_file_cursors(file)
 
     @message_type("file-lock-list-request")
     async def _file_send_lock_list(self, msg) -> None:
@@ -472,6 +503,92 @@ class Filesystem(Service):
         self._send_message_client("file-change-broadcast", content,
                                   *resp["content"]["client_list"])
 
+
+    @message_type("file-delta")
+    async def _edit_block(self, msg) -> None:
+        """
+        Replaces a line in the given block of the piecetable
+        with the new provided content.
+        """
+
+        try:
+            address, username = msg["sender"]
+            content = msg["content"]
+
+            file_path = content["file_path"]
+            piece_uuid = content["piece_uuid"]
+            block_content = content["content"]
+        except KeyError as e:
+            #TODO: error sturen
+            self._send_message_client("error-response",
+                                      {"message": str(e),
+                                       "error_code": ERROR_WRONG_MESSAGE},
+                                      address)
+            return
+
+        file = self.file_dict[file_path]
+
+        try:
+            file.update_content(username, piece_uuid, block_content)
+        except LockError as e:
+            #TODO send lock error
+            return
+            message = "Illegal edit, this lock does not belong to you."
+            self._send_message_client("error-response",
+                                      {"message": message,
+                                       "error_code": ERROR_NOT_LOCKED},
+                                      address)
+
+            block_line = file.file_pt.get_piece_content(piece_uuid)
+            block_content = ""
+            for line in block_line:
+                block_content += line
+
+            resp_content = {
+                        "file_path": file_path,
+                        "piece_uuid": piece_uuid,
+                        "content": block_content
+                    }
+            self._send_message_client("file-delta-broadcast",
+                                      resp_content, address)
+            return
+        except ValueError as e:
+            # self._send_message_client("file-delta-broadcast", content, [address])
+            self._send_message_client("error-response",
+                                      {"message": str(e),
+                                       "error_code": ERROR_ILLEGAL_PIECE_ID},
+                                      address)
+            return
+
+        self._send_message_client("file-delta-broadcast",
+                                  content,
+                                  *file.get_clients(exclude=[address]))
+
+    @message_type("file-save")
+    async def _save_file_to_disk(self, msg):
+        try:
+            address, username = msg['sender']
+            content = msg['content']
+            file_path = content['file_path']
+
+            if file_path not in self.file_dict \
+                or not self.file_dict[file_path].is_joined(address):
+                message = f"""File {file_path} is not in system RAM.
+                          Join the file to load it to memory."""
+                self._send_message_client("error-response",
+                                          {"message": message,
+                                           "error_code": ERROR_FILE_NOT_IN_RAM},
+                                          address)
+                return
+
+            self.file_dict[file_path].save_to_disk()
+            content['saved'] = 'true'
+
+            self._send_message_client("file-save-broadcast",
+                                      content,
+                                      *self.file_dict[file_path].get_clients())
+        except KeyError as e:
+            return
 
 if __name__ == "__main__":
     Filesystem.start()

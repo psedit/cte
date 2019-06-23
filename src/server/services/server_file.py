@@ -1,5 +1,7 @@
 from typing import Any, Dict, List, Iterable
 from typedefs import Address
+from typing import Any, Dict, List, Optional
+from client import Address
 from piece_table import PieceTable
 import os
 
@@ -31,15 +33,19 @@ class ServerFile:
             self.file_pt = PieceTable(file_list)
             self.is_saved = True
 
-    def save_to_disk(self) -> None:
+    def save_to_disk(self, garbage_collect=True) -> None:
         """
         Writes the current buffer to the file on disk, while keeping all
         open edit-blocks open.
         """
         file_path = os.path.join(self.root_dir, self.file_path_relative)
         with open(file_path, 'w') as f:
-            for line in self.file_pt.stitch():
-                f.write(line)
+            if garbage_collect:
+                for line in self.file_pt.remove_closed_blocks():
+                    f.write(line)
+            else:
+                for line in self.file_pt.stitch():
+                    f.write(line)
 
         self.is_saved = True
 
@@ -60,10 +66,8 @@ class ServerFile:
         self.is_saved = False
         pass
 
-    def add_lock(self, client: Address,
-                 piece_id: str,
-                 offset: int,
-                 length: int) -> str:
+    def add_lock(self, client: Address, piece_id: str, offset: int,
+                 length: int, uname: str) -> str:
         """
         Tries to create the block within the piece table.
         Returns the block ID of the created block when successful, None
@@ -71,7 +75,7 @@ class ServerFile:
         """
         cursors_rows = self.get_cursors_rows()
 
-        lock_id = self.file_pt.open_block(piece_id, offset, length)
+        lock_id = self.file_pt.open_block(piece_id, offset, length, uname)
 
         if client not in self.locks:
             self.locks[client] = [lock_id]
@@ -100,6 +104,14 @@ class ServerFile:
         """
         return [[usernames[addr], lock_id] for addr in self.locks
                 for lock_id in self.locks[addr]]
+
+    def get_lock_client(self, lock_id) -> Optional[Address]:
+        """
+        Returns the address of the client who holds the lock.
+        """
+        for client, locks in self.locks.items():
+            if lock_id in locks:
+                return client
 
     def join_file(self, client: Address) -> None:
         self.clients[client] = [self.file_pt.table[0][0], 0, 0, False]
@@ -166,3 +178,27 @@ class ServerFile:
 
     def change_file_path(self, new_path: str) -> None:
         self.file_path_relative = new_path
+
+    def _has_lock(self, uname: str, piece_id: str):
+        """
+        Checks if the given address has a lock on the given piece id
+        """
+
+        return self.file_pt.get_piece(piece_id)[4] == uname
+
+    def update_content(self, uname: str, piece_id: str, content: str) -> None:
+        """
+        Updates the content in the piecetable
+        """
+        if self._has_lock(uname, piece_id):
+            self.file_pt.set_piece_content(piece_id, content)
+        if not self.file_pt.get_piece(piece_id):
+            raise ValueError("The piece uuid is not present within the table.")
+        elif self._has_lock(uname, piece_id):
+            self.file_pt.set_piece_content(piece_id, content)
+        else:
+            raise LockError(f"{address} has no lock on {piece_id}")
+
+
+class LockError(Exception):
+    pass

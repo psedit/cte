@@ -13,10 +13,6 @@ class TextBlock:
     def __len__(self) -> int:
         return len(self.lines)
 
-    def update(self, delta) -> None:
-        # TODO
-        pass
-
     def get_lines(self, start: int, length: int) -> List[str]:
         return self.lines[start:start + length]
 
@@ -25,3 +21,9 @@ class TextBlock:
 
     def is_open(self) -> bool:
         return self.open
+
+    def set_content(self, content: str) -> None:
+        """
+        Sets the content of the textblock and returns the new length
+        """
+        self.lines = content.splitlines(True)
