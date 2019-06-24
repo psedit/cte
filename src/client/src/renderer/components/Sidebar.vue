@@ -32,6 +32,10 @@
   const dialogs = require('dialogs')
   const fs = require('fs')
 
+  const homedir = require('os').homedir()
+  const settingsDirPath = homedir + '/pseditor-settings/'
+  const settingsPath = settingsDirPath + 'settings.json'
+
   export default {
     name: 'sidebar',
     data () {

@@ -34,21 +34,26 @@ function createWindow () {
   mainWindow.loadURL(winURL)
   const menu = Menu.buildFromTemplate([
     {
-      label: 'Server Connection',
+      label: 'Settings',
       submenu: [
         {
-          label: 'Change Server',
+          label: 'Server Connection',
           click () {
             prompt({
               title: 'New Server URL',
               label: 'URL',
               value: 'ws://segfault.party:12345'
             }).then((newURLString) => {
-              if (newURLString === undefined) {
-                return
+              if (newURLString !== undefined && newURLString !== null) {
+                mainWindow.webContents.send('changeURL', newURLString)
               }
-              mainWindow.webContents.send('changeURL', newURLString)
             })
+          }
+        },
+        {
+          label: 'Local Workspace',
+          click () {
+            console.log('hallo')
           }
         }
       ]

@@ -1,10 +1,11 @@
 const WebSocket = require('ws')
 const uuid = require('uuid/v4')
+const fs = require('fs')
 
-// FIXME: Change path to server path.
 const path = new URL('ws://bami.party:12345')
-// const path = 'ws://segfault.party:12345'
-// const path = new URL('ws://localhost:8080')
+const homedir = require('os').homedir()
+const settingsDirPath = homedir + '/pseditor-settings/'
+const settingsPath = settingsDirPath + 'settings.json'
 
 /**
  * @typedef {Object} Message
@@ -57,10 +58,34 @@ class Connector {
 
   /**
    * Creates a connection and setups listeners.
+   * Also creates a json file or reads path from json file.
    * @param {string | URL} path - The path to the websocket server.
    */
   constructor (path) {
-    this.setUp(path)
+    let settings = {serverURL: path, workingPath: ''}
+
+    /* If settings json file exists, read the file and update the settings object. */
+    if (fs.existsSync(settingsPath)) {
+      let jsonSettingsString = fs.readFileSync(settingsPath, 'utf8')
+      try {
+        settings = JSON.parse(jsonSettingsString)
+      } catch (err) {
+        console.error(err)
+      }
+    } else {
+      /* Make a json object and write it to the settings.json file. */
+      const jsonSettingsString = JSON.stringify(settings)
+
+      /* Make the pseditor-settings directory if it does not exist yet. */
+      if (!fs.existsSync(settingsDirPath)) fs.mkdirSync(settingsDirPath)
+
+      /* Write json string to file. */
+      fs.writeFile(settingsPath, jsonSettingsString, 'utf8', (e) => {
+        if (e) console.error(e)
+      })
+    }
+
+    this.setUp(settings.serverURL)
   }
   /**
    * Sets up the connector.
@@ -115,11 +140,37 @@ class Connector {
     }, 5) // wait 5 milisecond for the connection...
   }
   /**
-   * Change the server URL
+   * Change the server URL and update the JSON file accordingly.
    * @param {string} newPathString string with path for new url
    */
   reload (newPathString) {
-    this.setUp(newPathString)
+    let settings = {serverURL: newPathString, workingPath: ''}
+
+    // TODO: Maak hier een fucntie van (@see constructor)
+    /* If settings json file exists, read the file and update the serverURL member. */
+    if (fs.existsSync(settingsPath)) {
+      let jsonSettingsString = fs.readFileSync(settingsPath, 'utf8')
+      console.log(jsonSettingsString) // TODO: REMOVE
+      try {
+        settings = JSON.parse(jsonSettingsString)
+        settings.serverURL = newPathString
+        fs.writeFile(settingsPath, JSON.stringify(settings), 'utf8', (e) => { if (e) console.error(e) })
+      } catch (err) {
+        console.error(err)
+      }
+    } else {
+      /* Make a json object and write it to the settings.json file. */
+      const jsonSettingsString = JSON.stringify(settings)
+
+      /* Make the pseditor-settings directory if it does not exist yet. */
+      if (!fs.existsSync(settingsDirPath)) fs.mkdirSync(settingsDirPath)
+
+      /* Write json string to file. */
+      fs.writeFile(settingsPath, jsonSettingsString, 'utf8', (e) => {
+        if (e) console.error(e)
+      })
+    }
+    this.setUp(settings.serverURL)
   }
   /**
    * Closes connection to websocket server
