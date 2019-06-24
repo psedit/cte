@@ -1,10 +1,12 @@
+from typing import Any, Dict, List, Iterable
+from typedefs import Address
 from typing import Any, Dict, List, Optional
 from client import Address
 from piece_table import PieceTable
 import os
 
 
-CursorMap = Dict[Address, List[Any]]
+Cursors = Dict[Address, List[Any]]
 
 
 class ServerFile:
@@ -114,7 +116,9 @@ class ServerFile:
     def join_file(self, client: Address) -> None:
         self.clients[client] = [self.file_pt.table[0][0], 0, 0, False]
 
-    def move_cursor(self, client: Address, piece_id: str, offset: int,
+    def move_cursor(self, client: Address,
+                    piece_id: str,
+                    offset: int,
                     column: int) -> None:
         self.clients[client] = [piece_id, offset, column, False]
 
@@ -130,8 +134,9 @@ class ServerFile:
             cursors_rows[client] = self.file_pt.get_piece_start(p_id) + offset
         return cursors_rows
 
-    def get_cursors(self, exclude: List[Address] = []) -> CursorMap:
+    def get_cursors(self, exclude: Iterable[Address] = ()) -> Cursors:
         c_list = self.clients.copy()
+        exclude = exclude or ()
         for client in exclude:
             del c_list[client]
         return c_list

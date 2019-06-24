@@ -234,18 +234,6 @@
           this.$emit('update')
         })
 
-        cm.on('cursorActivity', () => {
-          const cursorPos = cm.doc.getCursor()
-          console.log(cursorPos, this.pieces[this.index].pieceID)
-          // const message =
-          connector.send('cursor-move', {
-            file_path: this.$store.state.fileTracker.openFile,
-            piece_id: this.pieces[this.index].pieceID,
-            offset: cursorPos.line,
-            column: cursorPos.ch
-          })
-        })
-
         cm.on('scrollCursorIntoView', (_, e) => {
           e.preventDefault()
         })
@@ -261,6 +249,17 @@
               file_path: this.$store.state.fileTracker.openFile,
               piece_uuid: this.pieces[this.index].pieceID,
               content: value
+            })
+          })
+
+          cm.on('cursorActivity', () => {
+            const cursorPos = cm.doc.getCursor()
+
+            connector.send('cursor-move', {
+              file_path: this.$store.state.fileTracker.openFile,
+              piece_id: this.pieces[this.index].pieceID,
+              offset: cursorPos.line,
+              column: cursorPos.ch
             })
           })
         }

@@ -30,7 +30,7 @@
             // FIXME: do error screeen pls
             console.error('hier graag')
           } else {
-            this.$store.dispatch('login', newUsername)
+            this.$store.commit('changeUsername', newUsername)
           }
         })
       })
