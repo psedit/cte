@@ -34,6 +34,7 @@
 </template>
 
 <script>
+  import Vue from 'vue'
   import EditorPiece from './Editor/EditorPiece'
   import convert from './Editor/cursor'
   import connector from '../../main/connector'
@@ -75,6 +76,11 @@
             })
           }
         })
+      },
+      pieces: function () {
+        const editorElement = this.$refs.editorPiecesList
+        this.restoreScrollY = editorElement.scrollTop
+        Vue.nextTick(this.restoreEditorScroll)
       }
     },
     methods: {
@@ -109,14 +115,21 @@
       },
       restoreEditorScroll () {
         const editorElement = this.$refs.editorPiecesList
-        console.log('new scroll', editorElement.scrollTop)
-        editorElement.scrollTop = this.restoreScrollY
+        if (editorElement.scrollHeight - editorElement.clientHeight <= this.restoreScrollY) {
+          console.log('Current editor too small for restoration.')
+          this.restoreScrollY -= 1
+          this.$nextTick(this.restoreEditorScroll)
+        } else {
+          console.log(`Reset scroll from ${editorElement.scrollTop} to ${this.restoreScrollY}`)
+          editorElement.scrollTop = Math.min(this.restoreScrollY, editorElement.scrollHeight - editorElement.clientHeight)
+        }
       },
       lockDragStart (line, index) {
         const editorElement = this.$refs.editorPiecesList
         this.restoreScrollY = editorElement.scrollTop
         this.lockDragStartLocation = {piece: index, line}
         this.lockDragEndLocation = {piece: index, line}
+        Vue.nextTick(this.restoreEditorScroll)
       },
       lockDragUpdate (line, index) {
         const editorElement = this.$refs.editorPiecesList
@@ -124,6 +137,7 @@
         if (this.lockDragStartLocation) {
           this.lockDragEndLocation = {piece: index, line}
         }
+        Vue.nextTick(this.restoreEditorScroll)
       },
       lockDragEnd (line, index) {
         if (this.lockDragStartLocation === null) return
@@ -152,11 +166,16 @@
         }
       },
       lockDragCancel () {
-        console.log('cancel')
-        this.lockDragStartLocation = null
-        this.lockDragEndLocation = null
-        for (let key in this.components) {
-          this.components[key].$options.cminstance.clearGutter('user-gutter')
+        if (this.lockDragStartLocation) {
+          const editorElement = this.$refs.editorPiecesList
+          this.restoreScrollY = editorElement.scrollTop
+          console.log('cancel')
+          this.lockDragStartLocation = null
+          this.lockDragEndLocation = null
+          for (let key in this.components) {
+            this.components[key].$options.cminstance.clearGutter('user-gutter')
+          }
+          this.$nextTick(this.restoreEditorScroll)
         }
       }
     },
@@ -261,6 +280,7 @@
 
 .editor {
   width: 100%;
+  height: auto;
   overflow-y: scroll;
   background-color: #272822;
 }
