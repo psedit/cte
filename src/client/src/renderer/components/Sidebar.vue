@@ -7,6 +7,7 @@
     </div>
     <div class="file-tools">
       <file-plus title="Add new file/directory" class="button" @click="createItem"/>
+      <cloud-download-outline title="Download project" class="button" @click="downloadProject"/>
       <upload title="Upload directory" class="button" @click="uploadDir"/>
       <file-upload title="Upload file" class="button" @click="uploadFile"/>
     </div>
@@ -22,6 +23,7 @@
   import BackIcon from 'vue-material-design-icons/ArrowLeft'
   import FilePlus from 'vue-material-design-icons/FilePlus'
   import FileUpload from 'vue-material-design-icons/FileUpload'
+  import CloudDownloadOutline from 'vue-material-design-icons/CloudDownloadOutline'
   import Upload from 'vue-material-design-icons/Upload'
   import connector from '../../main/connector'
   import FileTree from './Sidebar/FileTree'
@@ -31,10 +33,6 @@
   const {dialog} = require('electron').remote
   const dialogs = require('dialogs')
   const fs = require('fs')
-
-  const homedir = require('os').homedir()
-  const settingsDirPath = homedir + '/pseditor-settings/'
-  const settingsPath = settingsDirPath + 'settings.json'
 
   export default {
     name: 'sidebar',
@@ -50,7 +48,8 @@
       BackIcon,
       FilePlus,
       Upload,
-      FileUpload
+      FileUpload,
+      CloudDownloadOutline
       // VueSimpleContextMenu
     },
     computed: {
@@ -119,6 +118,13 @@
       }
     },
     methods: {
+      /**
+       * Download entire project to local directory.
+       */
+      downloadProject () {
+        console.log('downloading')
+      },
+
       /**
        * Gives the file path of an item. If directory, it needs
        * to end on a '/'.
@@ -456,10 +462,10 @@
       uploadDir () {
         let localDirPath = dialog.showOpenDialog({ properties: ['openDirectory'] })
 
-        if (localDirPath === undefined || localDirPath[0].toString().toString() === '') {
+        if (localDirPath === undefined || localDirPath[0].toString() === '') {
           return
         } else {
-          localDirPath = localDirPath[0].toString().toString()
+          localDirPath = localDirPath[0].toString()
         }
 
         /* Recursively upload folder (and all its subfolders). */
@@ -616,7 +622,7 @@
   .file-tools {
     background-color: #555;
     display: grid;
-    grid-template-columns: 1fr auto auto auto;
+    grid-template-columns: 1fr auto auto auto auto;
     grid-gap: 0.5em;
     align-items: center;
     color: #fff;
