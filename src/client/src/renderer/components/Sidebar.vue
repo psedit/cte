@@ -28,7 +28,6 @@
   import connector from '../../main/connector'
   import FileTree from './Sidebar/FileTree'
   import * as fileManager from './Sidebar/fileManager'
-  // import VueSimpleContextMenu from 'vue-simple-context-menu'
   import {convertToJS, stitch} from '../../main/pieceTable'
   const {dialog} = require('electron').remote
   const dialogs = require('dialogs')
@@ -50,7 +49,6 @@
       Upload,
       FileUpload,
       CloudDownloadOutline
-      // VueSimpleContextMenu
     },
     computed: {
       /**
@@ -122,7 +120,40 @@
        * Download entire project to local directory.
        */
       downloadProject () {
-        console.log('downloading')
+        const homedir = require('os').homedir()
+        const settingsDirPath = homedir + '/pseditor-settings/'
+        const settingsPath = settingsDirPath + 'settings.json'
+
+        let errTitle = 'Error! Could not get local workspace path...'
+        let err = 'Specify the local workspace path via Settings --> Local Workspace'
+        let localPath = ''
+
+        /* If settings json does not exist, throw an error. */
+        if (!fs.existsSync(settingsPath)) {
+          dialog.showErrorBox(errTitle, err + '\nPath to settings.json does not exist.')
+          return
+        }
+
+        /* Try getting local file path from json. */
+        let jsonSettingsString = fs.readFileSync(settingsPath, 'utf8')
+        try {
+          localPath = JSON.parse(jsonSettingsString).workingPath
+        } catch (e) {
+          dialog.showErrorBox(errTitle, err + '\nCould not parse json file.')
+          return
+        }
+
+        /* Throw error if local path does not exist. */
+        if (!fs.existsSync(localPath)) {
+          dialog.showErrorBox(errTitle, `${err}\nLocal path (${localPath}) does not exist.`)
+          return
+        }
+
+        // TODO: Download project.
+        // https://github.com/cthackers/adm-zip
+        // Beter:
+        // https://stackoverflow.com/questions/10308110/simplest-way-to-download-and-unzip-files-in-node-js-cross-platform
+        console.log('Downloading project to ' + localPath)
       },
 
       /**
