@@ -1,4 +1,6 @@
 #!/bin/sh
+export PYRO_SERIALIZERS_ACCEPTED=pickle
+export PYRO_SERIALIZER=pickle
 python3.7 -m Pyro4.naming &
 PIDN=$!
 python3.7 message_bus.py &

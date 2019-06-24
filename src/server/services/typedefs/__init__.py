@@ -7,3 +7,6 @@ Address = Tuple[str, int]
 UUID = str
 
 ServiceAddress = str
+
+class LockError(Exception):
+    pass

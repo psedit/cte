@@ -1,199 +1,138 @@
-from typing import Any, Dict, List, Optional
-from client import Address
+from typing import Dict, List
+from cursor import Cursor
 from piece_table import PieceTable
 import os
-
-
-CursorMap = Dict[Address, List[Any]]
+import traceback
 
 
 class ServerFile:
     def __init__(self, root: str, path: str) -> None:
-        self.root_dir: str = root
-        self.file_path_relative: str = path
-        self.file_pt: PieceTable
-        # Clients and their location (piece_id, offset, column, is_idle)
-        self.clients: Dict[Address, List[Any]] = {}
-        # Clients and their locks (as an index), sorted by id
-        self.locks: Dict[Address, List[str]] = {}
-        self.lock_id_count: int = 0
+        self.root: str = root
+        self.path_relative: str = path
+        self.pt: PieceTable
+        self.cursors: Dict[str, Cursor] = {}
         self.is_saved: bool
 
         self.load_from_disk()
+
+    #
+    # FILESYSTEM I/O
+    #
 
     def load_from_disk(self) -> None:
         """
         Loads the file from disk and creates the piece table object.
         """
-        file_path = os.path.join(self.root_dir, self.file_path_relative)
+        file_path = os.path.join(self.root, self.path_relative)
         with open(file_path) as f:
             file_list: List[str] = list(f)
-            self.file_pt = PieceTable(file_list)
-            self.is_saved = True
+
+        self.pt = PieceTable(file_list)
+        self.is_saved = True
 
     def save_to_disk(self, garbage_collect=True) -> None:
         """
         Writes the current buffer to the file on disk, while keeping all
-        open edit-blocks open.
+        locked pieces locked.
         """
-        file_path = os.path.join(self.root_dir, self.file_path_relative)
+        file_path = os.path.join(self.root, self.path_relative)
+
         with open(file_path, 'w') as f:
-            if garbage_collect:
-                for line in self.file_pt.remove_closed_blocks():
-                    f.write(line)
-            else:
-                for line in self.file_pt.stitch():
-                    f.write(line)
+            for line in self.pt.get_lines():
+                f.write(line)
 
         self.is_saved = True
 
-    def retrieve_block(self, start: int = 0, length: int = -1) -> List[str]:
+    def change_file_path(self, new_path: str) -> None:
+        self.path_relative = new_path
+
+    #
+    # LOCKS
+    #
+
+    def add_lock(self, start_piece_id: str, offset: int, length: int,
+                 uname: str) -> str:
         """
-        Returns all 'length' lines from line 'start', split up per line.
+        Tries to create a lock within the piece table.
 
-        A negative length will return until the last line.
+        Raises ValueError if creating the lock fails.
+
+        Returns the id of the newly locked piece.
         """
-        return self.file_pt.get_lines(start, length)
-
-    def process_delta(self, delta, client: Address, piece_id: str) -> None:
-        """
-        Writes the the delta contents (= file change) to the piece table.
-        """
-        # TODO: Keep locks in mind
-        # TODO: Return True if succesfull
-        self.is_saved = False
-        pass
-
-    def add_lock(self, client: Address, piece_id: str, offset: int,
-                 length: int, uname: str) -> str:
-        """
-        Tries to create the block within the piece table.
-        Returns the block ID of the created block when successful, None
-        otherwise
-        """
-        cursors_rows = self.get_cursors_rows()
-
-        lock_id = self.file_pt.open_block(piece_id, offset, length, uname)
-
-        if client not in self.locks:
-            self.locks[client] = [lock_id]
-        else:
-            self.locks[client].append(lock_id)
-
-        self.update_cursors(cursors_rows)
-
+        cursor_lines = self.get_cursor_rows()
+        # TODO: rollback on exception?
+        lock_id = self.pt.put_piece(start_piece_id, offset, length, uname)
+        try:
+            self.update_cursors(cursor_lines)
+        except ValueError:
+            print(f"Created lock, but updating cursors failed?")
+            print(traceback.format_exc())
         return lock_id
 
-    def remove_lock(self, client: Address, lock_id: str) -> None:
-        """
-        Remove the lock if the client has access to it.
-        """
-        if client in self.locks and lock_id in self.locks[client]:
-            self.file_pt.close_block(lock_id)
-            self.locks[client].remove(lock_id)
+    def remove_lock(self, lock_id: str) -> None:
+        self.pt.get_piece(lock_id).owner = ""
 
-            if not self.locks[client]:
-                del self.locks[client]
+    def change_lock_owner(self, lock_id: str, uname: str) -> None:
+        self.pt.get_piece(lock_id).owner = uname
 
-    def get_lock_list(self, usernames: Dict[Address, str]) -> List[List[Any]]:
-        """
-        Returns a list of all locked blocks within the file, in
-        the form [username of the address, piece_id].
-        """
-        return [[usernames[addr], lock_id] for addr in self.locks
-                for lock_id in self.locks[addr]]
+    #
+    # CURSORS
+    #
 
-    def get_lock_client(self, lock_id) -> Optional[Address]:
-        """
-        Returns the address of the client who holds the lock.
-        """
-        for client, locks in self.locks.items():
-            if lock_id in locks:
-                return client
+    def move_cursor(self, uname: str, piece_id: str,
+                    offset: int, column: int) -> None:
+        self.cursors[uname] = Cursor(piece_id, offset, column)
 
-    def join_file(self, client: Address) -> None:
-        self.clients[client] = [self.file_pt.table[0][0], 0, 0, False]
+    def get_cursor_list(self, exclude: List[str]) -> Dict[str, Cursor]:
+        return {uname: cursor for uname, cursor in self.cursors.items()
+                if uname not in exclude}
 
-    def move_cursor(self, client: Address, piece_id: str, offset: int,
-                    column: int) -> None:
-        self.clients[client] = [piece_id, offset, column, False]
+    def get_cursor_rows(self) -> Dict[str, int]:
+        cursor_lines = {}
+        for uname, cursor in self.cursors.items():
+            cursor_lines[uname] = (self.pt.piece_to_row(cursor.piece_id)
+                                   + cursor.offset)
+        return cursor_lines
 
-    def get_cursor(self, client: Address) -> List[Any]:
-        return self.clients[client]
+    def update_cursors(self, cursors) -> None:
+        for uname in cursors:
+            piece_id, offset = self.pt.row_to_piece(cursors[uname])
+            self.cursors[uname].piece_id = piece_id
+            self.cursors[uname].offset = offset
 
-    def get_cursors_rows(self) -> Dict[Address, int]:
-        """
-        Returns a list of the current line positions of all cursors.
-        """
-        cursors_rows = {}
-        for client, [p_id, offset, _, _] in self.clients.items():
-            cursors_rows[client] = self.file_pt.get_piece_start(p_id) + offset
-        return cursors_rows
+    #
+    # CLIENTS
+    #
 
-    def get_cursors(self, exclude: List[Address] = []) -> CursorMap:
-        c_list = self.clients.copy()
-        for client in exclude:
-            del c_list[client]
-        return c_list
+    def client_join(self, uname: str) -> None:
+        self.cursors[uname] = Cursor(self.pt.table[0].piece_id, 0, 0)
 
-    def update_cursors(self, cursors_rows: Dict[Address, int]) -> None:
-        """
-        Updates the cursor dictionary to reflect piece uuid changes within
-        the piece table, according to an absolute line number given as the
-        argument to this function.
-        """
-        for address, row in cursors_rows.items():
-            index, offset = self.file_pt.line_to_table_index(row)
-            self.clients[address][0] = self.file_pt.table[index][0]
-            self.clients[address][1] = offset
+    def client_leave(self, uname: str) -> None:
+        for piece in self.pt.table:
+            if piece.owner == uname:
+                piece.owner = ""
 
-    def make_idle(self, client: Address) -> None:
-        self.clients[client][-1] = False
+        if uname in self.cursors:
+            del self.cursors[uname]
 
-    def drop_client(self, client: Address) -> None:
-        if client in self.locks:
-            client_locks = self.locks.pop(client)
+    def get_clients(self, exclude: List[str] = []) -> List[str]:
+        return [uname for uname in self.cursors if uname not in exclude]
 
-            for lock in client_locks:
-                self.file_pt.close_block(lock)
-
-        del self.clients[client]
+    def is_joined(self, uname: str) -> bool:
+        return uname in self.cursors
 
     def client_count(self) -> int:
-        return len(self.clients)
+        return len(self.cursors)
 
-    def get_clients(self, exclude: List[Address] = []) -> List[Address]:
-        return [c for c in self.clients if c not in exclude]
-
-    def is_joined(self, client) -> bool:
-        return client in self.clients.keys()
-
-    def saved_status(self) -> bool:
-        return self.is_saved
-
-    def change_file_path(self, new_path: str) -> None:
-        self.file_path_relative = new_path
-
-    def _has_lock(self, uname: str, piece_id: str):
-        """
-        Checks if the given address has a lock on the given piece id
-        """
-
-        return self.get_piece(piece_id)[4] == uname
+    #
+    # EDITS
+    #
 
     def update_content(self, uname: str, piece_id: str, content: str) -> None:
-        """
-        Updates the content in the piecetable
-        """
-        if self._has_lock(uname, piece_id):
-            self.file_pt.set_piece_content(piece_id, content)
-        if not self.file_pt.get_piece(piece_id):
-            raise ValueError("The piece uuid is not present within the table.")
-        elif self._has_lock(address, piece_id):
-            self.file_pt.set_piece_content(piece_id, content)
-        else:
-            raise LockError(f"{address} has no lock on {piece_id}")
+        self.pt.set_piece_content(piece_id, content.splitlines(True))
+        self.is_saved = False
 
-
-class LockError(Exception):
-    pass
+    def clear_unused_pieces(self) -> None:
+        cursor_lines = self.get_cursor_rows()
+        self.pt.merge_unlocked_pieces()
+        self.update_cursors(cursor_lines)

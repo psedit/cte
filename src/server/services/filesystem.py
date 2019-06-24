@@ -1,13 +1,12 @@
-from server_file import ServerFile, LockError
-from typedefs import Address
-from typing import Dict, List
+from server_file import ServerFile
+from typedefs import Address, LockError
+from typing import Dict, List, Any
 from service import Service, message_type
 import traceback
 import os
 import shutil
 import Pyro4
 
-# TODO: dit is vast lelijk
 ERROR_WRONG_MESSAGE = 1
 ERROR_FILE_NOT_IN_RAM = 2
 ERROR_FILE_NOT_JOINED = 3
@@ -25,31 +24,20 @@ class Filesystem(Service):
     """
     def __init__(self, *super_args) -> None:
         super().__init__(*super_args)
-        # Check server config for root directory
-        # TODO: retrieve from server
         self.root_dir: str = os.path.realpath('../file_root')
-        self.usernames: Dict[Address, str] = {}
+        self.files: Dict[str, ServerFile] = {}
 
-        # Files sorted by path relative to root dir
-        self.file_dict: Dict[str, ServerFile] = {}
-        self.root_tree = self.parse_walk(list(os.walk(self.root_dir)),
-                                         self.root_dir)
+    #
+    # FILE I/O
+    #
 
-    def add_file(self, file_path: str) -> None:
+    def load_file(self, file_path: str) -> None:
         """
         Add the file to the Filesystem. Path file is relative to root
         directory.
         """
-
-        if file_path not in self.file_dict:
-            self.file_dict[file_path] = ServerFile(self.root_dir, file_path)
-
-    def list_files(self) -> List[str]:
-        """
-        Lists all files currently within the file system (in RAM), relative to
-        the root directory.
-        """
-        return list(self.file_dict.keys())
+        if file_path not in self.files:
+            self.files[file_path] = ServerFile(self.root_dir, file_path)
 
     def parse_walk(self, walk, path):
         """
@@ -67,8 +55,30 @@ class Filesystem(Service):
 
         return tree
 
-    def _is_joined(self, address, file_path) -> bool:
-        if file_path not in self.file_dict:
+    @message_type("file-save")
+    async def _save_file_to_disk(self, msg):
+        pass
+
+    #
+    # CLIENTS JOIN/LEAVE
+    #
+
+    def check_file_available(self, address: Address, username: str,
+                             file_path: str) -> bool:
+        if not os.path.isfile(os.path.join(self.root_dir, file_path)):
+            message = f"The file {file_path} is not present on the server."
+            self._send_message_client("error-response",
+                                      {"message": message,
+                                       "error_code": ERROR_FILE_NOT_PRESENT},
+                                      address)
+            return False
+        return True
+
+    def check_file_loaded(self, address: Address,
+                          username: str, file_path: str) -> bool:
+        if not self.check_file_available(address, username, file_path):
+            return False
+        elif file_path not in self.files:
             message = f"""File {file_path} is not in system RAM.
                       Join the file to load it to memory."""
             self._send_message_client("error-response",
@@ -76,7 +86,13 @@ class Filesystem(Service):
                                        "error_code": ERROR_FILE_NOT_IN_RAM},
                                       address)
             return False
-        elif not self.file_dict[file_path].is_joined(address):
+        return True
+
+    def check_valid(self, address: Address,
+                         uname: str, file_path: str) -> bool:
+        if not self.check_file_loaded(address, uname, file_path):
+            return False
+        elif not self.files[file_path].is_joined(uname):
             message = f"Join the file {file_path} to gain access to it."
             self._send_message_client("error-response",
                                       {"message": message,
@@ -86,40 +102,169 @@ class Filesystem(Service):
         else:
             return True
 
+    @message_type("file-join")
+    async def _file_add_client(self, msg) -> None:
+        """
+        Add the client from the file specified in the message.
+        Add the file to RAM if necessary.
+        """
+        content = msg["content"]
+        path = content["file_path"]
+        address, username = msg["sender"]
+
+        if not self.check_file_available(address, username, path):
+            return
+
+        # Add the file to RAM if necessary.
+        if path not in self.files:
+            self.files[path] = ServerFile(self.root_dir, path)
+
+        # Add the file to the client list in the ServerFile class.
+        self.files[path].client_join(username)
+
+        # Broadcast the change.
+        self._send_message_client("file-join-broadcast",
+                                  {"username": username,
+                                   "file_path": path},
+                                  *self.files[path].get_clients([username]))
+
+    @message_type("file-leave")
+    async def _file_remove_client(self, msg) -> None:
+        """
+        Remove the client from the file specified in the message.
+        Remove the file from RAM if no clients are connected within the file.
+        """
+        content = msg["content"]
+        path = content["file_path"]
+        force = content["force_exit"]
+        address, username = msg["sender"]
+
+        if not self.check_valid(address, username, path):
+            return
+
+        # Make sure no changes are accidentally lost.
+        if (not force and self.files[path].client_count() == 1
+                and not self.files[path].is_saved):
+            message = f"""First save the file {path} or
+                      resend request with 'force_exit' = 1"""
+            self._send_message_client("error-response",
+                                      {"message": message,
+                                       "error_code": ERROR_FILE_NOT_PRESENT},
+                                      address)
+            return
+
+        self.files[path].client_leave(username)
+
+        # Broadcast the change and remove the username
+        self._send_message_client("file-leave-broadcast",
+                                  {"username": username,
+                                   "file_path": path},
+                                  *self.files[path].get_clients())
+
+        self._send_piece_table_change_broadcast(path)
+
+        # Remove the file from RAM if necessary.
+        if self.files[path].client_count() == 0:
+            del self.files[path]
+
+    @message_type("client-disconnect")
+    async def _remove_client(self, msg) -> None:
+        content = msg["content"]
+        address = content["address"]
+        username = content["username"]
+
+        file_msg: Dict[str, Any] = {"sender": (address, username),
+                                    "content": {"force_exit": True}}
+
+        to_unlock = [path for path, f in self.files.items()
+                     if f.is_joined(username)]
+
+        for path in to_unlock:
+            file_msg["content"]["file_path"] = path
+            await self._file_remove_client(file_msg)
+
+    #
+    # CONTENT REQUEST
+    #
+
     @message_type("file-content-request")
     async def _process_file_content_request(self, msg) -> None:
         """
         Take the file content request message and construct the appropriate
         response, sending the block via a new 'file-content-response' message.
         """
-        address = msg["sender"][0]
+        address, username = msg["sender"]
         content = msg["content"]
+        path = content["file_path"]
 
-        file_path = content["file_path"]
+        if not self.check_valid(address, username, path):
+            return
 
-        if self._is_joined(address, file_path):
-            file = self.file_dict[file_path]
-            block_list = []
+        file = self.files[path]
+        block_list = []
 
-            for b_id, block in file.file_pt.blocks.items():
-                block_list.append((b_id, block.is_open(), block.lines))
+        for b_id, block in file.pt.blocks.items():
+            block_list.append((b_id, True, block)) # TODO: update message
 
-            response_content = {"piece_table": file.file_pt.table,
-                                "block_list": block_list}
+        response_content = {
+                             "piece_table": file.pt.table,
+                             "block_list": block_list
+                           }
 
-            self._send_message_client("file-content-response",
-                                      response_content,
-                                      address)
-        else:
-            pass
-            # File not joined error
+        self._send_message_client("file-content-response",
+                                  response_content,
+                                  address)
 
-    @message_type("file-list-request")
-    async def _send_file_list(self, msg) -> None:
-        address = msg["sender"][0]
+    #
+    # PIECE TABLE
+    #
 
-        net_msg = {"root_tree": self.root_tree}
-        self._send_message_client("file-list-response", net_msg, address)
+    def _send_piece_table_change_broadcast(self,
+                                           file_path: str,
+                                           lock_ids: List[str] = []) -> None:
+        """
+        Send the new table from the piece table to all clients within the file.
+        Also sends the updated cursor positions.
+        """
+        file = self.files[file_path]
+
+        # Due to client-side implementation, we have to send the updates one
+        # by one. As a result, we also need to send an 'empty' update when
+        # there where no locks given.
+        for lock_id in lock_ids:
+            piece = file.pt.get_piece(lock_id)
+
+            if not piece:
+                continue
+
+            block_id = piece.block_id
+            lines = file.pt.get_lines(lock_id, 0, piece.length)
+
+            content = {
+                        "file_path": file_path,
+                        "piece_table": file.pt.table,
+                        "changed_block": [block_id, True, lines]
+                      }
+            self._send_message_client("file-piece-table-change-broadcast",
+                                      content,
+                                      *file.get_clients())
+
+        if not lock_ids:
+            content = {
+                        "file_path": file_path,
+                        "piece_table": file.pt.table,
+                        "changed_block": [-1, []]
+                      }
+            self._send_message_client("file-piece-table-change-broadcast",
+                                      content,
+                                      *file.get_clients())
+
+        # Reposition all cursors in the file.
+        self._broadcast_file_cursors(file_path)
+
+    #
+    # CURSORS
+    #
 
     @message_type("cursor-move")
     async def _move_cursor(self, msg) -> None:
@@ -131,282 +276,125 @@ class Filesystem(Service):
         offset = content["offset"]
         column = content["column"]
 
-        file = self.file_dict[path]
-
-        if not self._is_joined(address, path):
+        if not self.check_valid(address, username, path):
             return
 
-        file.move_cursor(address, piece_id, offset, column)
+        file = self.files[path]
+        file.move_cursor(username, piece_id, offset, column)
 
-        new_content = {
-                "username": username,
-                "file_path": path,
-                "piece_id": piece_id,
-                "offset": offset,
-                "column": column,
-            }
+        new_content = content.copy()
+        new_content["username"] = username
+
+        assert isinstance(username, str)
 
         self._send_message_client("cursor-move-broadcast",
                                   new_content,
-                                  *file.get_clients(exclude=[address]))
+                                  *file.get_clients([address]))
 
-    @message_type("cursor-list-request")
-    async def _clist_request_handler(self, msg):
-        address = msg["sender"][0]
-        content = msg["content"]
-
-        path = content["file_path"]
-
-        if not self._is_joined(address, path):
-            return
-
-        self._send_cursor_list(path, address, exclude=(address,))
-
-    def _send_cursor_list(self, path, *addrs, exclude=None):
+    def _send_cursor_list(self, file, *usernames) -> None:
         """
-        Send the cursor list for a path to the given addresses.
+        Send the cursor list for a file to the given users (usernames).
 
-        If no addresses are passed, send the cursor list to everyone who
-        is joined to the file.
+        If no usernames are passed, send the cursor list to everyone who
+        has joined the file.
         """
-        curs_f = self.file_dict[path].get_cursors(exclude)
-        cursors = [[self.usernames[c]] + curs_f[c] for c in curs_f]
+        cursors = [[uname, *cursor] for uname, cursor in file.cursors.items()]
 
-        if not addrs:
-            addrs = curs_f.get_clients()
-            # broadcast
-            pass
+        if not usernames:
+            usernames = file.get_clients()
 
         self._send_message_client("cursor-list-response",
                                   {"cursor_list": cursors},
-                                  *addrs)
+                                  *usernames)
 
-    def _broadcast_file_cursors(self, file):
-        for client, loc in file.clients.items():
-            uname = self.usernames[client]
+    @message_type("cursor-list-request")
+    async def _clist_request_handler(self, msg) -> None:
+        address, username = msg["sender"]
+        content = msg["content"]
+        path = content["file_path"]
+
+        if not self.check_valid(address, username, path):
+            return
+
+        self._send_cursor_list(self.files[path], username)
+
+    def _broadcast_file_cursors(self, file_path: str) -> None:
+        file = self.files[file_path]
+        for username, cursor in file.cursors.items():
+            content = {
+                        "file_path": file_path,
+                        "piece_id": cursor.piece_id,
+                        "offset": cursor.offset,
+                        "column": cursor.column,
+                        "username": username
+                      }
+            assert isinstance(username, str)
             self._send_message_client("cursor-move-broadcast",
-                                      {
-                                          "username": uname,
-                                          "file_path": file.file_path_relative,
-                                          "piece_id": loc[0],
-                                          "offset": loc[1],
-                                          "column": loc[2]
-                                      },
-                                      *file.get_clients(exclude=client))
+                                      content,
+                                      *file.get_clients([username]))
 
-    @message_type("file-join")
-    async def _file_add_client(self, msg) -> None:
+    #
+    # EDITS
+    #
+
+    @message_type("file-delta")
+    async def _edit_block(self, msg) -> None:
         """
-        Add the client from the file specified in the message.
-        Add the file to RAM if necessary.
+        Replaces a line in the given block of the piecetable
+        with the new provided content.
         """
-        content = msg["content"]
-
-        path = content["file_path"]
-        address, username = msg["sender"]
-
-        # TODO: this should go via the pyro
-        self.usernames[address] = username
-
-        if not os.path.isfile(os.path.join(self.root_dir, path)):
-            message = f"The file {path} is not present on the server."
-            self._send_message_client("error-response",
-                                      {"message": message,
-                                       "error_code": ERROR_FILE_NOT_PRESENT},
-                                      address)
-            return
-
-        # Add the file to RAM if necessary.
-        if path not in self.file_dict:
-            self.file_dict[path] = ServerFile(self.root_dir, path)
-
-        # Add the file to the client list in the ServerFile class.
-        self.file_dict[path].join_file(address)
-
-        # Broadcast the change.
-        self._send_file_join_broadcast(path, address)
-
-    @message_type("file-leave")
-    async def _file_remove_client(self, msg) -> None:
-        """
-        Remove the client from the file specified in the message.
-        Remove the file from RAM if no clients are connected within the file.
-        """
-        content = msg["content"]
-
-        path = content["file_path"]
-        force = content["force_exit"]
-        address = msg["sender"][0]
-
-        if path not in self.file_dict:
-            return
-
-        if (not force and self.file_dict[path].client_count() == 1
-                and self.file_dict[path].saved_status() is False):
-            message = f"""First save the file {path} or
-                      resend request with 'force_exit' = 1"""
-            self._send_message_client("error-response",
-                                      {"message": message,
-                                       "error_code": ERROR_FILE_NOT_PRESENT},
-                                      address)
-            return
-
-        self.file_dict[path].drop_client(address)
-
-        # Remove the file from RAM if necessary.
-        if self.file_dict[path].client_count() == 0:
-            del self.file_dict[path]
-
-        # Broadcast the change and remove the username
-        self._send_file_leave_broadcast(path, address)
-        self._send_piece_table_change_broadcast(path)
-
-        if self.usernames[address]:
-            del self.usernames[address]
-
-    @message_type("client-disconnect")
-    async def _remove_client(self, msg) -> None:
-        content = msg["content"]
-
-        address = content["address"]
-
-        for path, f in self.file_dict.items():
-            if f.is_joined(address):
-                # Remove the client from the file and broadcast the change.
-                f.drop_client(address)
-                self._send_file_leave_broadcast(path, address)
-                self._send_piece_table_change_broadcast(path)
-
-        if address in self.usernames:
-            del self.usernames[address]
-
-    def _send_file_join_broadcast(self, file_path: str, client: Address):
-        file = self.file_dict[file_path]
-        self._send_message_client("file-join-broadcast",
-                                  {"username": self.usernames[client],
-                                   "file_path": file_path},
-                                  *file.get_clients(exclude=[client]))
-
-    def _send_file_leave_broadcast(self, file_path: str, client: Address):
-        file = self.file_dict[file_path]
-        self._send_message_client("file-leave-broadcast",
-                                  {"username": self.usernames[client],
-                                   "file_path": file_path},
-                                  *file.get_clients(exclude=[client]))
-
-    @message_type("file-lock-request")
-    async def _file_add_lock(self, msg) -> None:
-        """
-        If possible, creates a lock in the specified file for the client,
-        and sends a response with the give lock id. If locking was not
-        successful, sets te 'success' flag in the response to false.
-        Afterwards, broadcasts the changes to all other clients.
-        """
-        content = msg["content"]
-        address, username = msg["sender"]
-
-        path = content["file_path"]
-        piece_id = content["piece_uuid"]
-        offset = content["offset"]
-        length = content["length"]
-
-        if not self._is_joined(address, path):
-            self._send_lock_response(path, False, "", address)
-            return
 
         try:
-            lock_id = self.file_dict[path].add_lock(address, piece_id,
-                                                    offset, length, username)
-        except ValueError as e:
-            print(traceback.print_exc())
+            address, username = msg["sender"]
+            content = msg["content"]
+
+            file_path = content["file_path"]
+            piece_uuid = content["piece_uuid"]
+            block_content = content["content"]
+        except KeyError as e:
             self._send_message_client("error-response",
-                                      {
-                                          "message": str(e),
-                                          "error_code": ERROR_FILE_ILLEGAL_LOCK
-                                      },
+                                      {"message": str(e),
+                                       "error_code": ERROR_WRONG_MESSAGE},
+                                      address)
+            return
+
+        file = self.files[file_path]
+
+        try:
+            file.update_content(username, piece_uuid, block_content)
+        except LockError as e:
+            message = "Illegal edit, this lock does not belong to you."
+            self._send_message_client("error-response",
+                                      {"message": message,
+                                       "error_code": ERROR_NOT_LOCKED},
                                       address)
 
-            self._send_lock_response(path, False, "", address)
+            block_lines = file.pt.get_piece_content(piece_uuid)
+            block_content = "".join(block_lines)
+
+            resp_content = {
+                        "file_path": file_path,
+                        "piece_uuid": piece_uuid,
+                        "content": block_content
+                    }
+            self._send_message_client("file-delta-broadcast",
+                                      resp_content, address)
+            return
+        except ValueError as e:
+            # self._send_message_client("file-delta-broadcast", content, [address])
+            self._send_message_client("error-response",
+                                      {"message": str(e),
+                                       "error_code": ERROR_ILLEGAL_PIECE_ID},
+                                      address)
             return
 
-        self._send_lock_response(path, True, lock_id, address)
-        self._send_piece_table_change_broadcast(path, lock_id, True)
-        self._broadcast_file_cursors(self.file_dict[path])
+        self._send_message_client("file-delta-broadcast",
+                                  content,
+                                  *file.get_clients(exclude=[address]))
 
-    @message_type("file-unlock-request")
-    async def _file_remove_lock(self, msg) -> None:
-        """
-        Remove the client's lock from the specified file, and broadcasts
-        the changes to all other clients.
-        """
-        content = msg["content"]
-        address, username = msg["sender"]
-
-        path = content["file_path"]
-        lock_id = content["lock_id"]
-
-        if not self._is_joined(address, path):
-            return
-
-        self.file_dict[path].remove_lock(address, lock_id)
-        self._send_piece_table_change_broadcast(path, lock_id, False)
-
-    def _send_lock_response(self, file_path: str, success: bool,
-                            lock_id: str, client: Address) -> None:
-        """
-        Send the file-lock-response message.
-        """
-        self._send_message_client("file-lock-response",
-                                  {"file_path": file_path,
-                                   "success": success,
-                                   "lock_id": lock_id},
-                                  client)
-
-    def _send_piece_table_change_broadcast(self,
-                                           file_path: str,
-                                           lock_id: str = "",
-                                           is_locked: bool = False) -> None:
-        """
-        Send the new table from the piece table to all clients within the file.
-        Also sends the updated cursor positions.
-        """
-        file = self.file_dict[file_path]
-
-        lines = file.file_pt.get_piece_content(lock_id)
-        if lock_id:
-            block_id = file.file_pt.get_piece_block_id(lock_id)
-        else:
-            block_id = -1  # Signals no block is changed
-
-        content = {
-                    "file_path": file_path,
-                    "piece_table": file.file_pt.table,
-                    "changed_block": [block_id, is_locked, lines]
-                  }
-        self._send_message_client("file-piece-table-change-broadcast", content,
-                                  *file.get_clients())
-
-        self._broadcast_file_cursors(file)
-
-    @message_type("file-lock-list-request")
-    async def _file_send_lock_list(self, msg) -> None:
-        """
-        Sends the lock list of the specified file to the client that
-        requests it.
-        """
-        content = msg["content"]
-        address, username = msg["sender"]
-
-        path = content["file_path"]
-
-        if not self._is_joined(address, path):
-            return
-
-        lock_list = self.file_dict[path].get_lock_list(self.usernames)
-        self._send_message_client("file-lock-list-response",
-                                  {"file_path": path,
-                                   "lock_list": lock_list},
-                                  address)
+    #
+    # FILES
+    #
 
     def _isdir(self, path: str) -> bool:
         """
@@ -432,18 +420,18 @@ class Filesystem(Service):
 
         # Update the file paths within memory.
         if self._isdir(old_path):
-            for p in self.file_dict.keys():
+            for p in self.files.keys():
                 if p.startswith(old_path):
                     p_new = p.replace(old_path, new_path, 1)
 
-                    self.file_dict[p].change_file_path(p_new)
-                    self.file_dict[p_new] = self.file_dict[p]
-                    del self.file_dict[p]
+                    self.files[p].change_file_path(p_new)
+                    self.files[p_new] = self.files[p]
+                    del self.files[p]
         else:
-            if old_path in self.file_dict.keys():
-                self.file_dict[old_path].change_file_path(new_path)
-                self.file_dict[new_path] = self.file_dict[old_path]
-                del self.file_dict[old_path]
+            if old_path in self.files.keys():
+                self.files[old_path].change_file_path(new_path)
+                self.files[new_path] = self.files[old_path]
+                del self.files[old_path]
 
     def _remove_file(self, old_path: str) -> None:
         """
@@ -454,14 +442,14 @@ class Filesystem(Service):
         if self._isdir(old_path):
             shutil.rmtree(old_abs)
 
-            for p in self.file_dict.keys():
+            for p in self.files.keys():
                 if p.startswith(old_path):
-                    del self.file_dict[p]
+                    del self.files[p]
         else:
             os.remove(old_abs)
 
-            if old_path in self.file_dict.keys():
-                del self.file_dict[old_path]
+            if old_path in self.files.keys():
+                del self.files[old_path]
 
     def _add_file(self, new_path: str, file_content: str) -> None:
         """
@@ -503,92 +491,84 @@ class Filesystem(Service):
         self._send_message_client("file-change-broadcast", content,
                                   *resp["content"]["client_list"])
 
+    @message_type("file-list-request")
+    async def _send_file_list(self, msg) -> None:
+        address = msg["sender"][0]
 
-    @message_type("file-delta")
-    async def _edit_block(self, msg) -> None:
+        root_tree = self.parse_walk(list(os.walk(self.root_dir)),
+                                    self.root_dir)
+
+        net_msg = {"root_tree": root_tree}
+        self._send_message_client("file-list-response", net_msg, address)
+
+    #
+    # LOCKS
+    #
+
+    @message_type("file-lock-request")
+    async def _file_add_lock(self, msg) -> None:
         """
-        Replaces a line in the given block of the piecetable
-        with the new provided content.
+        If possible, creates a lock in the specified file for the client,
+        and sends a response with the given lock id. If locking was not
+        successful, sets te 'success' flag in the response to false.
+        Afterwards, broadcasts the changes to all other clients.
         """
+        content = msg["content"]
+        address, username = msg["sender"]
+
+        path = content["file_path"]
+        piece_id = content["piece_uuid"]
+        offset = content["offset"]
+        length = content["length"]
+
+        if not self.check_valid(address, username, path):
+            return self._send_lock_response(path, False, address)
 
         try:
-            address, username = msg["sender"]
-            content = msg["content"]
-
-            file_path = content["file_path"]
-            piece_uuid = content["piece_uuid"]
-            block_content = content["content"]
-        except KeyError as e:
-            #TODO: error sturen
-            self._send_message_client("error-response",
-                                      {"message": str(e),
-                                       "error_code": ERROR_WRONG_MESSAGE},
-                                      address)
-            return
-
-        file = self.file_dict[file_path]
-
-        try:
-            file.update_content(username, piece_uuid, block_content)
-        except LockError as e:
-            #TODO send lock error
-            return
-            message = "Illegal edit, this lock does not belong to you."
-            self._send_message_client("error-response",
-                                      {"message": message,
-                                       "error_code": ERROR_NOT_LOCKED},
-                                      address)
-
-            block_line = file.file_pt.get_piece_content(piece_uuid)
-            block_content = ""
-            for line in block_line:
-                block_content += line
-
-            resp_content = {
-                        "file_path": file_path,
-                        "piece_uuid": piece_uuid,
-                        "content": block_content
-                    }
-            self._send_message_client("file-delta-broadcast",
-                                      resp_content, address)
-            return
+            lock_id = self.files[path].add_lock(piece_id, offset,
+                                                length, username)
         except ValueError as e:
-            # self._send_message_client("file-delta-broadcast", content, [address])
             self._send_message_client("error-response",
-                                      {"message": str(e),
-                                       "error_code": ERROR_ILLEGAL_PIECE_ID},
-                                      address)
+                                      {
+                                          "message": str(e),
+                                          "error_code": ERROR_FILE_ILLEGAL_LOCK
+                                      }, address)
+
+            return self._send_lock_response(path, False, address)
+
+        self._send_lock_response(path, True, address)
+        self._send_piece_table_change_broadcast(path, [lock_id])
+        self._broadcast_file_cursors(path)
+
+    @message_type("file-unlock-request")
+    async def _file_remove_lock(self, msg) -> None:
+        """
+        Remove the client's lock from the specified file, and broadcasts
+        the changes to all other clients.
+        """
+        content = msg["content"]
+        address, username = msg["sender"]
+
+        path = content["file_path"]
+        lock_id = content["lock_id"]
+
+        if not self.check_valid(address, username, path):
             return
 
-        self._send_message_client("file-delta-broadcast",
-                                  content,
-                                  *file.get_clients(exclude=[address]))
+        self.files[path].remove_lock(lock_id)
+        self._send_piece_table_change_broadcast(path, [lock_id])
 
-    @message_type("file-save")
-    async def _save_file_to_disk(self, msg):
-        try:
-            address, username = msg['sender']
-            content = msg['content']
-            file_path = content['file_path']
 
-            if file_path not in self.file_dict \
-                or not self.file_dict[file_path].is_joined(address):
-                message = f"""File {file_path} is not in system RAM.
-                          Join the file to load it to memory."""
-                self._send_message_client("error-response",
-                                          {"message": message,
-                                           "error_code": ERROR_FILE_NOT_IN_RAM},
-                                          address)
-                return
+    def _send_lock_response(self, file_path: str, success: bool,
+                            client: Address) -> None:
+        """
+        Send the file-lock-response message.
+        """
+        self._send_message_client("file-lock-response",
+                                  {"file_path": file_path,
+                                   "success": success},
+                                  client)
 
-            self.file_dict[file_path].save_to_disk()
-            content['saved'] = 'true'
-
-            self._send_message_client("file-save-broadcast",
-                                      content,
-                                      *self.file_dict[file_path].get_clients())
-        except KeyError as e:
-            return
 
 if __name__ == "__main__":
     Filesystem.start()

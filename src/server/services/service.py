@@ -2,6 +2,7 @@ import threading
 import inspect
 import Pyro4
 from typing import Dict, Any, Callable, List, Tuple
+import functools
 import uuid
 from typedefs import Address
 import time
@@ -17,8 +18,22 @@ def message_type(msg_type: str):
     which message type it handles.
     """
     def decorator(f):
-        f._msg_type = msg_type
-        return f
+        @functools.wraps(f)
+        async def new_fn(self, *args, **kwargs):
+            # Block different handlers from executing concurrently
+            # enforcing sequential ordering, since we really only
+            # use async for its Future behavior.
+
+            # Is this terrible? Yes. Would I like to have used a
+            # different architecture? Maybe. But we have a week
+            # left, so this'll do.
+
+            # Also, we're using Python, so it seems fitting to use a
+            # far-reaching, concurrency-breaking lock ;)
+            async with self._handler_lock:
+                await f(self, *args, **kwargs)
+        new_fn._msg_type = msg_type
+        return new_fn
     return decorator
 
 
@@ -55,9 +70,11 @@ class Service(LoggerMixin):
                 self, predicate=lambda x: hasattr(x, "_msg_type")):
             self._type_map[func._msg_type] = func
 
-        self._waiting: Dict[str, List[types.CoroutineType]] = defaultdict(list)
+        # TODO: List[Any] -> List[Future] (but need to find type)
+        self._waiting: Dict[str, List[Any]] = defaultdict(list)
 
         self._loop = asyncio.new_event_loop()
+        self._handler_lock: asyncio.Lock = asyncio.Lock(loop=self._loop)
         self._msg_queue = asyncio.Queue(loop=self._loop)
         self._async_thread = threading.Thread(target=self._start_async_thread)
         self._async_thread.daemon = True
