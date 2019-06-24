@@ -1,6 +1,6 @@
 <template>
-  <div class="editor">
-    <div class="editor-pieces">
+  <div class="editor" ref="mainEditor">
+    <div class="editor-pieces" ref="editorPiecesList">
       <editor-piece
               v-for="(piece, index) in pieces"
               v-if="piece.text.length > 0"
@@ -12,6 +12,7 @@
               @lockDragStart="lockDragStart"
               @lockDragUpdate="lockDragUpdate"
               @lockDragEnd="lockDragEnd"
+              @restoreScrollPosition="restoreEditorScroll"
               @mounted="editorMount"
               @update="editorUpdate"
               ref="editorPieces"
@@ -45,7 +46,8 @@
         lockDragStartLocation: null,
         lockDragEndLocation: null,
         dragList: null,
-        cursors: []
+        cursors: [],
+        restoreScrollY: 0
       }
     },
     watch: {
@@ -88,22 +90,25 @@
         }
         return cm.getStateAfter(cm.lastLine(), true)
       },
-      removeDragMarkers () {
-        for (let key in this.components) {
-          this.components[key].$options.cminstance.clearGutter('user-gutter')
-        }
-      },
       requestLock (startId, startOffset, endId, endOffset) {
         let payload = { start: {id: startId, offset: startOffset},
           end: {id: endId, offset: endOffset}}
         this.$store.dispatch('requestLock', payload)
       },
+      restoreEditorScroll () {
+        const editorElement = this.$refs.editorPiecesList
+        console.log('new scroll', editorElement.scrollTop)
+        editorElement.scrollTop = this.restoreScrollY
+      },
       lockDragStart (line, index) {
-        // console.log('start', line, index)
+        const editorElement = this.$refs.editorPiecesList
+        this.restoreScrollY = editorElement.scrollTop
         this.lockDragStartLocation = {piece: index, line}
         this.lockDragEndLocation = {piece: index, line}
       },
       lockDragUpdate (line, index) {
+        const editorElement = this.$refs.editorPiecesList
+        this.restoreScrollY = editorElement.scrollTop
         if (this.lockDragStartLocation) {
           this.lockDragEndLocation = {piece: index, line}
         }
@@ -233,7 +238,7 @@
 <style scoped lang="scss">
 .editor {
   width: 100%;
-  overflow-y: hidden;
+  overflow-y: scroll;
   background-color: #272822;
 }
 
