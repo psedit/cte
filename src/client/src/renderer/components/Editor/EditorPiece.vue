@@ -158,9 +158,9 @@
 
         // cm.getGutterElement().querySelector('.user-gutter').style.backgroundColor = getRandomColor(this.username).string()
         if (this.username) {
-          cm.getGutterElement().querySelector('.user-gutter').style.setProperty('--background-color', getRandomColor(this.username).string())
+          cm.getGutterElement().style.setProperty('--background-color', getRandomColor(this.username).string())
         }
-        cm.getGutterElement().setAttribute('title', this.username)
+        cm.getGutterElement().setAttribute('title', this.username || 'Click and drag to lock a piece.')
         this.initializeEvents()
       },
       unlock () {
@@ -325,21 +325,19 @@
     animation: blink 1s step-end infinite;
   }
   .user-gutter {
-    box-shadow: 0 0 3em 1em rgba(0, 256, 30, 0.6);
+    box-shadow: 0 0 3em 1em var(--background-color);
   }
 }
 
 .open_editor {
   .user-gutter {
     box-shadow: none;
-    /*background-color: rgba(255, 255, 255, 0.5) !important;*/
   }
 }
 
 .user-gutter {
-  --background-color: rgba(255, 255, 255, 0.5);
   width: 1em;
-  background-color: var(--background-color);
+  background-color: var(--background-color, rgba(255, 255, 255, 0.5));
 }
 
 .lock-gutter-marker {
