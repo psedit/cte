@@ -98,7 +98,22 @@ class Connector {
       }
     }
   }
-
+  /**
+   * Got form:
+   * https://stackoverflow.com/questions/13546424/how-to-wait-for-a-websockets-readystate-to-change
+   * @param {function} callback is called when websocket is open
+   */
+  waitUntillOpen (callback) {
+    setTimeout(() => {
+      if (this.ws.readyState === 1) {
+        if (callback != null) {
+          callback()
+        }
+      } else {
+        this.waitUntillOpen(callback)
+      }
+    }, 5) // wait 5 milisecond for the connection...
+  }
   /**
    * Change the server URL
    * @param {string} newPathString string with path for new url
