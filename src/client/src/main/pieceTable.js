@@ -135,10 +135,10 @@ export function convertChangeToJS (textBlocks, update) {
   return {
     filePath: update['file_path'],
     pieceTable: {
-      textBlocks: convertBlockToJS(textBlocks, update['changed_block']),
+      textBlocks: update['changed_blocks'].reduce(convertBlockToJS, textBlocks),
       table: update['piece_table'].map(convertTableTojs)
     },
-    changedBlock: convertBlockToJS({}, update['changed_block'])
+    changedBlocks: update['changed_blocks'].reduce(convertBlockToJS, {})
   }
 }
 
