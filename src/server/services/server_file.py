@@ -4,8 +4,21 @@ from piece_table import PieceTable
 import os
 import traceback
 
+class LockError(Exception):
+    """
+    Error to indicate the lock creation has failed.
+    """
+    pass
 
 class ServerFile:
+    """
+    The representation of a file from the FileSystem class.
+    Basically a wrapper class for PieceTable (see its respective description)
+    with additional functions, of which the most important are:
+    - Cursor/Client list
+    - Storage of file path
+    - Saving from and loading to disk functionality
+    """
     def __init__(self, root: str, path: str) -> None:
         self.root: str = root
         self.path_relative: str = path
@@ -30,10 +43,10 @@ class ServerFile:
         self.pt = PieceTable(file_list)
         self.is_saved = True
 
-    def save_to_disk(self, garbage_collect=True) -> None:
+    def save_to_disk(self) -> None:
         """
-        Writes the current buffer to the file on disk, while keeping all
-        locked pieces locked.
+        Writes the current buffer to the file on disk, but does not change the
+        file representation in RAM.
         """
         file_path = os.path.join(self.root, self.path_relative)
 
@@ -53,24 +66,40 @@ class ServerFile:
     def add_lock(self, start_piece_id: str, offset: int, length: int,
                  uname: str) -> str:
         """
-        Tries to create a lock within the piece table.
+        Tries to create a lock within the piece table, updating the cursor
+        positions to the possibly newly created or changed pieces.
 
-        Raises ValueError if creating the lock fails.
+        Raises a LockError if creating the lock fails, and a ValueError is
+        cursor repositioning fails.
 
         Returns the id of the newly locked piece.
         """
         cursor_lines = self.get_cursor_rows()
-        # TODO: rollback on exception?
-        lock_id = self.pt.put_piece(start_piece_id, offset, length, uname)
+
         try:
-            self.update_cursors(cursor_lines)
+            lock_id = self.pt.put_piece(start_piece_id, offset, length, uname)
         except ValueError:
-            print(f"Created lock, but updating cursors failed?")
-            print(traceback.format_exc())
+            raise LockError("Lock creation has failed.")
+
+        self.update_cursors(cursor_lines)
+
         return lock_id
 
+    def insert_lock_after_piece(self, piece_id: str, uname: str) -> None:
+        return self.pt.put_piece_after(piece_id, uname)
+
     def remove_lock(self, lock_id: str) -> None:
+        """
+        Removes the lock in the specified piece, and merges unlocked pieces
+        back into the 'orig' block at index 0. As a result, multiple pieces
+        may be changed. Raises a ValueError if cursor repositioning fails.
+        """
+        cursor_lines = self.get_cursor_rows()
+
         self.pt.get_piece(lock_id).owner = ""
+        self.pt.merge_unlocked_pieces()
+
+        self.update_cursors(cursor_lines)
 
     def change_lock_owner(self, lock_id: str, uname: str) -> None:
         self.pt.get_piece(lock_id).owner = uname
@@ -81,13 +110,32 @@ class ServerFile:
 
     def move_cursor(self, uname: str, piece_id: str,
                     offset: int, column: int) -> None:
+        """
+        Move the cursor of the given user to the specified position.
+        Currently ignores illegal movement requests.
+        """
+        # Return if the piece does not exist, clamp to max lines in piece.
+        try:
+            piece = self.pt.get_piece(piece_id)
+            offset = max(0, min(offset, piece.length - 1))
+        except ValueError:
+            # TODO: Raise something?
+            return
+
         self.cursors[uname] = Cursor(piece_id, offset, column)
+
+        return piece.piece_id, offset, column
 
     def get_cursor_list(self, exclude: List[str]) -> Dict[str, Cursor]:
         return {uname: cursor for uname, cursor in self.cursors.items()
                 if uname not in exclude}
 
     def get_cursor_rows(self) -> Dict[str, int]:
+        """
+        Return the cursor list in terms of row positions in the current file
+        according to the piece table. Used for retaining cursor positions after
+        piece table changes have been made.
+        """
         cursor_lines = {}
         for uname, cursor in self.cursors.items():
             cursor_lines[uname] = (self.pt.piece_to_row(cursor.piece_id)
@@ -95,6 +143,11 @@ class ServerFile:
         return cursor_lines
 
     def update_cursors(self, cursors) -> None:
+        """
+        Updates the piece id of the given cursors based on their corresponding
+        given row number. Used to restore cursor positions after piece table
+        changes have been made.
+        """
         for uname in cursors:
             piece_id, offset = self.pt.row_to_piece(cursors[uname])
             self.cursors[uname].piece_id = piece_id
@@ -108,9 +161,12 @@ class ServerFile:
         self.cursors[uname] = Cursor(self.pt.table[0].piece_id, 0, 0)
 
     def client_leave(self, uname: str) -> None:
+        """
+        Removes the client from the file, as well as all locks which they own.
+        """
         for piece in self.pt.table:
             if piece.owner == uname:
-                piece.owner = ""
+                self.remove_lock(piece.piece_id)
 
         if uname in self.cursors:
             del self.cursors[uname]
@@ -131,8 +187,3 @@ class ServerFile:
     def update_content(self, uname: str, piece_id: str, content: str) -> None:
         self.pt.set_piece_content(piece_id, content.splitlines(True))
         self.is_saved = False
-
-    def clear_unused_pieces(self) -> None:
-        cursor_lines = self.get_cursor_rows()
-        self.pt.merge_unlocked_pieces()
-        self.update_cursors(cursor_lines)

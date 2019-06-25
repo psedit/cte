@@ -1,8 +1,10 @@
-from server_file import ServerFile
+from server_file import ServerFile, LockError
 from typedefs import Address, LockError
 from typing import Dict, List, Any
 from service import Service, message_type
+import base64
 import traceback
+import tarfile
 import os
 import shutil
 import Pyro4
@@ -14,13 +16,34 @@ ERROR_FILE_NOT_PRESENT = 4
 ERROR_FILE_ILLEGAL_LOCK = 5
 ERROR_NOT_LOCKED = 6
 ERROR_ILLEGAL_PIECE_ID = 7
+ERROR_FILE_NOT_SAVED = 8
 
 
 @Pyro4.expose
 @Pyro4.behavior(instance_mode="single")
 class Filesystem(Service):
     """
+    Main file system service. Keeps track of all files currently in the system
+    and in memory. The main functionality is handling messages from the other
+    services, and provided to appropriate responses and broadcasts to the
+    connected clients.
 
+    Files are in the form of ServerFile classes. For more information,
+    see server_file.py.
+
+    The functionality listed:
+    - The current working directory can be requested, with which clients can
+      select the available files;
+    - Clients can (and are required to) join specific files to gain access to
+      its contents and functions ;
+    - Cursor locations are stored and broadcasted to users;
+    -  Clients can request locks in files, and
+    - Clients can update the file content in their locks;
+    - Clients can add, remove or rename files;
+    - Clients can download all files on the server.
+
+    For the full  message descriptions, see the wiki over at github
+    (https://github.com/psedit/cte/wiki/Server-service-messages)
     """
     def __init__(self, *super_args) -> None:
         super().__init__(*super_args)
@@ -57,14 +80,67 @@ class Filesystem(Service):
 
     @message_type("file-save")
     async def _save_file_to_disk(self, msg):
-        pass
+        file_path = msg["content"]["file_path"]
+
+        file = self.files[file_path]
+        lines = file.save_to_disk()
+
+    @message_type("file-project-request")
+    async def _send_files_as_tar(self, msg):
+        """
+        Sends the complete root directory currently on disk to the requesting
+        client. The files are encoded in base64 as a tar file.
+        """
+        addr = msg["sender"][0]
+
+        with tarfile.open(".project.tar", "w|") as tar:
+            tar.add(self.root_dir, arcname=os.path.basename(self.root_dir))
+        with open(".project.tar", 'rb') as f:
+            b64_string = base64.b64encode(f.read()).decode('utf-8')
+
+        self._send_message_client("file-project-response",
+                                  {"data": b64_string},
+                                  addr)
+
+        os.remove(".project.tar")
+
+
+    @message_type("file-folder-upload")
+    async def _upload_folder_as_tar(self, msg):
+        """
+        Creates a folder with content based on a given base64 byte stream
+        """
+        b64_string = msg["content"]["data"]
+        data_bytes = base64.b64decode(b64_string)
+
+        with open(".project.tar", "wb") as f:
+            f.write(data_bytes)
+        with tarfile.open(".project.tar", "r|") ad tar:
+            tar.extractall(path = self.root_dir)
+
+        os.remove(".project.tar")
+
+        root_tree = self.parse_walk(list(os.walk(self.root_dir)),
+                                    self.root_dir)
+
+        c_msg = self._send_message("client-list-request", {})
+        resp = await self._wait_for_response(c_msg["uuid"])
+
+        self._send_message_clients("file-list-broadcast",
+                                   {
+                                       "root_tree": root_tree
+                                   },
+                                   *resp["content"]["client_list"])
 
     #
     # CLIENTS JOIN/LEAVE
     #
 
-    def check_file_available(self, address: Address, username: str,
-                             file_path: str) -> bool:
+    def check_file_available(self, address: Address, file_path: str) -> bool:
+        """
+        Checks whether the file is present in the root directory, and warn
+        the client when it is not.
+        """
         if not os.path.isfile(os.path.join(self.root_dir, file_path)):
             message = f"The file {file_path} is not present on the server."
             self._send_message_client("error-response",
@@ -74,9 +150,12 @@ class Filesystem(Service):
             return False
         return True
 
-    def check_file_loaded(self, address: Address,
-                          username: str, file_path: str) -> bool:
-        if not self.check_file_available(address, username, file_path):
+    def check_file_loaded(self, address: Address, file_path: str) -> bool:
+        """
+        After checking whether the file is present on disk, checks whether the
+        file is present in server RAM. Warn the client when it is not.
+        """
+        if not self.check_file_available(address, file_path):
             return False
         elif file_path not in self.files:
             message = f"""File {file_path} is not in system RAM.
@@ -90,7 +169,14 @@ class Filesystem(Service):
 
     def check_valid(self, address: Address,
                          uname: str, file_path: str) -> bool:
-        if not self.check_file_loaded(address, uname, file_path):
+        """
+        Check whether the client has joined the file, as well as if the file
+        is loaded correctly. Warns the client when this is not the case.
+
+        This function needs to be called before handling most file-specific
+        messages.
+        """
+        if not self.check_file_loaded(address, file_path):
             return False
         elif not self.files[file_path].is_joined(uname):
             message = f"Join the file {file_path} to gain access to it."
@@ -112,7 +198,7 @@ class Filesystem(Service):
         path = content["file_path"]
         address, username = msg["sender"]
 
-        if not self.check_file_available(address, username, path):
+        if not self.check_file_available(address, path):
             return
 
         # Add the file to RAM if necessary.
@@ -129,10 +215,11 @@ class Filesystem(Service):
                                   *self.files[path].get_clients([username]))
 
     @message_type("file-leave")
-    async def _file_remove_client(self, msg) -> None:
+    async def _file_client_leave(self, msg) -> None:
         """
-        Remove the client from the file specified in the message.
-        Remove the file from RAM if no clients are connected within the file.
+        Remove the client from the file specified in the message, as well as
+        its locks. Remove the file from RAM if no clients are connected within
+        the file.
         """
         content = msg["content"]
         path = content["file_path"]
@@ -145,43 +232,57 @@ class Filesystem(Service):
         # Make sure no changes are accidentally lost.
         if (not force and self.files[path].client_count() == 1
                 and not self.files[path].is_saved):
-            message = f"""First save the file {path} or
-                      resend request with 'force_exit' = 1"""
+            message = (f"First save the file {path} or resend request" +
+                        "with 'force_exit' = true")
             self._send_message_client("error-response",
                                       {"message": message,
-                                       "error_code": ERROR_FILE_NOT_PRESENT},
+                                       "error_code": ERROR_FILE_NOT_SAVED},
                                       address)
             return
 
-        self.files[path].client_leave(username)
-
-        # Broadcast the change and remove the username
-        self._send_message_client("file-leave-broadcast",
-                                  {"username": username,
-                                   "file_path": path},
-                                  *self.files[path].get_clients())
-
-        self._send_piece_table_change_broadcast(path)
-
-        # Remove the file from RAM if necessary.
-        if self.files[path].client_count() == 0:
-            del self.files[path]
+        self._file_remove_client(address, username, path, force)
 
     @message_type("client-disconnect")
     async def _remove_client(self, msg) -> None:
+        """
+        Removes the clients from all files it was present in. Same as
+        'file-leave' handler for every file.
+        """
         content = msg["content"]
         address = content["address"]
         username = content["username"]
-
-        file_msg: Dict[str, Any] = {"sender": (address, username),
-                                    "content": {"force_exit": True}}
 
         to_unlock = [path for path, f in self.files.items()
                      if f.is_joined(username)]
 
         for path in to_unlock:
-            file_msg["content"]["file_path"] = path
-            await self._file_remove_client(file_msg)
+            self._file_remove_client(address, username, path, True)
+
+    def _file_remove_client(self, addr: Address, username: str,
+                            path: str, force: bool) -> None:
+        """
+        Removes the specified client from the specified file, removing all
+        locks in the process.
+
+        Because of this, the piece table of the file is updated as well as the
+        cursor positions. These changes are broadcasted to the other clients.
+        """
+        file =  self.files[path]
+
+        file.client_leave(username)
+
+        # Broadcast the change and remove the username
+        self._send_message_client("file-leave-broadcast",
+                                  {"username": username,
+                                   "file_path": path},
+                                  *file.get_clients(exclude=username))
+
+        self._update_and_broadcast_piece_table(path, update_orig = True)
+        self._broadcast_file_cursors(path)
+
+        # Remove the file from RAM if necessary.
+        if file.client_count() == 0:
+            del self.files[path]
 
     #
     # CONTENT REQUEST
@@ -190,8 +291,8 @@ class Filesystem(Service):
     @message_type("file-content-request")
     async def _process_file_content_request(self, msg) -> None:
         """
-        Take the file content request message and construct the appropriate
-        response, sending the block via a new 'file-content-response' message.
+        Constructs and sends the file content message to the requesting client,
+        sending the complete piece table and the block contents within.
         """
         address, username = msg["sender"]
         content = msg["content"]
@@ -219,48 +320,48 @@ class Filesystem(Service):
     # PIECE TABLE
     #
 
-    def _send_piece_table_change_broadcast(self,
-                                           file_path: str,
-                                           lock_ids: List[str] = []) -> None:
+    def _update_and_broadcast_piece_table(self,
+                                          file_path: str,
+                                          piece_ids: List[str] = [],
+                                          update_orig: bool = False) -> None:
         """
-        Send the new table from the piece table to all clients within the file.
-        Also sends the updated cursor positions.
+        Sends the current piece table to all clients within the file, as well
+        as the updated blocks within the table.
+
+        'piece_ids' is a list of pieces of which their blocks have been added
+        or updated. Used when a lock is added for instance.
+
+        The value of 'update_orig' indicates whether the block at index 0,
+        the 'orig' block, should be re-send to the clients. Used when a lock
+        is removed, and old unlocked blocks are merged into 'orig'.
         """
         file = self.files[file_path]
+        changed_blocks = []
 
-        # Due to client-side implementation, we have to send the updates one
-        # by one. As a result, we also need to send an 'empty' update when
-        # there where no locks given.
-        for lock_id in lock_ids:
-            piece = file.pt.get_piece(lock_id)
+        # Update the 'orig' content after merging unlocked blocks into it.
+        if update_orig:
+            changed_blocks.append([0, False, file.pt.blocks[0]])
 
-            if not piece:
-                continue
+        # Go through the given updated block_id's, and construct the message.
+        for piece_id in piece_ids:
+            piece = file.pt.get_piece(piece_id)
+            lines = file.pt.get_piece_content(piece_id)
 
-            block_id = piece.block_id
-            lines = file.pt.get_lines(lock_id, 0, piece.length)
+            changed_blocks.append([piece.block_id, False, lines])
 
-            content = {
-                        "file_path": file_path,
-                        "piece_table": file.pt.table,
-                        "changed_block": [block_id, True, lines]
-                      }
-            self._send_message_client("file-piece-table-change-broadcast",
-                                      content,
-                                      *file.get_clients())
+        # Clear the unused blocks in the table and add this to the broadcast.
+        removed_blocks = file.pt.clear_unused_blocks()
+        changed_blocks.extend([[b_id, True, []] for b_id in removed_blocks])
 
-        if not lock_ids:
-            content = {
-                        "file_path": file_path,
-                        "piece_table": file.pt.table,
-                        "changed_block": [-1, []]
-                      }
-            self._send_message_client("file-piece-table-change-broadcast",
-                                      content,
-                                      *file.get_clients())
-
-        # Reposition all cursors in the file.
-        self._broadcast_file_cursors(file_path)
+        # Broadcast the change to all clients within the file.
+        content = {
+                    "file_path": file_path,
+                    "piece_table": file.pt.table,
+                    "changed_blocks": changed_blocks
+                  }
+        self._send_message_client("file-piece-table-change-broadcast",
+                                  content,
+                                  *file.get_clients())
 
     #
     # CURSORS
@@ -268,6 +369,10 @@ class Filesystem(Service):
 
     @message_type("cursor-move")
     async def _move_cursor(self, msg) -> None:
+        """
+        Moves the client that has send the message to the specified location
+        within the piece table. Broadcasts this change to the other clients
+        """
         address, username = msg["sender"]
         content = msg["content"]
 
@@ -280,12 +385,17 @@ class Filesystem(Service):
             return
 
         file = self.files[path]
-        file.move_cursor(username, piece_id, offset, column)
+
+        result = file.move_cursor(username, piece_id, offset, column)
+        if result is None:
+            return
+        _, offset, column = result
 
         new_content = content.copy()
-        new_content["username"] = username
-
-        assert isinstance(username, str)
+        new_content.update({"username": username,
+                            "offset": offset,
+                            "column": column
+                           })
 
         self._send_message_client("cursor-move-broadcast",
                                   new_content,
@@ -309,6 +419,9 @@ class Filesystem(Service):
 
     @message_type("cursor-list-request")
     async def _clist_request_handler(self, msg) -> None:
+        """
+        Sends the cursor list to the requesting client.
+        """
         address, username = msg["sender"]
         content = msg["content"]
         path = content["file_path"]
@@ -319,6 +432,9 @@ class Filesystem(Service):
         self._send_cursor_list(self.files[path], username)
 
     def _broadcast_file_cursors(self, file_path: str) -> None:
+        """
+        Broadcast the cursor locations of every client to all other clients.
+        """
         file = self.files[file_path]
         for username, cursor in file.cursors.items():
             content = {
@@ -340,23 +456,15 @@ class Filesystem(Service):
     @message_type("file-delta")
     async def _edit_block(self, msg) -> None:
         """
-        Replaces a line in the given block of the piecetable
-        with the new provided content.
+        Replaces a line in the given block of the piecetable with the new
+        provided content.
         """
+        address, username = msg["sender"]
+        content = msg["content"]
 
-        try:
-            address, username = msg["sender"]
-            content = msg["content"]
-
-            file_path = content["file_path"]
-            piece_uuid = content["piece_uuid"]
-            block_content = content["content"]
-        except KeyError as e:
-            self._send_message_client("error-response",
-                                      {"message": str(e),
-                                       "error_code": ERROR_WRONG_MESSAGE},
-                                      address)
-            return
+        file_path = content["file_path"]
+        piece_uuid = content["piece_uuid"]
+        block_content = content["content"]
 
         file = self.files[file_path]
 
@@ -381,7 +489,6 @@ class Filesystem(Service):
                                       resp_content, address)
             return
         except ValueError as e:
-            # self._send_message_client("file-delta-broadcast", content, [address])
             self._send_message_client("error-response",
                                       {"message": str(e),
                                        "error_code": ERROR_ILLEGAL_PIECE_ID},
@@ -467,8 +574,8 @@ class Filesystem(Service):
     @message_type("file-change")
     async def _change_file(self, msg):
         """
-        Creates the file in the server root directory.
-        Overwrites file if it is already present.
+        Process the file-change message, by calling either _remove_file,
+        _add_file or _rename_file. Also broadcast the change to the clients.
         """
         content = msg["content"]
         # address = msg["sender"]
@@ -493,6 +600,9 @@ class Filesystem(Service):
 
     @message_type("file-list-request")
     async def _send_file_list(self, msg) -> None:
+        """
+        Send the file list back to the requesting client.
+        """
         address = msg["sender"][0]
 
         root_tree = self.parse_walk(list(os.walk(self.root_dir)),
@@ -510,7 +620,7 @@ class Filesystem(Service):
         """
         If possible, creates a lock in the specified file for the client,
         and sends a response with the given lock id. If locking was not
-        successful, sets te 'success' flag in the response to false.
+        successful, sets the 'success' flag in the response to false.
         Afterwards, broadcasts the changes to all other clients.
         """
         content = msg["content"]
@@ -527,18 +637,45 @@ class Filesystem(Service):
         try:
             lock_id = self.files[path].add_lock(piece_id, offset,
                                                 length, username)
+        except LockError:
+            message = f"Lock creation in {path} has failed."
+            self._send_message_client("error-response",
+                                      {
+                                          "message": message,
+                                          "error_code": ERROR_FILE_ILLEGAL_LOCK
+                                      }, address)
+
+            return self._send_lock_response(path, False, address)
+        except ValueError:
+            self._error("Cursor repositioning has failed, possible table "
+                        "divergence at the client side.")
+
+        self._send_lock_response(path, True, address)
+        self._update_and_broadcast_piece_table(path, [lock_id])
+        self._broadcast_file_cursors(path)
+
+    @message_type("file-lock-insert-request")
+    async def _file_insert_lock(self, msg) -> None:
+        """
+        Insert a new lock after the given piece_uuid, or at the beginning of
+        the file if piece_uuid = "". Broadcasts this table change to all
+        clients.
+        """
+        content = msg["content"]
+        address, uname = msg["sender"]
+
+        path = content["file_path"]
+        piece_id = content["piece_uuid"]
+
+        try:
+            lock_id = self.files[path].insert_lock_after_piece(piece_id, uname)
+            self._update_and_broadcast_piece_table(path, [lock_id])
         except ValueError as e:
             self._send_message_client("error-response",
                                       {
                                           "message": str(e),
                                           "error_code": ERROR_FILE_ILLEGAL_LOCK
                                       }, address)
-
-            return self._send_lock_response(path, False, address)
-
-        self._send_lock_response(path, True, address)
-        self._send_piece_table_change_broadcast(path, [lock_id])
-        self._broadcast_file_cursors(path)
 
     @message_type("file-unlock-request")
     async def _file_remove_lock(self, msg) -> None:
@@ -555,14 +692,20 @@ class Filesystem(Service):
         if not self.check_valid(address, username, path):
             return
 
-        self.files[path].remove_lock(lock_id)
-        self._send_piece_table_change_broadcast(path, [lock_id])
+        try:
+            self.files[path].remove_lock(lock_id)
+        except ValueError:
+            self._error("Cursor repositioning has failed, possible table divergence"
+                        " at the client side.")
 
+        self._update_and_broadcast_piece_table(path, update_orig = True)
+        self._broadcast_file_cursors(path)
 
     def _send_lock_response(self, file_path: str, success: bool,
                             client: Address) -> None:
         """
-        Send the file-lock-response message.
+        Send the file-lock-response message, which indicates whether the
+        locking was successful.
         """
         self._send_message_client("file-lock-response",
                                   {"file_path": file_path,

@@ -7,15 +7,20 @@ from typedefs import LockError
 class PieceTable:
     """
     Text file data structure consisting of the original file together with
-    so-called "edit-blocks" (see the TextBlock class), for which a table is
-    used to couple these seperate blocks into one single file.
+    so-called "blocks", for which a table is used to couple these seperate
+    blocks into one single file. The table contains 'pieces' which refer to
+    subsections of blocks (using a block id) and have an uuid and owner.
 
-    Edit-blocks can can be created on top of the original file and locked, such
-    that no other edit-blocks can be created on top of them, until the
-    edit-block is closed manually. Edit-blocks can thereafter be edited such,
-    while the piece table makes sure the general structure stays intact.
+    Pieces can can be created on top of the original file and locked, such
+    that no other pieces can be created on top of them, until the
+    piece is unlocked manually. Blocks can thereafter be edited, while the
+    piece table makes sure the general structure stays intact.
     """
     def __init__(self, text) -> None:
+        """
+        Initialises the block dictionary and piece table. Also creates the
+        block with id 0, the 'orig' block which contains the original file.
+        """
         if not text:
             text = ["\n"]
 
@@ -36,7 +41,10 @@ class PieceTable:
         return sum(piece.length for piece in self.table)
 
     def __str__(self) -> str:
-        fmt = "{:>38}" + "{:>10}"*5
+        """
+        Prints the piece table in an easily readable manner.
+        """
+        fmt = "{:>38}" + "{:>10}"*3 + "{:>15}" + "{:>10}"
         str_table = fmt.format("Piece ID", "Block ID", "Start",
                                "Length", "Owner", "Locked") + "\n"
 
@@ -45,68 +53,95 @@ class PieceTable:
 
         return str_table
 
+    __repr__ = __str__
+
     def __getitem__(self, idx):
         return self.table[idx]
 
     def __setitem__(self, idx, val):
         self.table[idx] = val
 
-    def _insert_block(self, text) -> int:
+    def _insert_block(self, text: str) -> int:
         """
+        Insert a new block into the block dictionary, and return its id.
         """
         lines = self.text_to_lines(text)
         index = max(self.blocks) + 1
         self.blocks[index] = lines
         return index
 
-    def _remove_piece_block(self, p: Piece) -> None:
-        if not p.length == len(self.blocks[p.block_id]):
-            raise ValueError("Piece's block used by others")
-
-        del self.blocks[p.block_id]
-
     def _insert_piece(self, piece: Piece, index: int = None,
                       after_id: str = None) -> None:
         """
+        Inserts the given piece into the table, where either 'index' or
+        'after_id' is specified.
+
+        If 'index' is given, inserts the piece at this index into the table
+        If 'after_id' is given, inserts the piece after the piece with this id
+        into the table. If 'after_id' is an empty string, the piece is inserted
+        as the first in the table.
         """
         if index is not None:
             self.table.insert(index, piece)
         elif after_id is not None:
-            prev_index = self.get_piece_index(after_id) + 1
-            self._insert_piece(piece, index=prev_index)
+            if after_id == "":
+                index = 0
+            else:
+                index = self.get_piece_index(after_id) + 1
+            self._insert_piece(piece, index=index)
         else:
             raise ValueError("No index or preceding uuid given")
 
-    def _clear_unused_blocks(self) -> None:
-        used = [p.block_id for p in self.table]
-        self.blocks = {k: v for k, v in self.blocks.items() if k in used}
-
     def _remove_piece(self, piece_id: str) -> None:
+        """
+        Remove the specified piece from the table.
+        """
         piece = self.get_piece(piece_id)
         if piece:
             self.table.remove(piece)
         else:
             raise ValueError("Given uuid not in piece table")
 
-    def _merge_neighbours_same_owner(self) -> None:
-        cur_p = self.table[0]
-        for next_p in self.table[1:]:
-            if next_p.owner and next_p.owner == cur_p.owner:
-                self.blocks[cur_p.block_id] += self.blocks[next_p.block_id]
-                cur_p.length += next_p.length
+    def _merge_neighbours_same_owner(self, piece_id: str, uname: str) -> None:
+        """
+        Merges the specified piece with its two neighbours if 'uname' owns
+        the respective piece.
 
-                self._remove_piece_block(next_p)
-                next_p.piece_id = ""
-                cur_p.piece_id = str(uuid.uuid4())
+        Adds all block content to the block of the piece belonging to piece_id
+        and removes the pieces which are now merged from the table.
 
-                continue
+        This function is called after a new lock has been put in the table, and
+        thus assumes that the block_id belonging to piece_id is included as a
+        whole in the table.
+        """
+        piece = self.get_piece(piece_id)
+        index = self.get_piece_index(piece_id)
 
-            cur_p = next_p
+        # Try merging with the next piece in the table.
+        if index + 1 < len(self.table) and self.table[index + 1].owner == uname:
+            next_piece = self.table[index + 1]
+            next_block = self.get_lines(next_piece.piece_id, next_piece.start,
+                                        next_piece.length)
 
-        self.table = [p for p in self.table if p.piece_id]
+            self.blocks[piece.block_id] += next_block
+            piece.length += next_piece.length
+            self.table.remove(next_piece)
+
+        # Try merging with the previous piece in the table.
+        if index > 0 and self.table[index - 1].owner == uname:
+            prev_piece = self.table[index - 1]
+            prev_block = self.get_lines(prev_piece.piece_id, prev_piece.start,
+                                        prev_piece.length)
+
+            self.blocks[piece.block_id] = (prev_block +
+                                           self.blocks[piece.block_id])
+            piece.length += prev_piece.length
+            self.table.remove(prev_piece)
 
     def get_piece_index(self, piece_id: str) -> int:
         """
+        From the given piece_id, return its index in the piece table. If it is
+        not present, raises a ValueError.
         """
         for i, piece in enumerate(self.table):
             if piece.piece_id == piece_id:
@@ -115,6 +150,8 @@ class PieceTable:
 
     def get_piece(self, piece_id: str) -> Piece:
         """
+        Return the piece given its id. If the piece is not present in the
+        table, raises a ValueError.
         """
         for piece in self.table:
             if piece.piece_id == piece_id:
@@ -122,23 +159,38 @@ class PieceTable:
         raise ValueError("Given uuid not in piece table")
 
     def row_to_piece(self, row: int) -> Tuple[str, int]:
+        """
+        Returns the piece_id which is located at the specified row in the file,
+        as well as the offset within this piece.
+        Raises a ValueError when the row is outside the file.
+        """
         for piece in self.table:
-            if row <= 0:
-                return piece.piece_id, -row
             row -= piece.length
+            if row <= 0:
+                return piece.piece_id, piece.length + row
         raise ValueError("Row number out of bounds.")
 
     def piece_to_row(self, piece_id: str) -> int:
+        """
+        Returns the starting row of the specified piece, and raises a
+        ValueError if the piece_id is not present in the table.
+        """
         row = 0
         for piece in self.table:
             if piece.piece_id == piece_id:
                 return row
             row += piece.length
-        return -1
+        raise ValueError("Piece does not exist.")
 
     def get_pieces(self, start_piece_id: str, offset: int,
                    length: int) -> Tuple[List[Piece], int]:
         """
+        Return a list of all pieces within the specified range. The range is
+        given as the starting location, start_piece_id and offset, and the
+        length of the range.
+
+        Also returns 'end_offset', which indicates the last row in the last
+        piece that is within the range.
         """
         start_index = self.get_piece_index(start_piece_id)
         pieces = []
@@ -164,7 +216,9 @@ class PieceTable:
         return pieces, end_offset
 
     def get_piece_content(self, piece_id: str) -> List[str]:
-        """ Get the content for a given piece id. """
+        """
+        Get the text content for a given piece id.
+        """
         p = self.get_piece(piece_id)
         return self.blocks[p.block_id][p.start:p.start+p.length]
 
@@ -215,6 +269,16 @@ class PieceTable:
 
     def put_piece(self, start_piece_id: str, offset: int, length: int,
                   uname: str) -> str:
+        """
+        Locks a section of the piece table, meaning a new piece is put over
+        one or more existing pieces, either partly or completely. Raises a
+        ValueError when unsuccessful.
+
+        Assigns 'uname' as the piece's owner.
+
+        After calling this function, 'clear_unused_blocks' should be called
+        to erase overwritten blocks from memory.
+        """
         args = (start_piece_id, offset, length)
 
         # Get pieces and end offset
@@ -233,8 +297,7 @@ class PieceTable:
             (first_piece, *middle_pieces, last_piece) = pieces
         else:
             # This occurs when we're creating a piece fully inside another one.
-            # In that case, we want to insert a copy of the piece after itself,
-            # and insert
+            # In that case, we want to insert a copy of the piece after itself.
             first_piece = pieces[0]
             last_piece = Piece(*first_piece)
             self._insert_piece(last_piece, after_id=first_piece.piece_id)
@@ -264,12 +327,27 @@ class PieceTable:
         else:
             self.table.remove(last_piece)
 
-        # Clean unused blocks
-        # (maybe breaks things client-side, so removing it)
-        # self._clear_unused_blocks()
+        # Merge the locks if necessary.
+        self._merge_neighbours_same_owner(new_piece.piece_id, uname)
+
         return new_piece.piece_id
 
+    def put_piece_after(self, piece_id: str, uname: str) -> None:
+        """
+        Inserts a new piece inbetween existing pieces after the piece
+        with the given piece id.
+        """
+        block_id = self._insert_block("\n")
+        piece = Piece(str(uuid.uuid4()), block_id, 0, 1, uname)
+        self._insert_piece(piece, after_id = piece_id)
+        self._merge_neighbours_same_owner(piece.piece_id, uname)
+        return piece.piece_id
+
     def close_piece(self, piece_id: str) -> None:
+        """
+        After calling this function, 'merge_unlocked_pieces' could be called to
+        potentially merge the piece with other unlocked pieces.
+        """
         self.get_piece(piece_id).owner = ""
 
     def set_piece_content(self, piece_id: str, lines: List[str]) -> None:
@@ -280,10 +358,14 @@ class PieceTable:
         piece.length = len(lines)
         self.blocks[piece.block_id] = lines
 
-    def merge_unlocked_pieces(self):
+    def merge_unlocked_pieces(self) -> None:
         """
         This function merges unlocked pieces by stitching the file and turning
-        contiguous unlocked blocks into a single block with the s
+        neighbouring unlocked pieces into a single piece referencing the new
+        orig block (with id 0).
+
+        After calling this function, 'clear_unused_blocks' should be called
+        to erase the removed blocks from memory.
         """
         new_orig = self.get_lines()
 
@@ -294,13 +376,12 @@ class PieceTable:
                 # Skip locked blocks and update next 'orig' piece index.
                 last_orig_index = i + 1
             else:
-                self.table[last_orig_index].length += piece.length
-
                 if i == last_orig_index:
                     # Create new 'orig' piece.
                     piece.block_id = 0
                     piece.start = cur_pos
                 else:
+                    self.table[last_orig_index].length += piece.length
                     # Stage piece to be removed.
                     piece.piece_id = ""
 
@@ -308,4 +389,17 @@ class PieceTable:
 
         self.table = [piece for piece in self.table if piece.piece_id]
         self.blocks[0] = new_orig
-        self._clear_unused_blocks()
+
+    def clear_unused_blocks(self) -> List[int]:
+        """
+        Removes all unused blocks from the 'blocks' dictionary, and returns
+        the block id's of the blocks which were removed from it.
+        """
+        used = {p.block_id for p in self.table}
+        unused = {k for k in self.blocks if k not in used}
+
+        self.blocks = {k: v for k, v in self.blocks.items() if k in used}
+
+        return list(unused)
+
+
