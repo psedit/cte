@@ -97,7 +97,6 @@ class Connector {
     } else {
       makeNewSetting()
     }
-    console.log('serverURL', settings.serverURL)
     this.setUp(settings.serverURL)
   }
   /**
