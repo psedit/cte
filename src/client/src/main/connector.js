@@ -2,9 +2,9 @@ const WebSocket = require('ws')
 const uuid = require('uuid/v4')
 
 // FIXME: Change path to server path.
-const path = new URL('ws://bami.party:12345')
-// const path = 'ws://segfault.party:12345'
-// const path = new URL('ws://localhost:8080')
+// const path = 'ws://bami.party:12345'
+const path = 'ws://segfault.party:12345'
+// const path = 'ws://localhost:8080'
 
 /**
  * @typedef {Object} Message
@@ -98,7 +98,22 @@ class Connector {
       }
     }
   }
-
+  /**
+   * Got form:
+   * https://stackoverflow.com/questions/13546424/how-to-wait-for-a-websockets-readystate-to-change
+   * @param {function} callback is called when websocket is open
+   */
+  waitUntillOpen (callback) {
+    setTimeout(() => {
+      if (this.ws.readyState === 1) {
+        if (callback != null) {
+          callback()
+        }
+      } else {
+        this.waitUntillOpen(callback)
+      }
+    }, 5) // wait 5 milisecond for the connection...
+  }
   /**
    * Change the server URL
    * @param {string} newPathString string with path for new url

@@ -1,7 +1,7 @@
 <template>
   <div class="editor" ref="mainEditor">
     <div class="editor-pieces" ref="editorPiecesList">
-      <transition-group name="swap" tag="editor-piece">
+      <transition-group name="swap" tag="editorPieceGroup">
         <editor-piece 
           v-for="(piece, index) in pieces"
           v-if="piece.text.length > 0"
@@ -16,6 +16,7 @@
           @restoreScrollPosition="restoreEditorScroll"
           @mounted="editorMount"
           @update="editorUpdate"
+          @viewportChange="editorViewPortChange"
           ref="editorPieces"
         />
       </transition-group>
@@ -85,6 +86,14 @@
     },
     methods: {
       editorUpdate () {},
+      editorViewPortChange (index) {
+        setTimeout(() => {
+          this.$refs.editorPieces.forEach(piece => {
+            if (!piece) return
+            piece.updateLineNumbers()
+          })
+        }, 10)
+      },
       editorMount (editorPiece) {
         const index = this.$refs.editorPieces.indexOf(editorPiece)
         this.initializeEditor(index)
@@ -188,7 +197,7 @@
         return this.$store.state.user.username
       },
       pieces () {
-        return this.$store.state.fileTracker.pieces
+        return this.$store.state.fileTracker.pieces || []
       },
       pieceTable () {
         return this.$store.state.fileTracker.pieceTable

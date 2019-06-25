@@ -11,6 +11,8 @@ const state = {
 }
 
 const mutations = {
+  serverURLChange (store) {
+  },
   /**
    * @param {Object} state
    * @param {pieceTable} pieceTable
@@ -141,6 +143,10 @@ const actions = {
   updatePieceTable (store, pieceTable) {
     store.commit('updatePieceTable', pieceTable)
     store.commit('updatePieces', pieceTable)
+  },
+  serverURLChange (store) {
+    store.commit('serverURLChange')
+    store.dispatch('clearTabs')
   },
   /**
    * Removes a tab from state and switches to a new tab if the tab was the
