@@ -1,8 +1,8 @@
 <template>
   <div>
-    <ul id="tab-list" @wheel="scroll()">
+    <ul id="tab-list" @wheel="scrollTabs">
       <li v-for="tab in tabs" class="tab" @click.self="tabClick(tab.filePath)" :class="{ 'active': isActive(tab.filePath) }">
-        <span>{{ tab.fileName }}</span> <close-icon class="close-tab" @click="tabRemove(tab)"/>
+        {{ tab.fileName }} <close-icon class="close-tab" @click="tabRemove(tab)"/>
       </li>
     </ul>
   </div>
@@ -15,6 +15,9 @@
     components: {
       CloseIcon
     },
+    data () {
+      return {scrollPosition: 0}
+    },
     computed: {
       tabs () {
         return this.$store.state.fileTracker.tabs
@@ -24,8 +27,12 @@
       }
     },
     methods: {
-      scroll (e) {
-        console.log('scrolling')
+      scrollTabs (e) {
+        let direction = 1
+        if (e.deltaY < 0) {
+          direction = 0
+        }
+        this.$store.dispatch('scrollTab', direction)
       },
       tabClick (fileName) {
         this.$store.dispatch('openFile', fileName)
@@ -52,6 +59,7 @@
     height: 2em;
     white-space: nowrap;
     overflow: hidden;
+    cursor: pointer;
   }
   li {
     display: inline-grid;
@@ -73,7 +81,6 @@
   }
 
   .close-tab {
-    cursor: pointer;
     padding: 2px 6px;
   }
 

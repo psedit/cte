@@ -1,6 +1,12 @@
 'use strict'
 
 import { app, BrowserWindow, Menu } from 'electron'
+const prompt = require('electron-prompt')
+const homedir = require('os').homedir()
+const settingsDirPath = homedir + '/pseditor-settings/'
+const settingsPath = settingsDirPath + 'settings.json'
+const dialog = require('electron').dialog
+const fs = require('fs')
 
 /**
  * Set `__static` path to static files in production
@@ -16,30 +22,6 @@ const winURL = process.env.NODE_ENV === 'development'
   : `file://${__dirname}/index.html`
 
 function createWindow () {
-  const menu = Menu.buildFromTemplate([
-    {
-      label: 'File',
-      submenu: [
-        { label: 'Open file' },
-        { label: 'Open folder' }
-      ]
-    },
-    {
-      label: 'Edit',
-      submenu: [
-        { label: 'Undo' },
-        { label: 'Redo' }
-      ]
-    },
-    {
-      label: 'Help',
-      submenu: [
-        { label: 'Exit' }
-      ]
-    }
-  ])
-  Menu.setApplicationMenu(menu)
-
   /**
    * Initial window options
    */
@@ -55,6 +37,79 @@ function createWindow () {
   mainWindow.setFullScreenable(true)
 
   mainWindow.loadURL(winURL)
+
+  const menu = Menu.buildFromTemplate([
+    {
+      label: 'Settings',
+      submenu: [
+        {
+          label: 'Server Connection',
+          click () {
+            /* Try to read URL from settings file
+             */
+            let defaultURL = 'ws://segfault.party:12345'
+            let jsonSettingsString = fs.readFileSync(settingsPath, 'utf8')
+            try {
+              let newSettings = JSON.parse(jsonSettingsString)
+              if (typeof newSettings.serverURL === 'string') {
+                defaultURL = newSettings.serverURL
+              }
+            } catch (err) {
+              dialog.showErrorBox('File read error', err)
+            }
+            /* Ask user for URL.
+             */
+            prompt({
+              title: 'New Server URL',
+              label: 'URL',
+              value: defaultURL
+            }).then((newURLString) => {
+              if (newURLString !== undefined && newURLString !== null) {
+                mainWindow.webContents.send('changeURL', newURLString)
+              }
+            })
+          }
+        },
+        {
+          label: 'Local Workspace',
+          click () {
+            let settings = {serverURL: '', workingPath: ''}
+
+            /* Let user select local directory. */
+            let localDirPath = dialog.showOpenDialog({ properties: ['openDirectory'] })
+
+            if (localDirPath === undefined || localDirPath[0].toString() === '') {
+              return
+            } else {
+              settings.workingPath = localDirPath[0].toString()
+            }
+
+            /* If settings json file exists, read the server member from the JSON object. */
+            if (fs.existsSync(settingsPath)) {
+              let jsonSettingsString = fs.readFileSync(settingsPath, 'utf8')
+              try {
+                settings.serverURL = JSON.parse(jsonSettingsString).serverURL
+              } catch (err) {
+                dialog.showErrorBox('Reading error', err)
+              }
+            }
+
+            /* Make a json object and write it to the settings.json file. */
+            const jsonSettingsString = JSON.stringify(settings)
+
+            /* Make the pseditor-settings directory if it does not exist yet. */
+            if (!fs.existsSync(settingsDirPath)) fs.mkdirSync(settingsDirPath)
+
+            /* Write json string to file. */
+            fs.writeFile(settingsPath, jsonSettingsString, 'utf8', (e) => {
+              if (e) dialog.showErrorBox('Writing error', e)
+            })
+          }
+        }
+      ]
+    }
+  ])
+  Menu.setApplicationMenu(menu)
 
   mainWindow.on('closed', () => {
     mainWindow = null

@@ -1,38 +1,37 @@
 <template>
   <div class="sidenav">
     <div id="toolbar">
-      <span class="curr-folder">./{{this.currPath.join('/')}}</span>
+      <span class="curr-folder" :title="`./${this.currPath.join('/')}`">./{{this.displayPath}}</span>
       <back-icon title="Go to previous folder" class="button" @click="previous"/>
       <home-icon title="Go to home folder" class="button" @click="home"/>
     </div>
     <div class="file-tools">
+      <file-plus title="Add new file/directory" class="button" @click="createItem"/>
+      <cloud-download-outline title="Download project" class="button" @click="downloadProject"/>
       <upload title="Upload directory" class="button" @click="uploadDir"/>
       <file-upload title="Upload file" class="button" @click="uploadFile"/>
-      <file-plus title="Add new file" class="button" @click="createFile"/>
-      <file-document-edit title="Rename file" class="button" @click="renameFile"/>
-      <file-move title="Relocate file" class="button" @click="relocateFile"/>
-      <file-remove title="Remove file" class="button" @click="removeFile"/>
     </div>
 
 
-    <file-tree id="file-list" :file-list="currItems" @openFolder="openFolder" @openFile="openFile"/>
+    <file-tree id="file-list" :file-list="currItems" @openFolder="openFolder" @openFile="openFile"
+      @renameItem="renameItem" @relocate="relocate" @removeItem="removeItem" @download="downloadFile"/>
   </div>
 </template>
 
 <script>
   import HomeIcon from 'vue-material-design-icons/Home'
   import BackIcon from 'vue-material-design-icons/ArrowLeft'
-  import FileRemove from 'vue-material-design-icons/FileRemove'
   import FilePlus from 'vue-material-design-icons/FilePlus'
-  import FileDocumentEdit from 'vue-material-design-icons/FileDocumentEdit'
-  import FileMove from 'vue-material-design-icons/FileMove'
   import FileUpload from 'vue-material-design-icons/FileUpload'
+  import CloudDownloadOutline from 'vue-material-design-icons/CloudDownloadOutline'
   import Upload from 'vue-material-design-icons/Upload'
   import connector from '../../main/connector'
   import FileTree from './Sidebar/FileTree'
   import * as fileManager from './Sidebar/fileManager'
-  const { dialog } = require('electron').remote
+  import {convertToJS, stitch} from '../../main/pieceTable'
+  const {dialog} = require('electron').remote
   const dialogs = require('dialogs')
+  const tar = require('tar')
   const fs = require('fs')
 
   export default {
@@ -47,12 +46,10 @@
       FileTree,
       HomeIcon,
       BackIcon,
-      FileRemove,
       FilePlus,
-      FileDocumentEdit,
-      FileMove,
       Upload,
-      FileUpload
+      FileUpload,
+      CloudDownloadOutline
     },
     computed: {
       /**
@@ -77,9 +74,24 @@
             }
           }
         }
+
+        /* Sort the items alphabetically, but with all folders on top and all
+         * other files below. */
+        items.sort(function (a, b) {
+          if (a instanceof Array && !(b instanceof Array)) {
+            return -1
+          } else if (!(a instanceof Array) && b instanceof Array) {
+            return 1
+          }
+          return a > b
+        })
+
         return items
       },
 
+      /**
+       * Return the current path string.
+       */
       currPathString () {
         /* The path string has to and on a '/' so we can append a file
          * name directly to when we want the path of that file. */
@@ -89,10 +101,110 @@
         }
 
         return pathString
+      },
+
+      /**
+       * Return the path string that will be displayed at top of the sidebar.
+       * There is a maximum length, to avoid style problems.
+       */
+      displayPath () {
+        let path = this.currPath.join('/')
+        if (path.length > 13) {
+          return path.substr(0, 4) + '...' + path.substr(path.length - 8, path.length)
+        }
+
+        return path
       }
     },
     methods: {
-      // TODO: FIX CANCELLEN IN ELKE METHODE.
+      /**
+       * Save project to disk.
+       *
+       * @param {string} dataBase64 base64 encoded string with binary data of project as tar file.
+       * @param {string} localPath path to local directory where project is downloaded.
+       */
+      saveToDisk (dataBase64, localPath) {
+        /* Decode base64 to binary and make a tar file of the tar string in
+         * localPath.
+         */
+        let buff = Buffer.from(dataBase64, 'base64')
+        let filePath = `${localPath}/.project.tar`
+        fs.writeFileSync(filePath, buff)
+
+        /* Unpack tar file. */
+        tar.x( // TODO: Fix unpacken
+          {
+            file: filePath
+          }
+        ).then(_ => {
+          /* Delete tar file. */
+          fs.unlinkSync(filePath)
+          this.$toasted.show(`Project succesfully downloaded to ${localPath}`)
+        })
+      },
+
+      /**
+       * Download entire project to local directory.
+       */
+      downloadProject () {
+        const homedir = require('os').homedir()
+        const settingsDirPath = homedir + '/pseditor-settings/'
+        const settingsPath = settingsDirPath + 'settings.json'
+
+        let errTitle = 'Error! Could not get local workspace path...'
+        let err = 'Specify the local workspace path via Settings --> Local Workspace'
+        let localPath = ''
+
+        /* If settings json does not exist, throw an error. */
+        if (!fs.existsSync(settingsPath)) {
+          dialog.showErrorBox(errTitle, err + '\nPath to settings.json does not exist.')
+          return
+        }
+
+        /* Try getting local file path from json. */
+        let jsonSettingsString = fs.readFileSync(settingsPath, 'utf8')
+        try {
+          localPath = JSON.parse(jsonSettingsString).workingPath
+        } catch (e) {
+          dialog.showErrorBox(errTitle, err + '\nCould not parse json file.')
+          return
+        }
+
+        /* Throw error if local path does not exist. */
+        if (!fs.existsSync(localPath)) {
+          dialog.showErrorBox(errTitle, `${err}\nLocal path (${localPath}) does not exist.`)
+          return
+        }
+
+        /* Get base64 encoded string with binary data of project as tar file
+         * from server.
+         */
+        this.$toasted.show(`Downloading project to ${localPath} ...`)
+        let dataBase64 = ''
+        connector.request(
+          'file-project-request',
+          'file-project-response',
+          {}
+        ).then((response) => {
+          dataBase64 = response.data
+          this.saveToDisk(dataBase64, localPath)
+        })
+      },
+
+      /**
+       * Gives the file path of an item. If directory, it needs
+       * to end on a '/'.
+       *
+       * @param {object} item file or directory (members: name, isFolder)
+       * @return {string} file path to current file or directory
+       */
+      getFilePath (item) {
+        /* If item is a directory, add a '/'. */
+        let filePath = `${this.currPathString}${item.name}`
+        filePath = item.isFolder ? filePath + '/' : filePath
+
+        return filePath
+      },
 
       /**
        * When clicking on a folder, push the folder name to currPath.
@@ -101,6 +213,62 @@
        */
       openFolder (name) {
         this.currPath.push(name)
+      },
+
+      /**
+       * Lets the user select a local map and a file on the server.
+       * The user then downloads the file.
+       *
+       * @param {object} item file or directory that will be downloaded
+       */
+      downloadFile (item) {
+        let filePath = this.getFilePath(item)
+
+        /* Download the file by selecting a local file and putting the content
+         * of the server file in it.
+         */
+        if (filePath === undefined) {
+          return
+        }
+
+        /* Select a local file. */
+        let options = {
+          title: 'Download location',
+          message: 'Select where to download file',
+          defaultPath: item.name
+        }
+
+        dialog.showSaveDialog(null, options, (downloadPath) => {
+          if (downloadPath === undefined) {
+            return
+          }
+
+          /* Join the file. */
+          connector.send(
+            'file-join',
+            {
+              'file_path': filePath
+            }
+          )
+
+          /* Get the file from. */
+          connector.request(
+            'file-content-request',
+            'file-content-response',
+            {
+              'file_path': filePath,
+              'start': 0,
+              'length': -1
+            }
+          ).then((data) => {
+            let fileContent = stitch(convertToJS(data)).join('')
+            fs.writeFile(downloadPath, fileContent, (err) => {
+              if (err) {
+                dialog.showErrorBox('error', err)
+              }
+            })
+          })
+        })
       },
 
       /**
@@ -157,71 +325,56 @@
 
       /**
        * Change name of file or directory.
+       *
+       * @param {object} item file or directory that will be renamed
        */
-      renameFile () {
-        /* Let user select file or directory from current folder.
-         * First get all files and directories. */
-        let items = ['cancel']
-        items = items.concat(this.itemNames())
+      renameItem (item) {
+        let oldName = item.name
 
-        /* Options needed for the message box. */
-        let options = {
-          type: 'question',
-          buttons: items,
-          defaultId: 0,
-          title: 'Rename file or directory',
-          message: 'Select item to rename'
-        }
-
-        /* Let user choose which file to rename. */
-        dialog.showMessageBox(null, options, (response) => {
-          /* When user selects 'cancel', do nothing. */
-          if (response === 0) {
+        /* Define a function to change name. Assure that a file gets
+         * changed into a file and a directory into a directory.
+         */
+        let changeName = (newName) => {
+          if (newName === '' || newName === undefined) {
             return
           }
 
-          let oldName = items[response]
-
-          /* Define a function to change name. Assure that a file gets
-           * changed into a file and a directory into a directory.
+          /* If oldName is a directory, add a '/' to the new name.
+           * If not, but newName is a directory, throw an error.
            */
-          let changeName = (newName) => {
-            if (newName === '' || newName === undefined) {
-              return
-            }
-
-            /* If oldName is a directory, add a '/' to the new name.
-             * If not, but newName is a directory, throw an error. */
-            if (oldName.slice(-1) === '/') {
-              newName = newName.slice(-1) !== '/' ? newName + '/' : newName
-            } else if (newName.slice(-1) === '/') {
-              console.log('A file cannot be changed into a directory!')
-              return
-            }
-
-            fileManager.nameChange(this.currPathString, oldName, newName)
+          if (oldName.slice(-1) === '/') {
+            newName = newName.slice(-1) !== '/' ? newName + '/' : newName
+          } else if (newName.slice(-1) === '/') {
+            dialog.showErrorBox('Renaming error', 'A file cannot be changed into a directory!')
+            return
           }
 
-          this.promptBox('Enter new name', oldName, changeName)
-        })
+          fileManager.nameChange(this.currPathString, oldName, newName)
+
+          /* Functions in the store can only take one argument, so we have to
+           * pass arguments like this. */
+          let payload = {pathToDir: this.currPathString, oldName: oldName, newName: newName}
+          this.$store.commit('renameTab', payload)
+        }
+
+        this.promptBox('Enter new name', oldName, changeName)
       },
 
       /**
        * Change location of file or directory.
+       *
+       * @param {object} item file or directory that will be relocated
        */
-      relocateFile () {
-        let selectFolder = (filePath, payload) => {
-          this.promptBox('Enter path', filePath, (response) => {
-            if (response === undefined || response === '') {
-              return
-            }
-            console.log('Requesting location change: ')
-            console.log('old_path: ', filePath)
-            console.log('new_path: ', response)
-            fileManager.locationChange(filePath, response)
-          })
-        }
-        this.selectItem('File move', 'select a file to move', '', this.currItems, 'file', selectFolder)
+      relocate (item) {
+        let filePath = this.getFilePath(item)
+
+        this.promptBox('Enter new path', filePath, (response) => {
+          if (response === undefined || response === '') {
+            return
+          }
+
+          fileManager.locationChange(filePath, response)
+        })
       },
 
       /* Let the user select a file.
@@ -241,15 +394,23 @@
               return !(item instanceof Array)
             case 'dir':
               return (item instanceof Array)
+            case 'all':
+              return true
             default:
               return true
           }
         }
 
         let filterItems = items.filter(filterFunc)
+        filterItems = filterItems.map((item) => {
+          if (item instanceof Array) {
+            return item[0] + '/'
+          } else {
+            return item
+          }
+        })
 
-        /* Add a cancel button
-          */
+        /* Add a cancel button. */
         let buttonOptions = ['cancel', ...filterItems]
 
         /* Options needed for the message box. */
@@ -268,7 +429,7 @@
           if (response === 0) {
             return
           }
-          console.log('button options', buttonOptions)
+
           returnValue = buttonOptions[response]
           returnValue = `${this.currPathString}${returnValue}`
           callback(returnValue)
@@ -276,45 +437,112 @@
       },
 
       /**
-       * Upload new directory to server.
+       * Upload a file to server (helper function of uploadFile),
+       * does the actual communication with server.
+       *
+       * @param {string} localPath local path to file that will be uploaded
+       * @param {string} serverPath destination path on server
+       *
+       * @see uploadFile()
        */
-      uploadDir () {
-        console.log(dialog.showOpenDialog({ properties: ['openDirectory'] }))
-        /* TODO: voor alle elementen in map: uploadDir op elke map en uploadFile
-         * op elk bestand (recursief). Let op currPathString...
-         */
+      uploadFileHelper (localPath, serverPath) {
+        /* Read content from file and request file upload from server. */
+        fs.readFile(localPath, (err, data) => {
+          if (err) {
+            dialog.showErrorBox('Reading error', err)
+            return
+          }
+
+          fileManager.uploadFile(serverPath, data.toString())
+        })
       },
 
       /**
        * Upload new file to server.
        */
       uploadFile () {
-        let newFilePath = dialog.showOpenDialog({ properties: ['openFile'] })
+        let localPath = dialog.showOpenDialog({ properties: ['openFile'] })
 
-        if (newFilePath === '' || newFilePath === undefined) {
+        if (localPath === undefined || localPath.toString() === '') {
           return
+        } else {
+          localPath = localPath.toString()
         }
 
         /* Get name of file from path. */
-        let lastIndex = newFilePath.lastIndexOf('/')
-        let newFileName = newFilePath.slice(lastIndex + 1, newFilePath.length)
-        let path = this.currPathString + newFileName
-        console.log('NEW FILE NAME: ' + newFileName)
-        fs.readFile(newFilePath, (err, data) => {
+        let folderPath = localPath.split('/')
+        let newFileName = folderPath[folderPath.length - 1]
+        let serverPath = this.currPathString + newFileName
+
+        this.uploadFileHelper(localPath, serverPath)
+      },
+
+      /**
+       * Recursively upload subdirectories to server.
+       *
+       * @param {string} newDirLocal local path to new directory
+       * @param {string} currServerPath destination path in which to make new directory
+       */
+      uploadDirRecursive (newDirLocal, currServerPath) {
+        /* Read local directory. */
+        fs.readdir(newDirLocal, {withFileTypes: true}, (err, files) => {
           if (err) {
-            console.log(err)
+            dialog.showErrorBox('Reading error', err)
             return
           }
 
-          fileManager.uploadFile(path, data)
+          /* Get dir name from newDirLocal. */
+          let folderPath = newDirLocal.split('/')
+          let newDirName = folderPath[folderPath.length - 1]
+
+          let dirs = []
+          files.forEach(file => {
+            let localPath = `${newDirLocal}/${file}`
+            let stat = fs.statSync(localPath)
+
+            /* Upload all files and make a list of the directories. */
+            if (stat.isDirectory()) {
+              dirs.push(localPath)
+            } else {
+              let serverPath = currServerPath + newDirName + '/' + file
+
+              this.uploadFileHelper(localPath, serverPath)
+            }
+          })
+
+          /* End recursion. */
+          if (dirs === []) {
+            return
+          }
+
+          /* Recursively add subdirectories. */
+          dirs.forEach(dirPath => {
+            this.uploadDirRecursive(dirPath, currServerPath + newDirName + '/')
+          })
         })
+      },
+
+      /**
+       * Upload new directory to server.
+       */
+      uploadDir () {
+        let localDirPath = dialog.showOpenDialog({ properties: ['openDirectory'] })
+
+        if (localDirPath === undefined || localDirPath[0].toString() === '') {
+          return
+        } else {
+          localDirPath = localDirPath[0].toString()
+        }
+
+        /* Recursively upload folder (and all its subfolders). */
+        this.uploadDirRecursive(localDirPath, this.currPathString)
       },
 
       /**
        * Ask user for a name and create a new file with that name.
        * If file already exists, it will be overwritten.
        */
-      createFile () {
+      createItem () {
         const d = dialogs()
 
         let promptString = `Add new file or directory. Enter desired name.
@@ -333,44 +561,35 @@
 
       /**
        * Let user choose a file and remove that file from the server.
+       *
+       * @param {object} item file or directory that will be removed
        */
-      removeFile () {
-        // let items = this.currItems
+      removeItem (item) {
+        let filePath = this.getFilePath(item)
 
-        // /* Get all files. */
-        // let files = items.filter((item) => {
-        //   return !(item instanceof Array)
-        // })
-        // files = ['cancel', ...files]
+        /* Options for promt box. */
+        let buttonOptions = ['No', 'Yes']
+        let title = `Deletion confirmation`
+        let message = `Are you sure you want to delete ${item.name}?`
+        let detail = `This cannot be undone!`
 
-        // let items = ['cancel'].concat(this.itemNames()) // TODO: Remove if only file deletion allowed
+        /* Options needed for the message box. */
+        let options = {
+          type: 'question',
+          buttons: buttonOptions,
+          defaultId: 0,
+          title: title,
+          message: message,
+          detail: detail
+        }
 
-        // /* Options needed for the message box. */
-        // let options = {
-        //   type: 'question',
-        //   // buttons: files, // FIXME: Change to 'files' if only file deletion allowed
-        //   buttons: items,
-        //   defaultId: 0,
-        //   title: 'Delete file',
-        //   message: 'Select file to delete',
-        //   detail: 'This cannot be undone!'
-        // }
-
-        // /* Let user choose which file to delete. */
-        // dialog.showMessageBox(null, options, (response) => {
-        //   /* When user selects 'cancel', do nothing. */
-        //   if (response === 0) {
-        //     return
-        //   }
-
-        //   fileManager.removeFile(`${this.currPathString}${items[response]}`)
-        // })
-        this.selectItem('Delete file', 'Select file to delete', 'This cannot be undone!', this.currItems, 'file', (filePath) => {
-          /* When user selects 'cancel', do nothing. */
-          if (filePath === undefined) {
-            return
+        /* Ask user for confirmation. */
+        dialog.showMessageBox(null, options, (response) => {
+          /* When user selects 'No', do nothing. Otherwise remove item. */
+          if (response !== 0) {
+            fileManager.removeItem(filePath)
+            this.$store.dispatch('removeTabByPath', filePath)
           }
-          fileManager.removeFile(filePath)
         })
       },
 
@@ -428,6 +647,16 @@
     },
     mounted () {
       this.openSocketUpdateTree()
+      /* When the server URL is changes,
+       * reset the directory tracker.
+       */
+      this.$store.subscribe((mutation, state) => {
+        if (mutation.type === 'serverURLChange') {
+          connector.waitUntillOpen(() => {
+            this.home()
+          })
+        }
+      })
     }
   }
 </script>
@@ -459,7 +688,7 @@
   .file-tools {
     background-color: #555;
     display: grid;
-    grid-template-columns: 1fr auto auto auto auto auto auto;
+    grid-template-columns: 1fr auto auto auto auto;
     grid-gap: 0.5em;
     align-items: center;
     color: #fff;

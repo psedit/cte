@@ -14,6 +14,7 @@
   import Tabs from './Tabs/Tabs'
   import ErrorMessenger from './ErrorMessenger'
   import connector from '../../main/connector.js'
+  const {dialog} = require('electron').remote
 
   export default {
     name: 'landing-page',
@@ -27,10 +28,9 @@
           {username}
         ).then(({succeed, new_username: newUsername}) => {
           if (!succeed) {
-            // FIXME: do error screeen pls
-            console.error('hier graag')
+            dialog.showErrorBox('No connection', 'failed to establish connection')
           } else {
-            this.$store.dispatch('login', newUsername)
+            this.$store.commit('changeUsername', newUsername)
           }
         })
       })

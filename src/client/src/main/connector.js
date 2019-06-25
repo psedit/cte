@@ -1,8 +1,13 @@
 const WebSocket = require('ws')
 const uuid = require('uuid/v4')
+const fs = require('fs')
+const {dialog} = require('electron')
 
-// FIXME: Change path to server path.
-const path = new URL('ws://segfault.party:12345')
+// const path = 'ws://bami.party:12345'
+const path = 'ws://segfault.party:12345'
+const homedir = require('os').homedir()
+const settingsDirPath = homedir + '/pseditor-settings/'
+const settingsPath = settingsDirPath + 'settings.json'
 
 /**
  * @typedef {Object} Message
@@ -48,15 +53,63 @@ class Connector {
   ws;
 
   /**
+   *
+   * @type {string} URLString
+   */
+  URLString;
+
+  /**
    * Creates a connection and setups listeners.
-   * @param {string | URL} path - The path to the websocket server.
+   * Also creates a json file or reads path from json file.
+   * @param {string} path - The path to the websocket server.
    */
   constructor (path) {
+    let settings = {serverURL: path, workingPath: ''}
+    /*
+     */
+    let getFromSettings = () => {
+      let jsonSettingsString = fs.readFileSync(settingsPath, 'utf8')
+      try {
+        let newSettings = JSON.parse(jsonSettingsString)
+        if (typeof newSettings.serverURL !== 'string') {
+          makeNewSetting()
+          return
+        } else {
+          settings = newSettings
+        }
+      } catch (err) {
+        dialog.showErrorBox('File read error', err)
+      }
+    }
+    let makeNewSetting = () => {
+      /* Make a json object and write it to the settings.json file. */
+      const jsonSettingsString = JSON.stringify(settings)
+      /* Make the pseditor-settings directory if it does not exist yet. */
+      if (!fs.existsSync(settingsDirPath)) fs.mkdirSync(settingsDirPath)
+      /* Write json string to file. */
+      fs.writeFile(settingsPath, jsonSettingsString, 'utf8', (e) => {
+        if (e) dialog.showErrorBox(e)
+      })
+    }
+    /* If settings json file exists, read the file and update the settings object. */
+    if (fs.existsSync(settingsPath)) {
+      getFromSettings()
+    } else {
+      makeNewSetting()
+    }
+    this.setUp(settings.serverURL)
+  }
+  /**
+   * Sets up the connector.
+   * @param {string} pathString string of URL for websocket.
+   */
+  setUp (pathString) {
+    this.URLString = pathString
+
     // Setup websocket
-    this.ws = new WebSocket(path, {
+    this.ws = new WebSocket(pathString, {
       perMessageDeflate: false
     })
-
     // Setup listeners
     for (let type in this.listeners) {
       if (type === 'message') {
@@ -82,7 +135,54 @@ class Connector {
       }
     }
   }
+  /**
+   * Got form:
+   * https://stackoverflow.com/questions/13546424/how-to-wait-for-a-websockets-readystate-to-change
+   * @param {function} callback is called when websocket is open
+   */
+  waitUntillOpen (callback) {
+    setTimeout(() => {
+      if (this.ws.readyState === 1) {
+        if (callback != null) {
+          callback()
+        }
+      } else {
+        this.waitUntillOpen(callback)
+      }
+    }, 5) // wait 5 milisecond for the connection...
+  }
+  /**
+   * Change the server URL and update the JSON file accordingly.
+   * @param {string} newPathString string with path for new url
+   */
+  reload (newPathString) {
+    let settings = {serverURL: newPathString, workingPath: ''}
 
+    // TODO: Maak hier een fucntie van (@see constructor)
+    /* If settings json file exists, read the file and update the serverURL member. */
+    if (fs.existsSync(settingsPath)) {
+      let jsonSettingsString = fs.readFileSync(settingsPath, 'utf8')
+      try {
+        settings = JSON.parse(jsonSettingsString)
+        settings.serverURL = newPathString
+        fs.writeFile(settingsPath, JSON.stringify(settings), 'utf8', (e) => { if (e) dialog.showErrorBox('File Write Error', e) })
+      } catch (err) {
+        dialog.showErrorBox('File write error', err)
+      }
+    } else {
+      /* Make a json object and write it to the settings.json file. */
+      const jsonSettingsString = JSON.stringify(settings)
+
+      /* Make the pseditor-settings directory if it does not exist yet. */
+      if (!fs.existsSync(settingsDirPath)) fs.mkdirSync(settingsDirPath)
+
+      /* Write json string to file. */
+      fs.writeFile(settingsPath, jsonSettingsString, 'utf8', (e) => {
+        if (e) dialog.showErrorBox('File write error', e)
+      })
+    }
+    this.setUp(settings.serverURL)
+  }
   /**
    * Closes connection to websocket server
    *
@@ -150,6 +250,12 @@ class Connector {
   }
 
   /**
+   * Return the String of the URL
+   */
+  getURLString () {
+    return this.URLString
+  }
+  /**
    * Send some content to the websocket server.
    *
    * @param {string} type - The type of the message.
@@ -211,4 +317,5 @@ class Connector {
  * An instance of Connector.
  * Use this to interact with this API.
  */
-export default new Connector(path)
+const inst = new Connector(path)
+export default inst

@@ -1,5 +1,7 @@
 import Color from 'color'
-const pearsonTable = [...new Array(360)].map((_, i) => i).sort(() => 0.5 - Math.random())
+// Mixed array of the numbers 0 to 360 to make the colors appear more random.
+// 169is the coprime of 360, thus all numbers generated are unique.
+const pearsonTable = [...new Array(360)].map((_, i) => i * 169 % 360)
 
 // Peason hash to generate hue
 export function getRandomColor (seed) {

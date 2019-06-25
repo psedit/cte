@@ -1,20 +1,39 @@
 <template>
-  <ul class="fileTree">
-    <file-tree-item v-for="(item, index) in fileList" :item="item" :key="index" @click="fileClick"/>
-  </ul>
+  <div>
+    <ul class="fileTree">
+      <file-tree-item v-for="(item, index) in fileList" :item="item" :key="index" @click="fileClick" @rightClick="rightClick"/>
+    </ul>
+
+    <vue-simple-context-menu
+      :elementId="'myUniqueIdFile'"
+      :options="rightClickOptionsFile"
+      :ref="'vueSimpleContextMenuFile'"
+      @option-clicked="optionClicked">
+    </vue-simple-context-menu>
+
+    <vue-simple-context-menu
+      :elementId="'myUniqueIdDir'"
+      :options="rightClickOptionsDir"
+      :ref="'vueSimpleContextMenuDir'"
+      @option-clicked="optionClicked">
+    </vue-simple-context-menu>
+  </div>
 </template>
 
 <script>
   import FolderIcon from 'vue-material-design-icons/Folder'
   import FileIcon from 'vue-material-design-icons/File'
   import FileTreeItem from './FileTreeItem'
+  import 'vue-simple-context-menu/dist/vue-simple-context-menu.css'
+  import VueSimpleContextMenu from 'vue-simple-context-menu'
 
   export default {
     name: 'FileTree',
     components: {
       FolderIcon,
       FileIcon,
-      FileTreeItem
+      FileTreeItem,
+      VueSimpleContextMenu
     },
     props: {
       fileList: Array,
@@ -23,11 +42,17 @@
         default: false
       }
     },
-    computed: {
+    mounted () {
+      addEventListener('click', (e) => {
+        this.$refs.vueSimpleContextMenuDir.hideContextMenu()
+        this.$refs.vueSimpleContextMenuFile.hideContextMenu()
+      })
     },
     data () {
       return {
-        isOpen: this.startOpen
+        isOpen: this.startOpen,
+        rightClickOptionsFile: [{name: 'Download'}, {name: 'Rename'}, {name: 'Relocate'}, {name: 'Delete'}],
+        rightClickOptionsDir: [{name: 'Rename'}, {name: 'Relocate'}, {name: 'Delete'}]
       }
     },
     methods: {
@@ -42,6 +67,47 @@
         } else {
           this.$emit('openFile', file.name)
         }
+      },
+
+      /**
+       * When right clicking on an item, show a context menu.
+       *
+       * @param {object} event the right click event
+       * @param {object} item file or directory
+       */
+      rightClick (event, item) {
+        this.$refs.vueSimpleContextMenuDir.hideContextMenu()
+        this.$refs.vueSimpleContextMenuFile.hideContextMenu()
+        if (item.isFolder) {
+          this.$refs.vueSimpleContextMenuDir.showMenu(event, item)
+        } else {
+          this.$refs.vueSimpleContextMenuFile.showMenu(event, item)
+        }
+      },
+
+      /**
+       * When clicking on an option from the context menu, call the
+       * appropriate function.
+       *
+       * @param {object} event the event object
+       *                 event.option.name indicates the selected option
+       *                 event.item is the item clicked on
+       */
+      optionClicked (event) {
+        switch (event.option.name) {
+          case 'Download':
+            this.$emit('download', event.item)
+            break
+          case 'Rename':
+            this.$emit('renameItem', event.item)
+            break
+          case 'Relocate':
+            this.$emit('relocate', event.item)
+            break
+          case 'Delete':
+            this.$emit('removeItem', event.item)
+            break
+        }
       }
     }
   }
@@ -50,5 +116,6 @@
 <style scoped>
   .fileTree {
     color: white;
+    list-style: none;
   }
 </style>

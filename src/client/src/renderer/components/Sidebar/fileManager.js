@@ -36,7 +36,7 @@ export function fileChangeRequest (oldPath, newPath, fileContent) {
  * @param {string} path path of file to be created.
  */
 export function newFile (path) {
-  this.fileChangeRequest('', path, '')
+  fileChangeRequest('', path, '')
 }
 
 /**
@@ -46,17 +46,16 @@ export function newFile (path) {
  * @param {string} content content of file
  */
 export function uploadFile (path, content) {
-  this.fileChangeRequest('', path, content)
+  fileChangeRequest('', path, content)
 }
 
 /**
  * Remove file from server.
  *
- * @param {string} path path on server of file to be deleted
+ * @param {string} path path on server of file or directory to be deleted
  */
-export function removeFile (path) {
-  console.log('Removing ' + path)
-  this.fileChangeRequest(path, '', '')
+export function removeItem (path) {
+  fileChangeRequest(path, '', '')
 }
 
 /**
@@ -67,8 +66,7 @@ export function removeFile (path) {
  * @param {string} newName new name of file
  */
 export function nameChange (pathToDir, oldName, newName) {
-  console.log(`RENAMING pathToDir: ${pathToDir}, oldName: ${oldName}, newName: ${newName}`) // FIXME:
-  this.locationChange(pathToDir + oldName, pathToDir + newName, '')
+  locationChange(pathToDir + oldName, pathToDir + newName, '')
 }
 
 /**
@@ -78,5 +76,5 @@ export function nameChange (pathToDir, oldName, newName) {
  * @param {string} newPath new path of file
  */
 export function locationChange (oldPath, newPath) {
-  this.fileChangeRequest(oldPath, newPath, '')
+  fileChangeRequest(oldPath, newPath, '')
 }

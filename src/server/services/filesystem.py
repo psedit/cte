@@ -8,6 +8,7 @@ import os
 import shutil
 import Pyro4
 
+# TODO: dit is vast lelijk
 ERROR_WRONG_MESSAGE = 1
 ERROR_FILE_NOT_IN_RAM = 2
 ERROR_FILE_NOT_JOINED = 3
@@ -46,7 +47,10 @@ class Filesystem(Service):
     """
     def __init__(self, *super_args) -> None:
         super().__init__(*super_args)
+        # Check server config for root directory
+        # TODO: retrieve from server
         self.root_dir: str = os.path.realpath('../file_root')
+        os.makedirs(self.root_dir, exist_ok=True)
         self.files: Dict[str, ServerFile] = {}
 
     #
@@ -192,6 +196,7 @@ class Filesystem(Service):
         Add the file to RAM if necessary.
         """
         content = msg["content"]
+
         path = content["file_path"]
         address, username = msg["sender"]
 
@@ -219,6 +224,7 @@ class Filesystem(Service):
         the file.
         """
         content = msg["content"]
+
         path = content["file_path"]
         force = content["force_exit"]
         address, username = msg["sender"]
@@ -246,6 +252,7 @@ class Filesystem(Service):
         'file-leave' handler for every file.
         """
         content = msg["content"]
+
         address = content["address"]
         username = content["username"]
 
@@ -291,8 +298,8 @@ class Filesystem(Service):
         Constructs and sends the file content message to the requesting client,
         sending the complete piece table and the block contents within.
         """
-        address, username = msg["sender"]
         content = msg["content"]
+        address, username = msg["sender"]
         path = content["file_path"]
 
         if not self.check_valid(address, username, path):
@@ -455,8 +462,8 @@ class Filesystem(Service):
         Replaces a line in the given block of the piecetable with the new
         provided content.
         """
-        address, username = msg["sender"]
         content = msg["content"]
+        address, username = msg["sender"]
 
         file_path = content["file_path"]
         piece_uuid = content["piece_uuid"]

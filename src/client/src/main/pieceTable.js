@@ -49,6 +49,8 @@ const { mergeLeft, clone } = require('ramda')
  * @typedef FilePiece
  * @property {string} pieceID
  * @property {string[]} text the text of the file
+ * @property {boolean} open whether the block is open
+ * @property {string} username username of the person that locked the piece
  */
 
 /**
@@ -70,7 +72,13 @@ export function _create (UUID) {
           lines: lines
         }
       },
-      table: [{ pieceID: UUID(), blockID: 0, start: 0, length: lines.length, username: 'hans' }]
+      table: [{
+        pieceID: UUID(),
+        blockID: 0,
+        start: 0,
+        length: text.length === 0 ? 0 : lines.length,
+        username: 'hans'
+      }]
     }
   }
 }
@@ -127,10 +135,10 @@ export function convertChangeToJS (textBlocks, update) {
   return {
     filePath: update['file_path'],
     pieceTable: {
-      textBlocks: convertBlockToJS(textBlocks, update['changed_block']),
+      textBlocks: update['changed_blocks'].reduce(convertBlockToJS, textBlocks),
       table: update['piece_table'].map(convertTableTojs)
     },
-    changedBlock: convertBlockToJS({}, update['changed_block'])
+    changedBlocks: update['changed_blocks'].reduce(convertBlockToJS, {})
   }
 }
 
@@ -180,6 +188,74 @@ export function convertPieceToPy ({ pieceID, blockID, start, length }) {
  */
 export function len (table) {
   return table.reduce((total, curr) => total + curr.length, 0)
+}
+
+export function indexOffsetRangeSort (A, B) {
+  const comp = indexOffsetCompare(A, B)
+  if (comp > 0) {
+    return [ B, A ]
+  } else {
+    return [ A, B ]
+  }
+}
+
+export function indexOffsetCompare (A, B) {
+  if (A.piece < B.piece || (A.piece === B.piece && A.line < B.line)) {
+    return -1
+  } else if (A.piece > B.piece || (A.piece === B.piece && A.line > B.line)) {
+    return 1
+  } else {
+    return 0
+  }
+}
+
+/**
+ *
+ * @param {*} table
+ * @param {*} idxA
+ * @param {*} offsetA
+ * @param {*} idxB
+ * @param {*} offsetB
+ */
+export function rangeToAnchoredLength (table, idxA, offsetA,
+  idxB, offsetB) {
+  let startPiece, endPiece
+  if (idxA < idxB || (idxA === idxB && offsetA <= offsetB)) {
+    startPiece = { piece: idxA, offset: offsetA }
+    endPiece = { piece: idxB, offset: offsetB }
+  } else {
+    startPiece = { piece: idxB, offset: offsetB }
+    endPiece = { piece: idxA, offset: offsetA }
+  }
+
+  let interLines = 0
+  for (let i = startPiece.piece; i < endPiece.piece; i++) {
+    console.log(`interLines: ${interLines}, length: ${table.table[i].length}`)
+    console.log(table.table[i])
+    interLines += table.table[i].length
+  }
+
+  return {
+    index: startPiece.piece,
+    offset: startPiece.offset,
+    length: interLines - startPiece.offset + endPiece.offset + 1
+  }
+}
+
+/**
+ * Compute number of lines between two locations in the piece table
+ * @param {Piece[]} table
+ * @param {*} start
+ * @param {*} end
+ */
+export function lengthBetween (table, startpiece, startoffset,
+  endpiece, endoffset) {
+  let accumulator = 0
+  for (let i = getPieceIndexByPieceID(table, startpiece);
+    i < getPieceByPieceID(table, endpiece); i++) {
+    accumulator += table[i].length
+  }
+  return accumulator - startoffset + endoffset + 1
 }
 
 /**
@@ -241,6 +317,22 @@ export function getRange (table, lineNumber, length) {
 }
 
 /**
+ * @param {Piece[]} table
+ * @param {PieceID} startPieceID
+ * @param {PieceID} endPieceID
+ * @returns {Range} a range of pieces which cover the given piece ID's
+ */
+export function getRangeById (table, startPieceID, endPieceID) {
+  const startPiece = getPieceIndexByPieceID(startPieceID)
+  const endPiece = getPieceIndexByPieceID(endPieceID)
+
+  return {
+    start: startPiece,
+    end: endPiece
+  }
+}
+
+/**
  * @param {pieceTable} pieceTable
  * @param {string} pieceID
  * @returns {TextBlock} the corresponding TextBlock
@@ -297,7 +389,7 @@ export function getTextByPieceID ({ textBlocks, table }, pieceID) {
  * @returns {FilePiece[]} a list of file pieces
  */
 export function getFile ({ textBlocks, table }) {
-  return table.map(({ pieceID, username }) => {
+  return table.filter(({ length }) => length > 0).map(({ pieceID, username }) => {
     return {
       pieceID,
       text: getTextByPieceID({ textBlocks, table }, pieceID),
