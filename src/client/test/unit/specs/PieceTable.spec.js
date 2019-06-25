@@ -85,12 +85,12 @@ describe('convertChangeToJS', function () {
       {
         file_path: 'test.js',
         piece_table: expectedPy['piece_table'],
-        changed_block: expectedPy['block_list'][0]
+        changed_blocks: expectedPy['block_list']
       }
     )
     expect(res.filePath).to.equal('test.js')
     expect(res.pieceTable).to.deep.equal(expected)
-    expect(res.changedBlock).to.deep.equal(expected['textBlocks'])
+    expect(res.changedBlocks).to.deep.equal(expected['textBlocks'])
   })
 })
 
