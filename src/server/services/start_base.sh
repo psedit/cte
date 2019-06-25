@@ -9,8 +9,8 @@ python3.7 logger.py &
 PIDL=$!
 python3.7 filesystem.py &
 PIDF=$!
-python3.7 websocket_server.py &
-PIDW=$1
+python3.7 ws_server.py &
+PIDW=$!
 
 trap 'kill $PIDN $PIDM $PIDL $PIDF $PIDW' INT TERM QUIT
 
