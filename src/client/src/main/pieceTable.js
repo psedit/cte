@@ -132,7 +132,6 @@ export function convertTableTojs ([pieceID, blockID, start, length, username]) {
  * @returns {Update}
  */
 export function convertChangeToJS (textBlocks, update) {
-  console.log(update['changed_blocks'])
   return {
     filePath: update['file_path'],
     pieceTable: {
