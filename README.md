@@ -1,4 +1,13 @@
 # Collaborative Text Editor
+## Introduction
+A real-time collaborative text editor: Google Docs for code
+
+Our project is a real-time collaborative text editor.
+ It allows you to host a server containing a project and give your team the ability to edit the files in this project together.
+This editing happens in real-time and you can see the editing of your team in real-time.
+
+Our project is a real-time collaborative text editor, intended for programming in teams. The editor allows you to collaboratively edit the same file as your team members and enables you to see each other’s changes in real time, as they are written. As such, a group of programmers can work together efficiently, using the immediate feedback from the work of others to solve programming tasks quickly and in an organised manner.
+
 
 ## Overview
 
