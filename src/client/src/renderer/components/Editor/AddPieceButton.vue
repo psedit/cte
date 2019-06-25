@@ -24,7 +24,7 @@
       click () {
         Connector.send('file-lock-insert-request', {
           file_path: this.$store.state.fileTracker.openFile,
-          uuid: this.pieceID
+          piece_uuid: this.pieceID
         })
       }
     }
@@ -41,6 +41,20 @@
   z-index: 10;
   opacity: 0;
   cursor: pointer;
+
+  &-top {
+    margin-left: 0.8em;
+    bottom: unset;
+    left: unset;
+    &:before {
+      border-bottom: solid $height transparent !important;
+      border-left: solid 0 transparent !important;
+      border-right: solid $height/2 #fff !important;
+      border-top: solid 0 transparent !important;
+      /*border-color: transparent #fff transparent transparent;*/
+    }
+  }
+
   &:hover {
     opacity: 1;
   }

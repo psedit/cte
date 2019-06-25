@@ -1,8 +1,9 @@
 <template>
   <div class="editor">
+    <add-piece-button class="add-piece-button-top"/>
     <div class="editor-pieces">
       <transition-group name="swap" tag="div">
-        <editor-piece 
+        <editor-piece
           v-for="(piece, index) in pieces"
           v-if="piece.text.length > 0"
           :key="piece.pieceID + piece.username"
@@ -39,10 +40,12 @@
   import connector from '../../main/connector'
   import { getRandomColor } from './Editor/RandomColor'
   import { convertChangeToJS, edit, rangeToAnchoredLength } from '../../main/pieceTable'
+  import AddPieceButton from './Editor/AddPieceButton'
 
   export default {
     name: 'Editor',
     components: {
+      AddPieceButton,
       EditorPiece
     },
     data () {

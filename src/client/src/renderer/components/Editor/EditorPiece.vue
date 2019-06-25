@@ -1,7 +1,7 @@
 <template>
   <div ref="cm" class="editor-piece" :class="{editable, open_editor: piece.username === ''}">
     <ghost-cursors ref="ghostCursors" :piece="piece"/>
-    <add-piece-button/>
+    <add-piece-button :pieceID="piece.pieceID"/>
   </div>
 </template>
 
