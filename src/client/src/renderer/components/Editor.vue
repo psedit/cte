@@ -62,7 +62,6 @@
           { file_path: val }
         ).then(({cursor_list: cursorList}) => {
           for (const [username, pieceID, line, ch] of cursorList) {
-            console.log(cursorList)
             this.$store.commit('addCursor', {
               username,
               pieceID,
@@ -111,7 +110,6 @@
         this.$store.dispatch('requestLock', payload)
       },
       lockDragStart (line, index) {
-        // console.log('start', line, index)
         this.lockDragStartLocation = {piece: index, line}
         this.lockDragEndLocation = {piece: index, line}
       },
@@ -123,31 +121,20 @@
       lockDragEnd (line, index) {
         if (this.lockDragStartLocation === null) return
 
-        console.log(`Request lock from ${this.lockDragStartLocation.piece}:${this.lockDragStartLocation.line} to ${index}:${line}`)
-
         let draggedLock = rangeToAnchoredLength(this.$store.state.fileTracker.pieceTable,
           this.lockDragStartLocation.piece, this.lockDragStartLocation.line,
           this.lockDragEndLocation.piece, this.lockDragEndLocation.line)
 
-        console.log(`PieceIdx: ${draggedLock.index}, Offset: ${draggedLock.offset}, Length: ${draggedLock.length}`)
-
-        connector.request('file-lock-request', 'file-lock-response', {
+        connector.send('file-lock-request', {
           file_path: this.$store.state.fileTracker.openFile,
           piece_uuid: this.pieces[draggedLock.index].pieceID,
           offset: draggedLock.offset,
           length: draggedLock.length
-        }).then(response => console.log(response))
+        })
 
         this.lockDragCancel()
       },
-      showPieceLengths () {
-        const table = this.$store.state.fileTracker.pieceTable
-        for (let i = 0; i < table.table.length; i++) {
-          console.log(`piece ${i} has length ${table.table[i].length}`)
-        }
-      },
       lockDragCancel () {
-        console.log('cancel')
         this.lockDragStartLocation = null
         this.lockDragEndLocation = null
         for (let key in this.components) {

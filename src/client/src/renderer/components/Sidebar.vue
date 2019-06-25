@@ -188,7 +188,7 @@
             let fileContent = stitch(convertToJS(data)).join('')
             fs.writeFile(downloadPath, fileContent, (err) => {
               if (err) {
-                console.log('error', err)
+                console.error(err)
               }
             })
           })
@@ -269,7 +269,7 @@
           if (oldName.slice(-1) === '/') {
             newName = newName.slice(-1) !== '/' ? newName + '/' : newName
           } else if (newName.slice(-1) === '/') {
-            console.log('A file cannot be changed into a directory!')
+            console.error('A file cannot be changed into a directory!')
             return
           }
 
@@ -373,7 +373,7 @@
         /* Read content from file and request file upload from server. */
         fs.readFile(localPath, (err, data) => {
           if (err) {
-            console.log(err)
+            console.error(err)
             return
           }
 
@@ -411,7 +411,7 @@
         /* Read local directory. */
         fs.readdir(newDirLocal, {withFileTypes: true}, (err, files) => {
           if (err) {
-            console.log(err)
+            console.error(err)
             return
           }
 

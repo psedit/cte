@@ -230,8 +230,6 @@ export function rangeToAnchoredLength (table, idxA, offsetA,
 
   let interLines = 0
   for (let i = startPiece.piece; i < endPiece.piece; i++) {
-    console.log(`interLines: ${interLines}, length: ${table.table[i].length}`)
-    console.log(table.table[i])
     interLines += table.table[i].length
   }
 
