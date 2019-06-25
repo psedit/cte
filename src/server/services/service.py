@@ -5,7 +5,6 @@ from typing import Dict, Any, Callable, List, Tuple
 import uuid
 from typedefs import Address
 import time
-import types
 import asyncio
 from collections import defaultdict
 from mixins import LoggerMixin
@@ -55,9 +54,11 @@ class Service(LoggerMixin):
                 self, predicate=lambda x: hasattr(x, "_msg_type")):
             self._type_map[func._msg_type] = func
 
-        self._waiting: Dict[str, List[types.CoroutineType]] = defaultdict(list)
+        # TODO: List[Any] -> List[Future] (but need to find type)
+        self._waiting: Dict[str, List[Any]] = defaultdict(list)
 
         self._loop = asyncio.new_event_loop()
+        self._handler_lock: asyncio.Lock = asyncio.Lock(loop=self._loop)
         self._msg_queue = asyncio.Queue(loop=self._loop)
         self._async_thread = threading.Thread(target=self._start_async_thread)
         self._async_thread.daemon = True
@@ -68,6 +69,20 @@ class Service(LoggerMixin):
         self._loop.run_until_complete(self._async_read_loop())
 
     async def _async_read_loop(self):
+        async def call_with_lock(msg, fn):
+            # Block different handlers from executing concurrently
+            # enforcing sequential ordering, since we really only
+            # use async for its Future behavior.
+
+            # Is this terrible? Yes. Would I like to have used a
+            # different architecture? Maybe. But we have a week
+            # left, so this'll do.
+
+            # Also, we're using Python, so it seems fitting to use a
+            # far-reaching, concurrency-breaking lock ;)
+            async with self._handler_lock:
+                await fn(msg)
+
         while True:
             msg = await self._msg_queue.get()
 
@@ -85,7 +100,7 @@ class Service(LoggerMixin):
                                      "by service {self.__class__.__name__}")
 
             if func:
-                coro = func(msg)
+                coro = call_with_lock(msg, func)
                 asyncio.create_task(coro)
 
     async def _wait_for_response(self, uuid: str):
@@ -136,7 +151,13 @@ class Service(LoggerMixin):
         service method based on the the received message's type and
         this type's mapping in _type_map.
         """
-        self._info(f"Received message: {msg}")
+
+        msg_str = str(msg)
+
+        if len(msg_str) > 750:
+            self._info(f"Received message: {msg_str[:350]}{msg_str[-349:]}")
+        else:
+            self._info(f"Received message: {msg_str}")
         coro = self._msg_queue.put(msg)
         asyncio.run_coroutine_threadsafe(coro, self._loop)
 
