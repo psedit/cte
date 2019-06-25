@@ -28,6 +28,7 @@ class Filesystem(Service):
         # Check server config for root directory
         # TODO: retrieve from server
         self.root_dir: str = os.path.realpath('../file_root')
+        os.makedirs(self.root_dir, exist_ok=True)
         self.usernames: Dict[Address, str] = {}
 
         # Files sorted by path relative to root dir
