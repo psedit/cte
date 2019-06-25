@@ -104,7 +104,16 @@ class WSServer(Service):
         while True:
             msg = await self.messages_to_send.get()
             recipients = msg["content"]["response_addrs"]
-            self._info("Sending message %r to clients %r", msg, recipients)
+
+            msg_str = str(msg)
+
+            if len(msg_str) > 5000:
+                self._info(f"Sending message: {msg_str[:2500]}{msg_str[-2499:]}"
+                           f" to client(s) {recipients}")
+            else:
+                self._info(f"Sending message: {msg_str}"
+                           f" to client(s) {recipients}")
+
             recipients = self._maybe_remap_recipients(recipients)
             for recipient in recipients:
                 try:
