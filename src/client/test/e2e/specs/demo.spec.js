@@ -14,15 +14,16 @@ describe("Demo", function () {
       })
   })
 
-  it('should create a file', async function () {
-    const text = await this.app.client.element('.material-design-icon.file-plus-icon.button').click().keys([name]).element('button.ok').click().element('ul.fileTree').getText()
-    return expect(text.split('\n')).to.include(name)
-  })
+  // it('should create a file', async function () {
+  //   const text = await this.app.client.element('.material-design-icon.file-plus-icon.button').click().keys([name]).element('button.ok').click().element('ul.fileTree').getText()
+  //   return expect(text.split('\n')).to.include(name)
+  // })
 
   it('should open a file', async function () {
     const tabFile = 'export default Tab'
     await this.app.client.waitUntilWindowLoaded()
-    await this.app.client.element('span=tabType.js').click().waitUntilTextExists('#tabs', 'tabType.js', 3000)
+    await this.app.client.waitUntilTextExists('span=tabType.js', 'tabType.js', 3000)
+    await this.app.client.element('span=tabType.js').click().waitForVisible('.CodeMirror-lines', 3000)
     const text = await this.app.client.element('.editor-pieces').getText()
     const arr = text.split('\n')
     return expect(arr[arr.length - 1]).to.equal(tabFile)
