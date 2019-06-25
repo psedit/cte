@@ -129,7 +129,6 @@
          */
         let buff = Buffer.from(dataBase64, 'base64')
         let filePath = `${localPath}/.project.tar`
-        console.log(filePath + ' SAVE TO DISK')
         fs.writeFileSync(filePath, buff)
 
         /* Unpack tar file. */
@@ -142,7 +141,6 @@
         ).then(_ => {
           /* Delete tar file. */
           fs.unlinkSync(filePath)
-          console.log(filePath + ' TAR CALLBACK')
           this.$toasted.show(`Project succesfully downloaded to ${localPath}`)
         })
       },
@@ -183,7 +181,7 @@
         /* Get base64 encoded string with binary data of project as tar file
          * from server.
          */
-        this.$toasted.show(`Downloading project to ${localPath}`)
+        this.$toasted.show(`Downloading project to ${localPath} (this may take upto 30 seconds)`)
         let dataBase64 = ''
         connector.request(
           'file-project-request',
@@ -191,7 +189,6 @@
           {}
         ).then((response) => {
           dataBase64 = response.data
-          // console.log('WILL REGRET ' + dataBase64)
           this.saveToDisk(dataBase64, localPath)
         })
       },
