@@ -1,7 +1,7 @@
-/* globals expect describe it $ */
+/* globals expect describe it */
 import utils from '../utils'
 const uuid = require('uuid/v4')
-const name = uuid()
+// const name = uuid()
 
 describe("Demo", function () {
   beforeEach(utils.beforeEach)
