@@ -2,6 +2,11 @@
 
 import { app, BrowserWindow, Menu } from 'electron'
 const prompt = require('electron-prompt')
+const homedir = require('os').homedir()
+const settingsDirPath = homedir + '/pseditor-settings/'
+const settingsPath = settingsDirPath + 'settings.json'
+const dialog = require('electron').dialog
+const fs = require('fs')
 
 /**
  * Set `__static` path to static files in production
@@ -33,11 +38,6 @@ function createWindow () {
 
   mainWindow.loadURL(winURL)
 
-  const homedir = require('os').homedir()
-  const settingsDirPath = homedir + '/pseditor-settings/'
-  const settingsPath = settingsDirPath + 'settings.json'
-  const dialog = require('electron').dialog
-  const fs = require('fs')
   const menu = Menu.buildFromTemplate([
     {
       label: 'Settings',
@@ -45,10 +45,24 @@ function createWindow () {
         {
           label: 'Server Connection',
           click () {
+            /* Try to read URL from settings file
+             */
+            let defaultURL = 'ws://segfault.party:12345'
+            let jsonSettingsString = fs.readFileSync(settingsPath, 'utf8')
+            try {
+              let newSettings = JSON.parse(jsonSettingsString)
+              if (typeof newSettings.serverURL === 'string') {
+                defaultURL = newSettings.serverURL
+              }
+            } catch (err) {
+              dialog.showErrorBox('File read error', err)
+            }
+            /* Ask user for URL.
+             */
             prompt({
               title: 'New Server URL',
               label: 'URL',
-              value: 'ws://segfault.party:12345'
+              value: defaultURL
             }).then((newURLString) => {
               if (newURLString !== undefined && newURLString !== null) {
                 mainWindow.webContents.send('changeURL', newURLString)
@@ -76,7 +90,7 @@ function createWindow () {
               try {
                 settings.serverURL = JSON.parse(jsonSettingsString).serverURL
               } catch (err) {
-                console.error(err)
+                dialog.showErrorBox('Reading error', err)
               }
             }
 
@@ -88,7 +102,7 @@ function createWindow () {
 
             /* Write json string to file. */
             fs.writeFile(settingsPath, jsonSettingsString, 'utf8', (e) => {
-              if (e) console.error(e)
+              if (e) dialog.showErrorBox('Writing error', e)
             })
           }
         }
