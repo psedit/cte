@@ -1,5 +1,5 @@
 <template>
-  <div ref="cm" class="editor-piece" :class="{editable}">
+  <div ref="cm" class="editor-piece" :class="{editable, open_editor: piece.username === ''}">
     <ghost-cursors ref="ghostCursors" :piece="piece"/>
     <add-piece-button/>
   </div>
@@ -78,6 +78,10 @@
         return this.$store.state.fileTracker.pieceTable
       },
 
+      firstLineNumber () {
+        return this.pieces.slice(0, this.index).reduce((acc, val) => val.text.length + acc, 0) + 1
+      },
+
       pieceDragStart () {
         if (!(this.dragStart || this.dragEnd)) {
           return null
@@ -144,7 +148,8 @@
           showCursorWhenSelecting: true,
           readOnly: !this.editable,
           // inputStyle: 'contenteditable',
-          lineNumberFormatter: this.lineNumberFormatter,
+          // lineNumberFormatter: this.lineNumberFormatter,
+          firstLineNumber: this.firstLineNumber,
           viewportMargin: Infinity,
           cursorBlinkRate: 0,
           gutters: ['user-gutter', 'CodeMirror-linenumbers']
@@ -154,8 +159,11 @@
 
         cm.setValue(this.code)
 
-        cm.getGutterElement().querySelector('.user-gutter').style.backgroundColor = getRandomColor(this.username).string()
-        cm.getGutterElement().setAttribute('title', this.username)
+        // cm.getGutterElement().querySelector('.user-gutter').style.backgroundColor = getRandomColor(this.username).string()
+        if (this.username) {
+          cm.getGutterElement().style.setProperty('--background-color', getRandomColor(this.username).string())
+        }
+        cm.getGutterElement().setAttribute('title', this.username || 'Click and drag to lock a piece.')
         this.initializeEvents()
       },
       unlock () {
@@ -204,11 +212,8 @@
       },
 
       gutterSelectMarker () {
-        var marker = document.createElement('div')
-        marker.style.backgroundColor = 'white'
-        marker.style.pointerEvents = 'none'
-        marker.style.position = 'absolute'
-        marker.style.width = '100%'
+        const marker = document.createElement('div')
+        marker.classList.add('lock-gutter-marker')
         marker.innerHTML = '●'
         return marker
       },
@@ -233,6 +238,10 @@
 
         cm.on('update', () => {
           this.$emit('update')
+        })
+
+        cm.on('viewportChange', () => {
+          this.$emit('viewportChange', this.index)
         })
 
         cm.on('scrollCursorIntoView', (_, e) => {
@@ -287,26 +296,10 @@
           gutter.addEventListener('contextmenu', this.unlock)
         }
       },
-      insertText (text, pos) {
-        const cm = this.$options.cminstance
-        pos.line = this.relativeLineToLine(pos.line)
-        cm.replaceRange(text, pos, pos, {
-          scroll: true
-        })
-      },
 
-      deleteText (from, to) {
-        from.line = this.relativeLineToLine(from.line)
-        to.line = this.relativeLineToLine(to.line)
+      updateLineNumbers () {
         const cm = this.$options.cminstance
-        cm.replaceRange('', from, to, {
-          scroll: true
-        })
-      },
-
-      lineNumberFormatter (line) {
-        const previousLines = this.pieces.slice(0, this.index).reduce((acc, val) => val.text.length + acc, 0)
-        return (previousLines + line).toString()
+        cm.setOption('firstLineNumber', this.firstLineNumber)
       }
     }
   }
@@ -336,12 +329,27 @@
     animation: blink 1s step-end infinite;
   }
   .user-gutter {
-    box-shadow: 0 0 3em 1em rgba(0, 256, 30, 0.6);
+    box-shadow: 0 0 3em 1em var(--background-color);
+  }
+}
+
+.open_editor {
+  .user-gutter {
+    box-shadow: none;
   }
 }
 
 .user-gutter {
   width: 1em;
+  background-color: var(--background-color, rgba(255, 255, 255, 0.5));
+}
+
+.lock-gutter-marker {
+  width: 100%;
+  background-color: #fff;
+  pointer-events: none;
+  position: absolute;
+
 }
 
 @keyframes blink {
