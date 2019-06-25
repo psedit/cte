@@ -1,6 +1,7 @@
 <template>
   <div ref="cm" class="editor-piece" :class="{editable}">
     <ghost-cursors ref="ghostCursors" :piece="piece"/>
+    <add-piece-button/>
   </div>
 </template>
 
@@ -15,11 +16,13 @@
   import connector from '../../../main/connector'
   import {getRandomColor} from './RandomColor'
   import GhostCursors from './GhostCursors'
+  import AddPieceButton from './AddPieceButton'
 
   export default {
     name: 'EditorPiece.vue',
     components: {
-      GhostCursors
+      GhostCursors,
+      AddPieceButton
     },
     props: {
       pieces: Array,
@@ -317,6 +320,7 @@
     }
   }
   border-bottom: 1px rgba(255, 255, 255, 0.2) dashed;
+  position: relative;
 }
 
 .CodeMirror {
