@@ -88,7 +88,6 @@ describe('convertChangeToJS', function () {
         changed_blocks: expectedPy['block_list']
       }
     )
-    console.log(res)
     expect(res.filePath).to.equal('test.js')
     expect(res.pieceTable).to.deep.equal(expected)
     expect(res.changedBlocks).to.deep.equal(expected['textBlocks'])
