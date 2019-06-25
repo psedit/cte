@@ -31,6 +31,7 @@
   import {convertToJS, stitch} from '../../main/pieceTable'
   const {dialog} = require('electron').remote
   const dialogs = require('dialogs')
+  const tar = require('tar')
   const fs = require('fs')
 
   export default {
@@ -117,6 +118,32 @@
     },
     methods: {
       /**
+       * Save project to disk.
+       *
+       * @param {string} dataBase64 base64 encoded string with binary data of project as tar file.
+       * @param {string} localPath path to local directory where project is downloaded.
+       */
+      saveToDisk (dataBase64, localPath) {
+        /* Decode base64 to binary and make a tar file of the tar string in
+         * localPath.
+         */
+        let buff = Buffer.from(dataBase64, 'base64')
+        let filePath = `${localPath}/.project.tar`
+        fs.writeFileSync(filePath, buff)
+
+        /* Unpack tar file. */
+        tar.x( // TODO: Fix unpacken
+          {
+            file: filePath
+          }
+        ).then(_ => {
+          /* Delete tar file. */
+          fs.unlinkSync(filePath)
+          this.$toasted.show(`Project succesfully downloaded to ${localPath}`)
+        })
+      },
+
+      /**
        * Download entire project to local directory.
        */
       downloadProject () {
@@ -149,11 +176,19 @@
           return
         }
 
-        // TODO: Download project.
-        // https://github.com/cthackers/adm-zip
-        // Beter:
-        // https://stackoverflow.com/questions/10308110/simplest-way-to-download-and-unzip-files-in-node-js-cross-platform
-        console.log('Downloading project to ' + localPath)
+        /* Get base64 encoded string with binary data of project as tar file
+         * from server.
+         */
+        this.$toasted.show(`Downloading project to ${localPath} ...`)
+        let dataBase64 = ''
+        connector.request(
+          'file-project-request',
+          'file-project-response',
+          {}
+        ).then((response) => {
+          dataBase64 = response.data
+          this.saveToDisk(dataBase64, localPath)
+        })
       },
 
       /**
