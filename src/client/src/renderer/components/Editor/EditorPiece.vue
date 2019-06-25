@@ -25,7 +25,8 @@
       pieces: Array,
       index: Number,
       dragStart: Object,
-      dragEnd: Object
+      dragEnd: Object,
+      theme: Boolean
     },
 
     data () {
@@ -49,6 +50,14 @@
       },
       pieceDragLength: function (newDragEnd, oldDragEnd) {
         this.updateDragLength(oldDragEnd, newDragEnd)
+      },
+      theme (newTheme) {
+        const cm = this.$options.cminstance
+        if (newTheme) {
+          cm.setOption('theme', 'default')
+        } else {
+          cm.setOption('theme', 'monokai')
+        }
       }
     },
     mounted () {

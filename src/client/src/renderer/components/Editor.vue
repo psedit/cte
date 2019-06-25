@@ -1,5 +1,6 @@
 <template>
   <div class="editor">
+    <theme-switch @theme-change="themeChange"/>
     <div class="editor-pieces">
       <transition-group name="swap" tag="div">
         <editor-piece 
@@ -7,6 +8,7 @@
           v-if="piece.text.length > 0"
           :key="piece.pieceID + piece.username"
           :index="index"
+          :theme="lightTheme"
           :pieces="pieces"
           :dragStart="lockDragStartLocation"
           :dragEnd="lockDragEndLocation"
@@ -35,6 +37,7 @@
 
 <script>
   import EditorPiece from './Editor/EditorPiece'
+  import ThemeSwitch from './ThemeSwitch'
   import convert from './Editor/cursor'
   import connector from '../../main/connector'
   import { getRandomColor } from './Editor/RandomColor'
@@ -43,13 +46,15 @@
   export default {
     name: 'Editor',
     components: {
-      EditorPiece
+      EditorPiece,
+      ThemeSwitch
     },
     data () {
       return {
         lockDragStartLocation: null,
         lockDragEndLocation: null,
-        dragList: null
+        dragList: null,
+        lightTheme: false
       }
     },
     watch: {
@@ -85,6 +90,10 @@
             piece.updateLineNumbers()
           })
         }, 10)
+      },
+      themeChange (lightTheme) {
+        console.log('Changing theme')
+        this.lightTheme = lightTheme
       },
       editorMount (editorPiece) {
         const index = this.$refs.editorPieces.indexOf(editorPiece)
