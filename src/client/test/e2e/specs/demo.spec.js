@@ -1,6 +1,5 @@
 /* globals expect describe it */
 import utils from '../utils'
-const uuid = require('uuid/v4')
 // const name = uuid()
 
 describe("Demo", function () {
