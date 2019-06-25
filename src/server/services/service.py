@@ -2,11 +2,9 @@ import threading
 import inspect
 import Pyro4
 from typing import Dict, Any, Callable, List, Tuple
-import functools
 import uuid
 from typedefs import Address
 import time
-import types
 import asyncio
 from collections import defaultdict
 from mixins import LoggerMixin

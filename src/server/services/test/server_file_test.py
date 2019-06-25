@@ -1,12 +1,14 @@
+import pytest
 import sys
 sys.path.insert(0, '.')
-from server_file import ServerFile
-from cursor import Cursor
-import pytest
+from server_file import ServerFile  # noqa
+from cursor import Cursor  # noqa
+
 
 @pytest.fixture(scope='class')
 def sf():
     return ServerFile('./test', 'test_file.txt')
+
 
 class TestSFDummy:
     def test_open_file(self, sf):

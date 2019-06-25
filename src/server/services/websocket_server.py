@@ -9,10 +9,13 @@ from typedefs import Address
 from service import Service, message_type
 from typing import Dict, List
 from collections import defaultdict
+import socket
+
 
 def list_ser(obj):
     """ Try serializing unknown objects as lists. """
     return [*obj]
+
 
 @Pyro4.expose
 class WSServer(Service):
@@ -53,7 +56,7 @@ class WSServer(Service):
         """
         self._asio_event_loop = asyncio.get_event_loop()
         self._pyro_daemon = inst_d
-        self._known_pyro_socks = []
+        self._known_pyro_socks: List[socket.socket] = []
         for sock in inst_d.sockets:
             self._known_pyro_socks.append(sock)
             self._asio_event_loop.add_reader(
@@ -91,9 +94,8 @@ class WSServer(Service):
         if not any(isinstance(i, str) for i in recipients):
             return recipients
 
-        reverse_uname_map = {v:k for k, v in self.usernames.items()}
-        new_rec = [reverse_uname_map.get(r) for r in recipients]
-        new_rec = [rec for rec in new_rec if rec is not None]
+        rmap = {v: k for k, v in self.usernames.items()}
+        new_rec = [rmap[r] for r in recipients if r in rmap]
         self._info(f"Mapped recipients {recipients} to {new_rec}")
         return new_rec
 
@@ -104,16 +106,7 @@ class WSServer(Service):
         while True:
             msg = await self.messages_to_send.get()
             recipients = msg["content"]["response_addrs"]
-
-            msg_str = str(msg)
-
-            if len(msg_str) > 5000:
-                self._info(f"Sending message: {msg_str[:2500]}{msg_str[-2499:]}"
-                           f" to client(s) {recipients}")
-            else:
-                self._info(f"Sending message: {msg_str}"
-                           f" to client(s) {recipients}")
-
+            self._info("Sending message %r to clients %r", msg, recipients)
             recipients = self._maybe_remap_recipients(recipients)
             for recipient in recipients:
                 try:

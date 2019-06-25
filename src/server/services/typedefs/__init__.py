@@ -8,5 +8,9 @@ UUID = str
 
 ServiceAddress = str
 
+
 class LockError(Exception):
+    """
+    Error to indicate the lock creation has failed.
+    """
     pass

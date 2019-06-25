@@ -12,6 +12,6 @@ PIDF=$!
 python3.7 websocket_server.py &
 PIDW=$1
 
-trap 'pkill -f python' INT TERM QUIT
+trap 'pkill -u robin -f python' INT TERM QUIT
 
 wait $PIDN

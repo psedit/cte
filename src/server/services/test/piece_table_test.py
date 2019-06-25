@@ -1,8 +1,7 @@
-import sys
-import pdb
-sys.path.insert(0, '.')
-from piece_table import PieceTable
 import pytest
+import sys
+sys.path.insert(0, '.')
+from piece_table import PieceTable  # noqa
 
 test_text = "test0\ntekst1\ntest2\ntekst3\ntest4\ntekst5\ntest6\ntekst7"
 
@@ -102,6 +101,7 @@ def test_put_piece_edges(piece_table):
     assert len(table) == 2
     assert piece_table.get_lines() == test_text.splitlines(True)
 
+
 def test_put_piece_outside(piece_table):
     table = piece_table.table
     prev_orig_id = table[0].piece_id
@@ -168,7 +168,7 @@ def test_remove_unused_pieces(piece_table):
 
     piece_table.put_piece(table[0].piece_id, 1, 5, "tester")
 
-    assert [1,2] == piece_table.clear_unused_blocks()
+    assert [1, 2] == piece_table.clear_unused_blocks()
 
     assert len(table) == 3
     assert table[0].length == 1

@@ -1,4 +1,4 @@
-from typing import List, Tuple, Dict
+from typing import List, Tuple, Dict, Union
 import uuid
 from piece import Piece
 from typedefs import LockError
@@ -61,7 +61,7 @@ class PieceTable:
     def __setitem__(self, idx, val):
         self.table[idx] = val
 
-    def _insert_block(self, text: str) -> int:
+    def _insert_block(self, text: Union[List[str], str]) -> int:
         """
         Insert a new block into the block dictionary, and return its id.
         """
@@ -118,7 +118,8 @@ class PieceTable:
         index = self.get_piece_index(piece_id)
 
         # Try merging with the next piece in the table.
-        if index + 1 < len(self.table) and self.table[index + 1].owner == uname:
+        if (index + 1 < len(self.table)
+           and self.table[index + 1].owner == uname):
             next_piece = self.table[index + 1]
             next_block = self.get_lines(next_piece.piece_id, next_piece.start,
                                         next_piece.length)
@@ -332,14 +333,14 @@ class PieceTable:
 
         return new_piece.piece_id
 
-    def put_piece_after(self, piece_id: str, uname: str) -> None:
+    def put_piece_after(self, piece_id: str, uname: str) -> str:
         """
         Inserts a new piece inbetween existing pieces after the piece
         with the given piece id.
         """
         block_id = self._insert_block("\n")
         piece = Piece(str(uuid.uuid4()), block_id, 0, 1, uname)
-        self._insert_piece(piece, after_id = piece_id)
+        self._insert_piece(piece, after_id=piece_id)
         self._merge_neighbours_same_owner(piece.piece_id, uname)
         return piece.piece_id
 
@@ -401,5 +402,3 @@ class PieceTable:
         self.blocks = {k: v for k, v in self.blocks.items() if k in used}
 
         return list(unused)
-
-

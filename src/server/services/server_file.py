@@ -1,14 +1,9 @@
-from typing import Dict, List
+from typedefs import LockError
+from typing import Dict, List, Tuple, Optional
 from cursor import Cursor
 from piece_table import PieceTable
 import os
-import traceback
 
-class LockError(Exception):
-    """
-    Error to indicate the lock creation has failed.
-    """
-    pass
 
 class ServerFile:
     """
@@ -85,7 +80,7 @@ class ServerFile:
 
         return lock_id
 
-    def insert_lock_after_piece(self, piece_id: str, uname: str) -> None:
+    def insert_lock_after_piece(self, piece_id: str, uname: str) -> str:
         return self.pt.put_piece_after(piece_id, uname)
 
     def remove_lock(self, lock_id: str) -> None:
@@ -108,8 +103,8 @@ class ServerFile:
     # CURSORS
     #
 
-    def move_cursor(self, uname: str, piece_id: str,
-                    offset: int, column: int) -> None:
+    def move_cursor(self, uname: str, piece_id: str, offset: int,
+                    column: int) -> Optional[Tuple[str, int, int]]:
         """
         Move the cursor of the given user to the specified position.
         Currently ignores illegal movement requests.
@@ -120,7 +115,7 @@ class ServerFile:
             offset = max(0, min(offset, piece.length - 1))
         except ValueError:
             # TODO: Raise something?
-            return
+            return None
 
         self.cursors[uname] = Cursor(piece_id, offset, column)
 

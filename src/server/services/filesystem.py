@@ -1,9 +1,8 @@
-from server_file import ServerFile, LockError
+from server_file import ServerFile
 from typedefs import Address, LockError
-from typing import Dict, List, Any
+from typing import Dict, List
 from service import Service, message_type
 import base64
-import traceback
 import tarfile
 import os
 import shutil
@@ -83,7 +82,7 @@ class Filesystem(Service):
         file_path = msg["content"]["file_path"]
 
         file = self.files[file_path]
-        lines = file.save_to_disk()
+        lines = file.save_to_disk()  # noqa
 
     @message_type("file-project-request")
     async def _send_files_as_tar(self, msg):
@@ -104,7 +103,6 @@ class Filesystem(Service):
 
         os.remove(".project.tar")
 
-
     @message_type("file-folder-upload")
     async def _upload_folder_as_tar(self, msg):
         """
@@ -115,8 +113,8 @@ class Filesystem(Service):
 
         with open(".project.tar", "wb") as f:
             f.write(data_bytes)
-        with tarfile.open(".project.tar", "r|") ad tar:
-            tar.extractall(path = self.root_dir)
+        with tarfile.open(".project.tar", "r|") as tar:
+            tar.extractall(path=self.root_dir)
 
         os.remove(".project.tar")
 
@@ -167,8 +165,7 @@ class Filesystem(Service):
             return False
         return True
 
-    def check_valid(self, address: Address,
-                         uname: str, file_path: str) -> bool:
+    def check_valid(self, address: Address, uname: str, file_path: str) -> bool:  # noqa
         """
         Check whether the client has joined the file, as well as if the file
         is loaded correctly. Warns the client when this is not the case.
@@ -232,8 +229,8 @@ class Filesystem(Service):
         # Make sure no changes are accidentally lost.
         if (not force and self.files[path].client_count() == 1
                 and not self.files[path].is_saved):
-            message = (f"First save the file {path} or resend request" +
-                        "with 'force_exit' = true")
+            message = (f"First save the file {path} or resend request"
+                       f"with 'force_exit' = true")
             self._send_message_client("error-response",
                                       {"message": message,
                                        "error_code": ERROR_FILE_NOT_SAVED},
@@ -267,7 +264,7 @@ class Filesystem(Service):
         Because of this, the piece table of the file is updated as well as the
         cursor positions. These changes are broadcasted to the other clients.
         """
-        file =  self.files[path]
+        file = self.files[path]
 
         file.client_leave(username)
 
@@ -275,9 +272,9 @@ class Filesystem(Service):
         self._send_message_client("file-leave-broadcast",
                                   {"username": username,
                                    "file_path": path},
-                                  *file.get_clients(exclude=username))
+                                  *file.get_clients(exclude=[username]))
 
-        self._update_and_broadcast_piece_table(path, update_orig = True)
+        self._update_and_broadcast_piece_table(path, update_orig=True)
         self._broadcast_file_cursors(path)
 
         # Remove the file from RAM if necessary.
@@ -305,7 +302,7 @@ class Filesystem(Service):
         block_list = []
 
         for b_id, block in file.pt.blocks.items():
-            block_list.append((b_id, True, block)) # TODO: update message
+            block_list.append((b_id, True, block))  # TODO: update message
 
         response_content = {
                              "piece_table": file.pt.table,
@@ -394,8 +391,7 @@ class Filesystem(Service):
         new_content = content.copy()
         new_content.update({"username": username,
                             "offset": offset,
-                            "column": column
-                           })
+                            "column": column})
 
         self._send_message_client("cursor-move-broadcast",
                                   new_content,
@@ -470,7 +466,7 @@ class Filesystem(Service):
 
         try:
             file.update_content(username, piece_uuid, block_content)
-        except LockError as e:
+        except LockError:
             message = "Illegal edit, this lock does not belong to you."
             self._send_message_client("error-response",
                                       {"message": message,
@@ -695,10 +691,10 @@ class Filesystem(Service):
         try:
             self.files[path].remove_lock(lock_id)
         except ValueError:
-            self._error("Cursor repositioning has failed, possible table divergence"
-                        " at the client side.")
+            self._error("Cursor repositioning has failed, possible table "
+                        "divergence at the client side.")
 
-        self._update_and_broadcast_piece_table(path, update_orig = True)
+        self._update_and_broadcast_piece_table(path, update_orig=True)
         self._broadcast_file_cursors(path)
 
     def _send_lock_response(self, file_path: str, success: bool,
