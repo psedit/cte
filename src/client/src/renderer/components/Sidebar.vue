@@ -31,7 +31,7 @@
   import {convertToJS, stitch} from '../../main/pieceTable'
   const {dialog} = require('electron').remote
   const dialogs = require('dialogs')
-  // const tar = require('tar')
+  const tar = require('tar')
   const fs = require('fs')
 
   export default {
@@ -129,18 +129,22 @@
          */
         let buff = Buffer.from(dataBase64, 'base64')
         let filePath = `${localPath}/.project.tar`
+        console.log(filePath + ' SAVE TO DISK')
         fs.writeFileSync(filePath, buff)
 
         /* Unpack tar file. */
-        // tar.x( // TODO: Fix unpacken
-        //   {
-        //     file: filePath
-        //   }
-        // ).then(_ => {
-        //   /* Delete tar file. */
-        //   fs.unlinkSync(filePath)
-        //   this.$toasted.show(`Project succesfully downloaded to ${localPath}`)
-        // })
+        tar.x(
+          {
+            file: filePath,
+            cwd: localPath,
+            strip: 1
+          }
+        ).then(_ => {
+          /* Delete tar file. */
+          fs.unlinkSync(filePath)
+          console.log(filePath + ' TAR CALLBACK')
+          this.$toasted.show(`Project succesfully downloaded to ${localPath}`)
+        })
       },
 
       /**
@@ -187,6 +191,7 @@
           {}
         ).then((response) => {
           dataBase64 = response.data
+          // console.log('WILL REGRET ' + dataBase64)
           this.saveToDisk(dataBase64, localPath)
         })
       },
