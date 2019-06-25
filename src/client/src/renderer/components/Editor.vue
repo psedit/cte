@@ -1,7 +1,7 @@
 <template>
-  <div class="editor">
-    <div class="editor-pieces">
-      <transition-group name="swap" tag="div">
+  <div class="editor" ref="mainEditor">
+    <div class="editor-pieces" ref="editorPiecesList">
+      <transition-group name="swap" tag="editorPieceGroup">
         <editor-piece 
           v-for="(piece, index) in pieces"
           v-if="piece.text.length > 0"
@@ -13,6 +13,7 @@
           @lockDragStart="lockDragStart"
           @lockDragUpdate="lockDragUpdate"
           @lockDragEnd="lockDragEnd"
+          @restoreScrollPosition="restoreEditorScroll"
           @mounted="editorMount"
           @update="editorUpdate"
           @viewportChange="editorViewPortChange"
@@ -34,6 +35,7 @@
 </template>
 
 <script>
+  import Vue from 'vue'
   import EditorPiece from './Editor/EditorPiece'
   import convert from './Editor/cursor'
   import connector from '../../main/connector'
@@ -49,7 +51,8 @@
       return {
         lockDragStartLocation: null,
         lockDragEndLocation: null,
-        dragList: null
+        dragList: null,
+        restoreScrollY: 0
       }
     },
     watch: {
@@ -74,6 +77,11 @@
             })
           }
         })
+      },
+      pieces: function () {
+        const editorElement = this.$refs.editorPiecesList
+        this.restoreScrollY = editorElement.scrollTop
+        Vue.nextTick(this.restoreEditorScroll)
       }
     },
     methods: {
@@ -109,25 +117,36 @@
         }
         return cm.getStateAfter(cm.lastLine(), true)
       },
-      removeDragMarkers () {
-        for (let key in this.components) {
-          this.components[key].$options.cminstance.clearGutter('user-gutter')
-        }
-      },
       requestLock (startId, startOffset, endId, endOffset) {
         let payload = { start: {id: startId, offset: startOffset},
           end: {id: endId, offset: endOffset}}
         this.$store.dispatch('requestLock', payload)
       },
+      restoreEditorScroll () {
+        const editorElement = this.$refs.editorPiecesList
+        if (editorElement.scrollHeight - editorElement.clientHeight <= this.restoreScrollY) {
+          console.log('Current editor too small for restoration.')
+          this.restoreScrollY -= 1
+          this.$nextTick(this.restoreEditorScroll)
+        } else {
+          console.log(`Reset scroll from ${editorElement.scrollTop} to ${this.restoreScrollY}`)
+          editorElement.scrollTop = Math.min(this.restoreScrollY, editorElement.scrollHeight - editorElement.clientHeight)
+        }
+      },
       lockDragStart (line, index) {
-        // console.log('start', line, index)
+        const editorElement = this.$refs.editorPiecesList
+        this.restoreScrollY = editorElement.scrollTop
         this.lockDragStartLocation = {piece: index, line}
         this.lockDragEndLocation = {piece: index, line}
+        Vue.nextTick(this.restoreEditorScroll)
       },
       lockDragUpdate (line, index) {
+        const editorElement = this.$refs.editorPiecesList
+        this.restoreScrollY = editorElement.scrollTop
         if (this.lockDragStartLocation) {
           this.lockDragEndLocation = {piece: index, line}
         }
+        Vue.nextTick(this.restoreEditorScroll)
       },
       lockDragEnd (line, index) {
         if (this.lockDragStartLocation === null) return
@@ -156,11 +175,16 @@
         }
       },
       lockDragCancel () {
-        console.log('cancel')
-        this.lockDragStartLocation = null
-        this.lockDragEndLocation = null
-        for (let key in this.components) {
-          this.components[key].$options.cminstance.clearGutter('user-gutter')
+        if (this.lockDragStartLocation) {
+          const editorElement = this.$refs.editorPiecesList
+          this.restoreScrollY = editorElement.scrollTop
+          console.log('cancel')
+          this.lockDragStartLocation = null
+          this.lockDragEndLocation = null
+          for (let key in this.components) {
+            this.components[key].$options.cminstance.clearGutter('user-gutter')
+          }
+          this.$nextTick(this.restoreEditorScroll)
         }
       }
     },
@@ -265,7 +289,8 @@
 
 .editor {
   width: 100%;
-  overflow-y: hidden;
+  height: auto;
+  overflow-y: scroll;
   background-color: #272822;
 }
 
