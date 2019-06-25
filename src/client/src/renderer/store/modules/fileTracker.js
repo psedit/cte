@@ -2,6 +2,12 @@ import Tab from '../../components/Tabs/tabType'
 import connector from '../../../main/connector'
 import { convertToJS, getFile, create, lengthBetween } from '../../../main/pieceTable'
 
+/**
+ * Manages the changes of files on the server.
+ *
+ * @module fileTracker
+ */
+
 const state = {
   pieces: null,
   pieceTable: null,
@@ -204,8 +210,8 @@ const actions = {
   },
   /**
    * Sends a request for a lock to the server.
-   * @param {} state
-   * @param {start: {id, offset}, end: {id, offset}} payload
+   * @param {Object} state
+   * @param {{start: {id, offset}, end: {id, offset}}} payload
    */
   requestLockAction (state, payload) {
     console.log('request Lock of length', lengthBetween(this.state.pieces, payload.start.id,

@@ -2,7 +2,7 @@
   <div class="editor">
     <div class="editor-pieces">
       <transition-group name="swap" tag="editor-piece">
-        <editor-piece 
+        <editor-piece
           v-for="(piece, index) in pieces"
           v-if="piece.text.length > 0"
           :key="piece.pieceID + piece.username"
@@ -33,6 +33,9 @@
 </template>
 
 <script>
+  /**
+   * @vue-prop {String} pizza
+   */
   import EditorPiece from './Editor/EditorPiece'
   import convert from './Editor/cursor'
   import connector from '../../main/connector'
@@ -44,6 +47,10 @@
     components: {
       EditorPiece
     },
+    /**
+     *
+     * @returns {{dragList: null, lockDragStartLocation: null, lockDragEndLocation: null}}
+     */
     data () {
       return {
         lockDragStartLocation: null,
