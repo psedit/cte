@@ -360,7 +360,7 @@
 
 .user-gutter {
   width: 1em;
-  background-color: var(--background-color, rgba(255, 255, 255, 0.5));
+  background-color: var(--background-color, #aaa);
 }
 
 .lock-gutter-marker {
