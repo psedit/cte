@@ -1,6 +1,7 @@
 <template>
-  <div ref="cm" class="editor-piece" :class="{editable}">
+  <div ref="cm" class="editor-piece" :class="{editable, open_editor: piece.username === ''}">
     <ghost-cursors ref="ghostCursors" :piece="piece"/>
+    <add-piece-button :pieceID="piece.pieceID"/>
   </div>
 </template>
 
@@ -15,11 +16,13 @@
   import connector from '../../../main/connector'
   import {getRandomColor} from './RandomColor'
   import GhostCursors from './GhostCursors'
+  import AddPieceButton from './AddPieceButton'
 
   export default {
     name: 'EditorPiece.vue',
     components: {
-      GhostCursors
+      GhostCursors,
+      AddPieceButton
     },
     props: {
       pieces: Array,
@@ -73,6 +76,10 @@
       },
       pieceTable () {
         return this.$store.state.fileTracker.pieceTable
+      },
+
+      firstLineNumber () {
+        return this.pieces.slice(0, this.index).reduce((acc, val) => val.text.length + acc, 0) + 1
       },
 
       pieceDragStart () {
@@ -141,7 +148,8 @@
           showCursorWhenSelecting: true,
           readOnly: !this.editable,
           // inputStyle: 'contenteditable',
-          lineNumberFormatter: this.lineNumberFormatter,
+          // lineNumberFormatter: this.lineNumberFormatter,
+          firstLineNumber: this.firstLineNumber,
           viewportMargin: Infinity,
           cursorBlinkRate: 0,
           gutters: ['user-gutter', 'CodeMirror-linenumbers']
@@ -151,17 +159,18 @@
 
         cm.setValue(this.code)
 
-        cm.getGutterElement().querySelector('.user-gutter').style.backgroundColor = getRandomColor(this.username).string()
-        cm.getGutterElement().setAttribute('title', this.username)
+        // cm.getGutterElement().querySelector('.user-gutter').style.backgroundColor = getRandomColor(this.username).string()
+        if (this.username) {
+          cm.getGutterElement().style.setProperty('--background-color', getRandomColor(this.username).string())
+        }
+        cm.getGutterElement().setAttribute('title', this.username || 'Click and drag to lock a piece.')
         this.initializeEvents()
       },
       unlock () {
-        console.log('hoi')
         connector.request('file-unlock-request', 'file-unlock-response', {
           file_path: this.$store.state.fileTracker.openFile,
           lock_id: this.pieces[this.index].pieceID
         }).then(({succes}) => {
-          console.log(succes, 'hoi ik ben')
           if (!succes) {
             console.error('faal')
           }
@@ -182,6 +191,7 @@
           cm.setGutterMarker(this.relativeLineToLine(i), 'user-gutter',
             this.gutterSelectMarker())
         }
+        // this.$emit('restoreScrollPosition')
       },
       updateDragLength (newDragLength, oldDragLength) {
         const cm = this.$options.cminstance
@@ -190,6 +200,7 @@
           cm.setGutterMarker(this.relativeLineToLine(i), 'user-gutter',
             this.gutterSelectMarker())
         }
+        // this.$emit('restoreScrollPosition')
       },
       lineToRelativeLine (line) {
         const cm = this.$options.cminstance
@@ -201,11 +212,8 @@
       },
 
       gutterSelectMarker () {
-        var marker = document.createElement('div')
-        marker.style.backgroundColor = 'white'
-        marker.style.pointerEvents = 'none'
-        marker.style.position = 'absolute'
-        marker.style.width = '100%'
+        const marker = document.createElement('div')
+        marker.classList.add('lock-gutter-marker')
         marker.innerHTML = '●'
         return marker
       },
@@ -232,6 +240,10 @@
           this.$emit('update')
         })
 
+        cm.on('viewportChange', () => {
+          this.$emit('viewportChange', this.index)
+        })
+
         cm.on('scrollCursorIntoView', (_, e) => {
           e.preventDefault()
         })
@@ -246,7 +258,7 @@
             connector.send('file-delta', {
               file_path: this.$store.state.fileTracker.openFile,
               piece_uuid: this.pieces[this.index].pieceID,
-              content: value
+              content: content.join('')
             })
           })
 
@@ -284,26 +296,10 @@
           gutter.addEventListener('contextmenu', this.unlock)
         }
       },
-      insertText (text, pos) {
-        const cm = this.$options.cminstance
-        pos.line = this.relativeLineToLine(pos.line)
-        cm.replaceRange(text, pos, pos, {
-          scroll: true
-        })
-      },
 
-      deleteText (from, to) {
-        from.line = this.relativeLineToLine(from.line)
-        to.line = this.relativeLineToLine(to.line)
+      updateLineNumbers () {
         const cm = this.$options.cminstance
-        cm.replaceRange('', from, to, {
-          scroll: true
-        })
-      },
-
-      lineNumberFormatter (line) {
-        const previousLines = this.pieces.slice(0, this.index).reduce((acc, val) => val.text.length + acc, 0)
-        return (previousLines + line).toString()
+        cm.setOption('firstLineNumber', this.firstLineNumber)
       }
     }
   }
@@ -317,6 +313,7 @@
     }
   }
   border-bottom: 1px rgba(255, 255, 255, 0.2) dashed;
+  position: relative;
 }
 
 .CodeMirror {
@@ -332,12 +329,27 @@
     animation: blink 1s step-end infinite;
   }
   .user-gutter {
-    box-shadow: 0 0 3em 1em rgba(0, 256, 30, 0.6);
+    box-shadow: 0 0 3em 1em var(--background-color);
+  }
+}
+
+.open_editor {
+  .user-gutter {
+    box-shadow: none;
   }
 }
 
 .user-gutter {
   width: 1em;
+  background-color: var(--background-color, rgba(255, 255, 255, 0.5));
+}
+
+.lock-gutter-marker {
+  width: 100%;
+  background-color: #fff;
+  pointer-events: none;
+  position: absolute;
+
 }
 
 @keyframes blink {

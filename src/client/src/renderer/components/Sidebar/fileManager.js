@@ -36,7 +36,7 @@ export function fileChangeRequest (oldPath, newPath, fileContent) {
  * @param {string} path path of file to be created.
  */
 export function newFile (path) {
-  this.fileChangeRequest('', path, '')
+  fileChangeRequest('', path, '')
 }
 
 /**
@@ -46,7 +46,7 @@ export function newFile (path) {
  * @param {string} content content of file
  */
 export function uploadFile (path, content) {
-  this.fileChangeRequest('', path, content)
+  fileChangeRequest('', path, content)
 }
 
 /**
@@ -55,7 +55,7 @@ export function uploadFile (path, content) {
  * @param {string} path path on server of file or directory to be deleted
  */
 export function removeItem (path) {
-  this.fileChangeRequest(path, '', '')
+  fileChangeRequest(path, '', '')
 }
 
 /**
@@ -66,7 +66,7 @@ export function removeItem (path) {
  * @param {string} newName new name of file
  */
 export function nameChange (pathToDir, oldName, newName) {
-  this.locationChange(pathToDir + oldName, pathToDir + newName, '')
+  locationChange(pathToDir + oldName, pathToDir + newName, '')
 }
 
 /**
@@ -76,5 +76,5 @@ export function nameChange (pathToDir, oldName, newName) {
  * @param {string} newPath new path of file
  */
 export function locationChange (oldPath, newPath) {
-  this.fileChangeRequest(oldPath, newPath, '')
+  fileChangeRequest(oldPath, newPath, '')
 }

@@ -5,6 +5,8 @@ import Vuex from 'vuex'
 
 import modules from './modules'
 
+import Toasted from 'vue-toasted'
+Vue.use(Toasted, {duration: 2000})
 Vue.use(Vuex)
 
 export default new Vuex.Store({
