@@ -243,7 +243,7 @@
       connector.addEventListener('open', () => {
         connector.listenToMsg('file-delta-broadcast', ({ content }) => {
           if (content.file_path === this.filePath) {
-            const newPieceTable = edit(this.pieceTable, content.piece_uuid, content.content.split('\n').map(val => val + '\n'))
+            const newPieceTable = edit(this.pieceTable, content.piece_uuid, content.content.replace(/\n$/, '').split('\n').map(val => val + '\n'))
             this.$store.dispatch('updatePieceTable', newPieceTable)
           }
         })
@@ -329,8 +329,8 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-}  
-  
+}
+
 .editorPieceGroup-leave-active {
   position: absolute;
 }

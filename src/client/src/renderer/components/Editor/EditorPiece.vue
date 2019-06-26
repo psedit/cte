@@ -18,12 +18,22 @@
   import GhostCursors from './GhostCursors'
   import AddPieceButton from './AddPieceButton'
 
+  /**
+   * @module Editor/EditorPiece
+   * @desc A piece of the editor.
+   */
   export default {
-    name: 'EditorPiece.vue',
+    name: 'EditorPiece',
     components: {
       GhostCursors,
       AddPieceButton
     },
+    /**
+     * @vue-prop {Piece[]} pieces - The piece table
+     * @vue-prop {Number} index - The index of the current piece.
+     * @vue-prop {Object} dragStart - The start position of dragging.
+     * @vue-prop {Object} dragStop - The stop position of dragging.
+     */
     props: {
       pieces: Array,
       index: Number,
@@ -34,17 +44,25 @@
        */
       theme: Boolean
     },
-
+    /**
+     * @vue-data {String} lang - The language of the code.
+   */
     data () {
       return {
         lang: null
       }
     },
 
+    /**
+     * The codemirror instance as a promise
+     * @type Promise | null
+     */
     myPromise: null,
+    /** @type CodeMirror | null */
     cminstance: null,
-    preText: null,
+    /** @type Object | null */
     startState: null,
+
     watch: {
       code (val) {
         if (!this.editable) {
@@ -64,6 +82,18 @@
     mounted () {
       this.$emit('mounted', this)
     },
+
+    /**
+     *
+     * @vue-computed {String[]} codeArray
+     * @vue-computed {String} code
+     * @vue-computed {Piece} piece
+     * @vue-computed {String} username
+     * @vue-computed {Boolean} editable
+     * @vue-computed {PieceTable} pieceTable
+     * @vue-computed {Number | null} pieceDragStart
+     * @vue-computed {Number} pieceDragLength
+     */
     computed: {
       codeArray () {
         return this.pieces[this.index].text
@@ -125,14 +155,15 @@
     },
 
     methods: {
-      updateTheme (theme) {
-        const cm = this.$options.cminstance
-        if (this.theme) {
-          cm.setOption('theme', 'default')
-        } else {
-          cm.setOption('theme', 'monokai')
-        }
-      },
+      /**
+       * Initializes a codemirror editor.
+       * Also initiates the ghostcursors for this piece after
+       * codemirror has been initiated.
+       *
+       * Promise is made only once.
+       *
+       * @returns {Promise<CodeMirror>} The promise resolved with the made CodeMirror instance.
+       */
       initializeEditor () {
         if (!this.$options.myPromise) {
           this.$options.myPromise = new Promise(resolve => {
@@ -145,6 +176,15 @@
           this.$options.myPromise.then((cm) => this.$refs.ghostCursors.init(cm, this.piece))
         }
         return this.$options.myPromise
+      },
+
+      updateTheme (theme) {
+        const cm = this.$options.cminstance
+        if (this.theme) {
+          cm.setOption('theme', 'default')
+        } else {
+          cm.setOption('theme', 'monokai')
+        }
       },
 
       _initializeEditor () {
@@ -263,6 +303,17 @@
 
         cm.on('scrollCursorIntoView', (_, e) => {
           e.preventDefault()
+        })
+
+        cm.on('cursorActivity', () => {
+          const cursorPos = cm.doc.getCursor()
+
+          connector.send('cursor-move', {
+            file_path: this.$store.state.fileTracker.openFile,
+            piece_id: this.pieces[this.index].pieceID,
+            offset: cursorPos.line,
+            column: cursorPos.ch
+          })
         })
 
         if (this.editable) {
