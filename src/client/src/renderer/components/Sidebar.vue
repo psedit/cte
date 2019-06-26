@@ -132,9 +132,11 @@
         fs.writeFileSync(filePath, buff)
 
         /* Unpack tar file. */
-        tar.x( // TODO: Fix unpacken
+        tar.x(
           {
-            file: filePath
+            file: filePath,
+            cwd: localPath,
+            strip: 1
           }
         ).then(_ => {
           /* Delete tar file. */
@@ -179,7 +181,7 @@
         /* Get base64 encoded string with binary data of project as tar file
          * from server.
          */
-        this.$toasted.show(`Downloading project to ${localPath} ...`)
+        this.$toasted.show(`Downloading project to ${localPath} (this may take upto 30 seconds)`)
         let dataBase64 = ''
         connector.request(
           'file-project-request',
