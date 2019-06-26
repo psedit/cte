@@ -692,8 +692,8 @@
       addEventListener('keydown', (event) => {
         console.log(navigator.platform)
         console.log(navigator.platform.indexOf('Mac'))
-        if (navigator.platform.indexOf('Mac') > -1 && event.metaKey && event.key === 's') {
-          this.saveFile()
+        if (navigator.platform.indexOf('Mac') > -1) {
+          if (event.metaKey && event.key === 's') this.saveFile()
         } else if (event.ctrlKey && event.key === 's') {
           this.saveFile()
         }
