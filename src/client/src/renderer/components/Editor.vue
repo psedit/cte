@@ -53,6 +53,10 @@
       ThemeSwitch,
       AddPieceButton
     },
+    /**
+     *
+     * @returns {{dragList: null, lockDragStartLocation: null, lockDragEndLocation: null}}
+     */
     data () {
       return {
         lockDragStartLocation: null,
