@@ -1,6 +1,7 @@
 <template>
   <div ref="cm" class="editor-piece" :class="{editable, open_editor: piece.username === ''}">
     <ghost-cursors ref="ghostCursors" :piece="piece"/>
+    <add-piece-button :pieceID="piece.pieceID"/>
   </div>
 </template>
 
@@ -15,17 +16,22 @@
   import connector from '../../../main/connector'
   import {getRandomColor} from './RandomColor'
   import GhostCursors from './GhostCursors'
+  import AddPieceButton from './AddPieceButton'
 
   export default {
     name: 'EditorPiece.vue',
     components: {
-      GhostCursors
+      GhostCursors,
+      AddPieceButton
     },
     props: {
       pieces: Array,
       index: Number,
       dragStart: Object,
       dragEnd: Object,
+      /* true: dark
+       * false: light
+       */
       theme: Boolean
     },
 
@@ -52,12 +58,7 @@
         this.updateDragLength(oldDragEnd, newDragEnd)
       },
       theme (newTheme) {
-        const cm = this.$options.cminstance
-        if (newTheme) {
-          cm.setOption('theme', 'default')
-        } else {
-          cm.setOption('theme', 'monokai')
-        }
+        this.updateTheme(newTheme)
       }
     },
     mounted () {
@@ -124,6 +125,14 @@
     },
 
     methods: {
+      updateTheme (theme) {
+        const cm = this.$options.cminstance
+        if (this.theme) {
+          cm.setOption('theme', 'default')
+        } else {
+          cm.setOption('theme', 'monokai')
+        }
+      },
       initializeEditor () {
         if (!this.$options.myPromise) {
           this.$options.myPromise = new Promise(resolve => {
@@ -139,6 +148,10 @@
       },
 
       _initializeEditor () {
+        let initTheme = 'monokai'
+        if (this.theme) {
+          initTheme = 'default'
+        }
         if (!window.CodeMirror) window.CodeMirror = CodeMirror
         // debugger
         const cm = CodeMirror(this.$refs.cm, {
@@ -148,7 +161,7 @@
             startState: this.$options.startState
           },
           lineNumbers: true,
-          theme: 'monokai',
+          theme: initTheme,
           smartIndent: true,
           lineWrapping: true,
           showCursorWhenSelecting: true,
@@ -173,12 +186,10 @@
         this.initializeEvents()
       },
       unlock () {
-        console.log('hoi')
         connector.request('file-unlock-request', 'file-unlock-response', {
           file_path: this.$store.state.fileTracker.openFile,
           lock_id: this.pieces[this.index].pieceID
         }).then(({succes}) => {
-          console.log(succes, 'hoi ik ben')
           if (!succes) {
             console.error('faal')
           }
@@ -199,6 +210,7 @@
           cm.setGutterMarker(this.relativeLineToLine(i), 'user-gutter',
             this.gutterSelectMarker())
         }
+        // this.$emit('restoreScrollPosition')
       },
       updateDragLength (newDragLength, oldDragLength) {
         const cm = this.$options.cminstance
@@ -207,6 +219,7 @@
           cm.setGutterMarker(this.relativeLineToLine(i), 'user-gutter',
             this.gutterSelectMarker())
         }
+        // this.$emit('restoreScrollPosition')
       },
       lineToRelativeLine (line) {
         const cm = this.$options.cminstance
@@ -264,7 +277,7 @@
             connector.send('file-delta', {
               file_path: this.$store.state.fileTracker.openFile,
               piece_uuid: this.pieces[this.index].pieceID,
-              content: value
+              content: content.join('')
             })
           })
 
@@ -319,6 +332,7 @@
     }
   }
   border-bottom: 1px rgba(255, 255, 255, 0.2) dashed;
+  position: relative;
 }
 
 .CodeMirror {
