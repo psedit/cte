@@ -96,6 +96,9 @@ const actions = {
    * @param {string} filePath the file path to document to be opened
    */
   openFile (store, filePath) {
+    if (filePath === store.state.openFile) {
+      return
+    }
     store.commit('updateOpenFile', filePath)
     store.commit('addTab', filePath)
 
