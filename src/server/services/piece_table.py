@@ -397,6 +397,7 @@ class PieceTable:
         the block id's of the blocks which were removed from it.
         """
         used = {p.block_id for p in self.table}
+        used.add(0)
         unused = {k for k in self.blocks if k not in used}
 
         self.blocks = {k: v for k, v in self.blocks.items() if k in used}
