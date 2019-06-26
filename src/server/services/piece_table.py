@@ -1,323 +1,404 @@
-from typing import List, Tuple, Dict, Any
-from text_block import TextBlock
+from typing import List, Tuple, Dict, Union
 import uuid
+from piece import Piece
+from typedefs import LockError
 
 
 class PieceTable:
     """
     Text file data structure consisting of the original file together with
-    so-called "edit-blocks" (see the TextBlock class), for which a table is
-    used to couple these seperate blocks into one single file.
+    so-called "blocks", for which a table is used to couple these seperate
+    blocks into one single file. The table contains 'pieces' which refer to
+    subsections of blocks (using a block id) and have an uuid and owner.
 
-    Edit-blocks can can be created on top of the original file and locked, such
-    that no other edit-blocks can be created on top of them, until the
-    edit-block is closed manually. Edit-blocks can thereafter be edited such,
-    while the piece table makes sure the general structure stays intact.
+    Pieces can can be created on top of the original file and locked, such
+    that no other pieces can be created on top of them, until the
+    piece is unlocked manually. Blocks can thereafter be edited, while the
+    piece table makes sure the general structure stays intact.
     """
     def __init__(self, text) -> None:
-        if isinstance(text, str):
-            lines = text.splitlines(True)
-        else:
-            lines = text
+        """
+        Initialises the block dictionary and piece table. Also creates the
+        block with id 0, the 'orig' block which contains the original file.
+        """
+        if not text:
+            text = ["\n"]
 
-        orig_piece = TextBlock(lines, False)
-        orig_piece_id = str(uuid.uuid4())
-        self.blocks: Dict[int, TextBlock] = {0: orig_piece}
-        self.table: List[List[Any]] = [[orig_piece_id, 0, 0, len(lines), ""]]
+        lines = self.text_to_lines(text)
+        orig = Piece(str(uuid.uuid4()), 0, 0, len(lines), "")
+
+        self.blocks: Dict[int, List[str]] = {0: lines}
+        self.table: List[Piece] = [orig]
+
+    @staticmethod
+    def text_to_lines(text) -> List[str]:
+        return text.splitlines(True) if isinstance(text, str) else text
 
     def __len__(self) -> int:
         """
         Returns the length of the stitched file according to the piece table.
         """
-        return sum(entry[3] for entry in self.table)
+        return sum(piece.length for piece in self.table)
 
     def __str__(self) -> str:
-        fmt = "{:>38}" + "{:>10}"*5
+        """
+        Prints the piece table in an easily readable manner.
+        """
+        fmt = "{:>38}" + "{:>10}"*3 + "{:>15}" + "{:>10}"
         str_table = fmt.format("Piece ID", "Block ID", "Start",
                                "Length", "Owner", "Locked") + "\n"
 
         for p in self.table:
-            str_table += fmt.format(*p, not p[4] == "") + "\n"
+            str_table += fmt.format(*p, not p.owner == "") + "\n"
 
         return str_table
 
-    def line_to_table_index(self, line: int) -> Tuple[int, int]:
+    __repr__ = __str__
+
+    def __getitem__(self, idx):
+        return self.table[idx]
+
+    def __setitem__(self, idx, val):
+        self.table[idx] = val
+
+    def _insert_block(self, text: Union[List[str], str]) -> int:
         """
-        Returns the corresponding piece index and piece offset
-        for a given file line.
+        Insert a new block into the block dictionary, and return its id.
         """
-        piece_start: int = 0
-        for i, entry in enumerate(self.table):
-            piece_length: int = entry[3]
+        lines = self.text_to_lines(text)
+        index = max(self.blocks) + 1
+        self.blocks[index] = lines
+        return index
 
-            if line >= piece_start and line < piece_start + piece_length:
-                return i, line - piece_start
-
-            piece_start += piece_length
-        raise ValueError("Invalid line number")
-
-    def get_piece_start(self, piece_id: str) -> int:
+    def _insert_piece(self, piece: Piece, index: int = None,
+                      after_id: str = None) -> None:
         """
-        Returns the line at which the given piece (table index) begins within
-        the stitched file. Return -1 when the piece is not in the table.
+        Inserts the given piece into the table, where either 'index' or
+        'after_id' is specified.
+
+        If 'index' is given, inserts the piece at this index into the table
+        If 'after_id' is given, inserts the piece after the piece with this id
+        into the table. If 'after_id' is an empty string, the piece is inserted
+        as the first in the table.
         """
-        cur_loc: int = 0
-        for piece in self.table:
-            if piece[0] == piece_id:
-                return cur_loc
-            cur_loc += piece[3]
-        return -1
-
-    def get_piece_range(self, start: int, length: int) -> Tuple[int, int]:
-        """
-        Returns a range of pieces which cover the given line range, in the
-        form '(start_pieces, end_piece)'.
-        """
-        first, offset = self.line_to_table_index(start)
-        length_rem: int = length - (self.table[first][3] - offset)
-        last_off: int = 1
-
-        while length_rem > 0 and first + last_off < len(self.table):
-            length_rem -= self.table[first + last_off][3]
-            last_off += 1
-
-        return first, first + last_off - 1
-
-    def get_lines(self, start: int, length: int) -> List[str]:
-        """
-        Returns a list with the requested lines assembled
-        from the piece present in the piece table.
-
-        When length is -1, returns until the last line.
-        """
-        if length < 0:
-            length = len(self)
-
-        lines: List[str] = []
-        length_rem: int = length
-        index, offset = self.line_to_table_index(start)
-        first, last = self.get_piece_range(start, length)
-
-        for i in range(first, last + 1):
-            piece_id, block_id, line_s, line_c, _ = self.table[i]
-            block = self.blocks[block_id]
-
-            if i == first:
-                line_s += offset
-                line_c -= offset
-
-            lines.extend(block.get_lines(line_s, min(length_rem, line_c)))
-
-            length_rem -= line_c
-
-        return lines
-
-    def get_piece_info(self, piece_id: str) -> List[int]:
-        """
-        If the given block is locked, returns the current piece length
-        and starting location within the file.
-        """
-        # TODO
-        cur_pos = 0
-        for piece in self.table:
-            if piece[0] == piece_id:
-                return [cur_pos, piece[3]]
+        if index is not None:
+            self.table.insert(index, piece)
+        elif after_id is not None:
+            if after_id == "":
+                index = 0
             else:
-                cur_pos += piece[3]
-        return []
+                index = self.get_piece_index(after_id) + 1
+            self._insert_piece(piece, index=index)
+        else:
+            raise ValueError("No index or preceding uuid given")
+
+    def _remove_piece(self, piece_id: str) -> None:
+        """
+        Remove the specified piece from the table.
+        """
+        piece = self.get_piece(piece_id)
+        if piece:
+            self.table.remove(piece)
+        else:
+            raise ValueError("Given uuid not in piece table")
+
+    def _merge_neighbours_same_owner(self, piece_id: str, uname: str) -> None:
+        """
+        Merges the specified piece with its two neighbours if 'uname' owns
+        the respective piece.
+
+        Adds all block content to the block of the piece belonging to piece_id
+        and removes the pieces which are now merged from the table.
+
+        This function is called after a new lock has been put in the table, and
+        thus assumes that the block_id belonging to piece_id is included as a
+        whole in the table.
+        """
+        piece = self.get_piece(piece_id)
+        index = self.get_piece_index(piece_id)
+
+        # Try merging with the next piece in the table.
+        if (index + 1 < len(self.table)
+           and self.table[index + 1].owner == uname):
+            next_piece = self.table[index + 1]
+            next_block = self.get_lines(next_piece.piece_id, next_piece.start,
+                                        next_piece.length)
+
+            self.blocks[piece.block_id] += next_block
+            piece.length += next_piece.length
+            self.table.remove(next_piece)
+
+        # Try merging with the previous piece in the table.
+        if index > 0 and self.table[index - 1].owner == uname:
+            prev_piece = self.table[index - 1]
+            prev_block = self.get_lines(prev_piece.piece_id, prev_piece.start,
+                                        prev_piece.length)
+
+            self.blocks[piece.block_id] = (prev_block +
+                                           self.blocks[piece.block_id])
+            piece.length += prev_piece.length
+            self.table.remove(prev_piece)
+
+    def get_piece_index(self, piece_id: str) -> int:
+        """
+        From the given piece_id, return its index in the piece table. If it is
+        not present, raises a ValueError.
+        """
+        for i, piece in enumerate(self.table):
+            if piece.piece_id == piece_id:
+                return i
+        raise ValueError("Given uuid not in piece table")
+
+    def get_piece(self, piece_id: str) -> Piece:
+        """
+        Return the piece given its id. If the piece is not present in the
+        table, raises a ValueError.
+        """
+        for piece in self.table:
+            if piece.piece_id == piece_id:
+                return piece
+        raise ValueError("Given uuid not in piece table")
+
+    def row_to_piece(self, row: int) -> Tuple[str, int]:
+        """
+        Returns the piece_id which is located at the specified row in the file,
+        as well as the offset within this piece.
+        Raises a ValueError when the row is outside the file.
+        """
+        for piece in self.table:
+            row -= piece.length
+            if row <= 0:
+                return piece.piece_id, piece.length + row
+        raise ValueError("Row number out of bounds.")
+
+    def piece_to_row(self, piece_id: str) -> int:
+        """
+        Returns the starting row of the specified piece, and raises a
+        ValueError if the piece_id is not present in the table.
+        """
+        row = 0
+        for piece in self.table:
+            if piece.piece_id == piece_id:
+                return row
+            row += piece.length
+        raise ValueError("Piece does not exist.")
+
+    def get_pieces(self, start_piece_id: str, offset: int,
+                   length: int) -> Tuple[List[Piece], int]:
+        """
+        Return a list of all pieces within the specified range. The range is
+        given as the starting location, start_piece_id and offset, and the
+        length of the range.
+
+        Also returns 'end_offset', which indicates the last row in the last
+        piece that is within the range.
+        """
+        start_index = self.get_piece_index(start_piece_id)
+        pieces = []
+
+        if (offset < 0 or offset >= self.table[start_index].length):
+            raise ValueError("Offset is outside of starting piece.")
+
+        # We want to compute the offset in the last block where the selection
+        # ends. To do this, we compute the lines remaining in the last block,
+        # and subtract it from the length of the last piece.
+        remainder = -(length + offset)
+        end_offset = 0
+
+        for piece in self.table[start_index:]:
+            pieces.append(piece)
+            remainder += piece.length
+
+            if remainder >= 0:
+                break
+
+        end_offset = piece.length - remainder
+
+        return pieces, end_offset
 
     def get_piece_content(self, piece_id: str) -> List[str]:
         """
-        Returns the content of a single piece in the table.
+        Get the text content for a given piece id.
         """
-        for p_id, block_id, start, length, _ in self.table:
-            if p_id == piece_id:
-                return self.blocks[block_id].get_lines(start, length)
+        p = self.get_piece(piece_id)
+        return self.blocks[p.block_id][p.start:p.start+p.length]
 
-        return []
-
-    def get_piece(self, piece_id: str) -> List[Any]:
+    def get_lines(self, start_piece_id: str = None, offset: int = 0,
+                  length: int = None) -> List[str]:
         """
-        Returns the piece by piece_id, returns empty list otherwise
+        Return actual text lines possibly spanning multiple pieces.
+
+        If no start id is passed, starts from the first piece
+        If length is not passed, returns the length until the end of the file.
         """
-        for piece in self.table:
-            if piece[0] == piece_id:
-                return piece
-
-        return []
-
-    def set_piece_size(self, piece_id: str, start: int, length: int):
-        """
-        Sets the length of a piece in the table
-        """
-        for piece in self.table:
-            if piece[0] == piece_id:
-                piece[2] = start
-                piece[3] = length
-
-    def set_piece_content(self, piece_id: str, content: str) -> None:
-        """
-        Sets the contents of a piece in the piecetable
-        """
-        _, block_id, start, _, _ = self.get_piece(piece_id)
-
-        text_block = self.blocks[block_id]
-
-        # set the content of the current block
-        text_block.set_content(content)
-        self.set_piece_size(piece_id, start, len(text_block))
-
-    def get_piece_block_id(self, piece_id: str) -> int:
-        """
-        Returns the block id of a single piece in the table.
-        """
-        for p_id, block_id, _, _, _ in self.table:
-            if p_id == piece_id:
-                return block_id
-
-        return -1
-
-    def stitch(self) -> List[str]:
-        """
-        Returns the new stitched file according to the piece table.
-        """
-        stitched_file: List[str] = []
-        position = 0
-        for _, block_id, start, len, uname in self.table:
-            position += len
-
-            stitched_file.extend(self.blocks[block_id].get_lines(start, len))
-
-        return stitched_file
-
-    def remove_closed_blocks(self) -> List[str]:
-        """
-        Stitches the file and removes closed edit-blocks. The new generated
-        pieces are given a new uuid, while the locked blocks retain their
-        original ID such that their user remains known for the clients.
-
-        Use when saving to disk.
-        """
-        stitched_file = self.stitch()
-        self.blocks[0] = TextBlock(stitched_file)
-
-        # Update the table section lengths and starting positions
-        cur_pos = 0
-        last_open_index = 0
-        for i, section in enumerate(self.table):
-            if self.blocks[section[1]].is_open():
-                last_open_index = i + 1
-            else:
-                self.table[last_open_index][3] += section[3]
-
-                if i == last_open_index:
-                    # Move the section to 'orig' and give it a new uuid.
-                    section = [str(uuid.uuid4()), 0, cur_pos, section[3]]
-                else:
-                    # The empty uuid signals that the section is to be removed.
-                    section[0] = ""
-
-            cur_pos += section[2]
-
-            # Generate new uuid's
-            section[0] = str(uuid.uuid4())
-
-        self.table = [s for s in self.table if s[0]]
-
-        # Remove the closed blocks from memory
-        for block_id in self.blocks:
-            if not self.blocks[block_id].is_open():
-                del self.blocks[block_id]
-
-        return stitched_file
-
-    def open_block(self, piece_id: str, offset: int, length: int,
-                   uname: str) -> str:
-        """
-        Opens a new block in the piece table starting at the given offset
-        within the specified piece, until the given length.
-
-        Raises a ValueError when trying to open a locked area, or when outside
-        of file boundaries.
-
-        Returns the piece uuid of the created block when successful, and an
-        exception describing the occurred error otherwise. Also updates the
-        uuid's of all affected blocks.
-        """
-        # Get the starting position of the piece
-        piece_start = self.get_piece_start(piece_id)
-
-        if piece_start < 0:
-            # The piece uuid is not present in the piece table.
-            raise ValueError("Piece uuid is not present within the table.")
-
-        start = piece_start + offset
-
-        # Check if block creation is allowed
-        range_start, range_end = self.get_piece_range(start, length)
-        for piece in self.table[range_start:range_end + 1]:
-            if self.blocks[piece[1]].is_open():
-                raise ValueError("Illegal block request, the area is locked.")
-
-        if start + length > len(self):
-            raise ValueError("Illegal block request, end of file.")
-
-        # Create the new TextBlock object
-        block_lines: List[str] = self.get_lines(start, length)
-
-        new_block: TextBlock = TextBlock(block_lines)
-        block_id = max(self.blocks) + 1
-        self.blocks[block_id] = new_block
-
-        # Find and shrink previous containing block.
-        index, offset = self.line_to_table_index(start)
-        prev_len: int = self.table[index][3]
-        self.table[index][0] = str(uuid.uuid4())
-        self.table[index][3] = offset
-
-        # Insert the new block in the table
-        piece_id = str(uuid.uuid4())
-        self.table.insert(index + 1, [piece_id,
-                                      len(self.blocks) - 1,
-                                      0, length, uname])
-
-        # Update the rest of the table
-        rem: int = prev_len - (offset + length)
-        if rem > 0:
-            # Insert remainder of previous containing block after new block
-            n_start = self.table[index][2] + offset + length
-
-            self.table.insert(index + 2, [str(uuid.uuid4()),
-                                          self.table[index][1],
-                                          n_start, rem, ""])
+        if start_piece_id:
+            start_index = self.get_piece_index(start_piece_id)
         else:
-            # Cut or shrink the next couple blocks to make space
-            length_rem: int = -1 * rem
-            cur_piece_index: int = index + 2
+            start_index = 0
 
-            while length_rem > 0 and len(self.table) > cur_piece_index:
-                piece_len: int = self.table[cur_piece_index][3]
+        if length is None:
+            length = len(self)
 
-                if length_rem > piece_len:
-                    length_rem -= piece_len
-                    del self.table[cur_piece_index]
-                else:
-                    self.table[cur_piece_index][0] = str(uuid.uuid4())
-                    self.table[cur_piece_index][2] += length_rem
-                    self.table[cur_piece_index][3] -= length_rem
+        pieces = self.table[start_index:]
+        first_piece, *rest_pieces = pieces
 
-                    break
+        length = min(sum(piece.length for piece in pieces) - offset, length)
+        remaining_length = length
 
-        return piece_id
+        # Step 1. Take the lines we need from the first piece
+        start = first_piece.start + offset
 
-    def close_block(self, piece_id: str) -> None:
+        # We can never take more lines from the first piece than it contains,
+        # so we need to take min(length, first_piece.length) lines.
+        take_length = min(length, first_piece.length - offset)
+        lines = self.blocks[first_piece.block_id][start:start + take_length]
+        remaining_length -= take_length
+
+        # Step 2. Take the remaining lines we need from the next pieces
+        for piece in rest_pieces:
+            if (remaining_length <= 0):
+                break
+
+            block = self.blocks[piece.block_id]
+            take_length = min(remaining_length, piece.length)
+            lines += block[piece.start:piece.start + take_length]
+            remaining_length -= take_length
+
+        assert remaining_length == 0
+        assert len(lines) == length
+        return lines
+
+    def put_piece(self, start_piece_id: str, offset: int, length: int,
+                  uname: str) -> str:
         """
-        Closes the block with the corresponsing index.
+        Locks a section of the piece table, meaning a new piece is put over
+        one or more existing pieces, either partly or completely. Raises a
+        ValueError when unsuccessful.
 
-        The block is kept within the piece table but should not be written to
-        anymore.
+        Assigns 'uname' as the piece's owner.
+
+        After calling this function, 'clear_unused_blocks' should be called
+        to erase overwritten blocks from memory.
         """
+        args = (start_piece_id, offset, length)
+
+        # Get pieces and end offset
+        pieces, end_offset = self.get_pieces(*args)
+
+        # Check if allowed
+        for p in pieces:
+            if p.owner not in ("", uname):
+                raise ValueError("The requested area is (partially) locked.")
+
+        # Get lines and initiate new block
+        lines = self.get_lines(*args)
+        block_id = self._insert_block(lines)
+
+        if len(pieces) > 1:
+            (first_piece, *middle_pieces, last_piece) = pieces
+        else:
+            # This occurs when we're creating a piece fully inside another one.
+            # In that case, we want to insert a copy of the piece after itself.
+            first_piece = pieces[0]
+            last_piece = Piece(*first_piece)
+            self._insert_piece(last_piece, after_id=first_piece.piece_id)
+            middle_pieces = []
+
+        # Insert the new piece
+        new_piece = Piece(piece_id=str(uuid.uuid4()), block_id=block_id,
+                          start=0, length=len(lines), owner=uname)
+        self._insert_piece(new_piece, after_id=first_piece.piece_id)
+
+        # Cut starting piece
+        if offset:
+            first_piece.length = offset
+            first_piece.piece_id = str(uuid.uuid4())
+        else:
+            self.table.remove(first_piece)
+
+        # Remove pieces within range
+        for piece in middle_pieces:
+            self.table.remove(piece)
+
+        # Cut last piece
+        if not end_offset >= last_piece.length:
+            last_piece.start += end_offset
+            last_piece.length -= end_offset
+            last_piece.piece_id = str(uuid.uuid4())
+        else:
+            self.table.remove(last_piece)
+
+        # Merge the locks if necessary.
+        self._merge_neighbours_same_owner(new_piece.piece_id, uname)
+
+        return new_piece.piece_id
+
+    def put_piece_after(self, piece_id: str, uname: str) -> str:
+        """
+        Inserts a new piece inbetween existing pieces after the piece
+        with the given piece id.
+        """
+        block_id = self._insert_block("\n")
+        piece = Piece(str(uuid.uuid4()), block_id, 0, 1, uname)
+        self._insert_piece(piece, after_id=piece_id)
+        self._merge_neighbours_same_owner(piece.piece_id, uname)
+        return piece.piece_id
+
+    def close_piece(self, piece_id: str) -> None:
+        """
+        After calling this function, 'merge_unlocked_pieces' could be called to
+        potentially merge the piece with other unlocked pieces.
+        """
+        self.get_piece(piece_id).owner = ""
+
+    def set_piece_content(self, piece_id: str, lines: List[str]) -> None:
+        piece = self.get_piece(piece_id)
+        if not piece.owner:
+            raise LockError("Piece not locked.")
+        assert piece.start == 0
+        piece.length = len(lines)
+        self.blocks[piece.block_id] = lines
+
+    def merge_unlocked_pieces(self) -> None:
+        """
+        This function merges unlocked pieces by stitching the file and turning
+        neighbouring unlocked pieces into a single piece referencing the new
+        orig block (with id 0).
+
+        After calling this function, 'clear_unused_blocks' should be called
+        to erase the removed blocks from memory.
+        """
+        new_orig = self.get_lines()
+
+        cur_pos = 0
+        last_orig_index = 0
         for i, piece in enumerate(self.table):
-            if piece[0] == piece_id:
-                self.blocks[piece[1]].close()
-                self.table[i][4] = ""
+            if piece.owner:
+                # Skip locked blocks and update next 'orig' piece index.
+                last_orig_index = i + 1
+            else:
+                if i == last_orig_index:
+                    # Create new 'orig' piece.
+                    piece.block_id = 0
+                    piece.start = cur_pos
+                else:
+                    self.table[last_orig_index].length += piece.length
+                    # Stage piece to be removed.
+                    piece.piece_id = ""
+
+            cur_pos += piece.length
+
+        self.table = [piece for piece in self.table if piece.piece_id]
+        self.blocks[0] = new_orig
+
+    def clear_unused_blocks(self) -> List[int]:
+        """
+        Removes all unused blocks from the 'blocks' dictionary, and returns
+        the block id's of the blocks which were removed from it.
+        """
+        used = {p.block_id for p in self.table}
+        unused = {k for k in self.blocks if k not in used}
+
+        self.blocks = {k: v for k, v in self.blocks.items() if k in used}
+
+        return list(unused)
