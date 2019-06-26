@@ -329,6 +329,17 @@
               content: content.join('')
             })
           })
+
+          cm.on('cursorActivity', () => {
+            const cursorPos = cm.doc.getCursor()
+
+            connector.send('cursor-move', {
+              file_path: this.$store.state.fileTracker.openFile,
+              piece_id: this.pieces[this.index].pieceID,
+              offset: cursorPos.line,
+              column: cursorPos.ch
+            })
+          })
         }
 
         const gutter = cm.getGutterElement()

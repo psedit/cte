@@ -37,9 +37,6 @@
 </template>
 
 <script>
-  /**
-   * @vue-prop {String} pizza
-   */
   import Vue from 'vue'
   import EditorPiece from './Editor/EditorPiece'
   import ThemeSwitch from './ThemeSwitch'
@@ -245,7 +242,6 @@
     mounted () {
       connector.addEventListener('open', () => {
         connector.listenToMsg('file-delta-broadcast', ({ content }) => {
-          // debugger
           if (content.file_path === this.filePath) {
             const newPieceTable = edit(this.pieceTable, content.piece_uuid, content.content.replace(/\n$/, '').split('\n').map(val => val + '\n'))
             this.$store.dispatch('updatePieceTable', newPieceTable)

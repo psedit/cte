@@ -20,6 +20,7 @@ const mutations = {
   serverURLChange (store) {
   },
   /**
+   * Updates the piecetable using the getFile function from pieceTable.js
    * @param {Object} state
    * @param {pieceTable} pieceTable
    */
@@ -28,7 +29,7 @@ const mutations = {
   },
 
   /**
-   *  Removes all tabs
+   * Removes all tabs.
    * @param {Object} state
    */
   clearTabs (state) {
@@ -42,9 +43,9 @@ const mutations = {
     state.pieceTable = pieceTable
   },
   /**
-   * Adds a tab to state
+   * Adds a tab to state.
    * @param {Object} state vuex state
-   * @param {string} filePath the filepath that needs to be added as tab
+   * @param {string} filePath filepath to file that needs to be added as tab
    */
   addTab (state, filePath) {
     if (state.tabs.every(x => x.filePath !== filePath)) {
@@ -52,12 +53,17 @@ const mutations = {
       state.tabs = [...state.tabs, newTab]
     }
   },
+  /**
+   * Removes tab to state.
+   * @param {Object} state vuex state
+   * @param {string} filePath filepath to file of the tab that needs to removed
+   */
   removeTab (state, tabPath) {
     state.tabs = state.tabs.filter(x => x.filePath !== tabPath)
   },
   /**
-   * Updates the filepaths
-   * @param {Object} state
+   * Updates the filepaths.
+   * @param {Object} state vuex state
    * @param {Object[]} filePaths
    */
   updateFiles (state, filePaths) {
@@ -96,6 +102,9 @@ const actions = {
    * @param {string} filePath the file path to document to be opened
    */
   openFile (store, filePath) {
+    if (filePath === store.state.openFile) {
+      return
+    }
     store.commit('updateOpenFile', filePath)
     store.commit('addTab', filePath)
 
@@ -117,14 +126,10 @@ const actions = {
     ).then((data) => {
       const pieceTable = convertToJS(data)
       store.dispatch('updatePieceTable', pieceTable)
-
-      // fs.writeFile(filePath, data.file_content, (err) => {
-      //   if (err) console.error(err)
-      // })
     })
   },
   /**
-   * Move to the tab before the tab with the given index.
+   * Move to the tab left from the tab with the given index.
    */
   prevTab (store, index) {
     if (index === 0) {
@@ -133,7 +138,7 @@ const actions = {
     store.dispatch('openFile', store.state.tabs[index - 1].filePath)
   },
   /**
-   * Move to the tab after the tab with the given index.
+   * Move to the tab right from the tab with the given index.
    */
   nextTab (store, index) {
     if (index === store.state.tabs.length - 1) {
@@ -211,8 +216,6 @@ const actions = {
    * @param {{start: {id, offset}, end: {id, offset}}} payload
    */
   requestLockAction (state, payload) {
-    console.log('request Lock of length', lengthBetween(this.state.pieces, payload.start.id,
-      payload.start.offset, payload.end.start, payload.end.offset))
     connector.request('file-lock-request', 'file-lock-response',
       {
         'file_path': state.openFile,
@@ -224,7 +227,7 @@ const actions = {
     )
   },
   /**
-   *
+   * Closes all open tabs.
    * @param {Object} store
    */
   clearTabs (store) {
