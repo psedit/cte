@@ -7,6 +7,7 @@
     </div>
     <div class="file-tools">
       <file-plus title="Add new file/directory" class="button" @click="createItem"/>
+      <content-save title="Save current file" class="button" @click="saveFile"/>
       <cloud-download-outline title="Download project" class="button" @click="downloadProject"/>
       <upload title="Upload directory" class="button" @click="uploadDir"/>
       <file-upload title="Upload file" class="button" @click="uploadFile"/>
@@ -23,6 +24,7 @@
   import BackIcon from 'vue-material-design-icons/ArrowLeft'
   import FilePlus from 'vue-material-design-icons/FilePlus'
   import FileUpload from 'vue-material-design-icons/FileUpload'
+  import ContentSave from 'vue-material-design-icons/ContentSave'
   import CloudDownloadOutline from 'vue-material-design-icons/CloudDownloadOutline'
   import Upload from 'vue-material-design-icons/Upload'
   import connector from '../../main/connector'
@@ -49,6 +51,7 @@
       FilePlus,
       Upload,
       FileUpload,
+      ContentSave,
       CloudDownloadOutline
     },
     computed: {
@@ -117,6 +120,20 @@
       }
     },
     methods: {
+      /**
+       * Save current open file.
+       */
+      saveFile () {
+        let openFilePath = this.$store.state.fileTracker.openFile
+        if (openFilePath === undefined || openFilePath === '') {
+          this.$toasted.show(`There was no open file. Open a file to save it.`)
+          return
+        }
+        connector.send('file-save', {
+          file_path: openFilePath
+        })
+      },
+
       /**
        * Save project to disk.
        *
@@ -633,6 +650,30 @@
       },
 
       /**
+       * Listen to file save broadcasts and display a toast indicating the saved
+       * file and the user that saved it.
+       */
+      listenToFileSave () {
+        /* Listen to file-save-broadcast messages and show a toast with the
+         * file_path and username of the save.
+         */
+        let listen = () => {
+          connector.listenToMsg('file-save-broadcast', (response) => {
+            this.$toasted.show(`Succesfully saved ${response.content.file_path} by ${response.content.username}`)
+          })
+        }
+
+        /* If connection is not open, first open the websocket. */
+        if (connector.isOpen()) {
+          listen()
+        } else {
+          connector.addEventListener('open', () => {
+            listen()
+          })
+        }
+      },
+
+      /**
        * Open a new web socket and update the file tree.
        */
       openSocketUpdateTree () {
@@ -649,6 +690,8 @@
     },
     mounted () {
       this.openSocketUpdateTree()
+      this.listenToFileSave()
+
       /* When the server URL is changes,
        * reset the directory tracker.
        */
@@ -657,6 +700,16 @@
           connector.waitUntillOpen(() => {
             this.home()
           })
+        }
+      })
+
+      /* Save file is ctrl + s (or cmd + s on mac) is pressed. */
+      addEventListener('keydown', (event) => {
+        /* When user has a Mac, check for command + s. */
+        if (navigator.platform.indexOf('Mac') > -1) {
+          if (event.metaKey && event.key === 's') this.saveFile()
+        } else if (event.ctrlKey && event.key === 's') {
+          this.saveFile()
         }
       })
     }
@@ -690,7 +743,7 @@
   .file-tools {
     background-color: #555;
     display: grid;
-    grid-template-columns: 1fr auto auto auto auto;
+    grid-template-columns: 1fr auto auto auto auto auto;
     grid-gap: 0.5em;
     align-items: center;
     color: #fff;

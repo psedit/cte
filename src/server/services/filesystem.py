@@ -84,9 +84,17 @@ class Filesystem(Service):
     @message_type("file-save")
     async def _save_file_to_disk(self, msg):
         file_path = msg["content"]["file_path"]
+        username = msg["sender"][1]
 
         file = self.files[file_path]
         lines = file.save_to_disk()  # noqa
+
+        self._send_message_client("file-save-broadcast",
+                                  {
+                                      "file_path": file_path,
+                                      "username": username
+                                  },
+                                  *file.get_clients())
 
     @message_type("file-project-request")
     async def _send_files_as_tar(self, msg):
@@ -128,11 +136,11 @@ class Filesystem(Service):
         c_msg = self._send_message("client-list-request", {})
         resp = await self._wait_for_response(c_msg["uuid"])
 
-        self._send_message_clients("file-list-broadcast",
-                                   {
-                                       "root_tree": root_tree
-                                   },
-                                   *resp["content"]["client_list"])
+        self._send_message_client("file-list-broadcast",
+                                  {
+                                      "root_tree": root_tree
+                                  },
+                                  *resp["content"]["client_list"])
 
     #
     # CLIENTS JOIN/LEAVE
