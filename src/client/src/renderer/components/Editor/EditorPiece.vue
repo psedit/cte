@@ -18,47 +18,33 @@
   import GhostCursors from './GhostCursors'
   import AddPieceButton from './AddPieceButton'
 
-  /**
-   * @module Editor/EditorPiece
-   * @desc A piece of the editor.
-   */
   export default {
-    name: 'EditorPiece',
+    name: 'EditorPiece.vue',
     components: {
       GhostCursors,
       AddPieceButton
     },
-    /**
-     * @vue-prop {Piece[]} pieces - The piece table
-     * @vue-prop {Number} index - The index of the current piece.
-     * @vue-prop {Object} dragStart - The start position of dragging.
-     * @vue-prop {Object} dragStop - The stop position of dragging.
-     */
     props: {
       pieces: Array,
       index: Number,
       dragStart: Object,
-      dragEnd: Object
+      dragEnd: Object,
+      /* true: dark
+       * false: light
+       */
+      theme: Boolean
     },
-    /**
-     * @vue-data {String} lang - The language of the code.
-   */
+
     data () {
       return {
         lang: null
       }
     },
 
-    /**
-     * The codemirror instance as a promise
-     * @type Promise | null
-     */
     myPromise: null,
-    /** @type CodeMirror | null */
     cminstance: null,
-    /** @type Object | null */
+    preText: null,
     startState: null,
-
     watch: {
       code (val) {
         if (!this.editable) {
@@ -70,23 +56,14 @@
       },
       pieceDragLength: function (newDragEnd, oldDragEnd) {
         this.updateDragLength(oldDragEnd, newDragEnd)
+      },
+      theme (newTheme) {
+        this.updateTheme(newTheme)
       }
     },
     mounted () {
       this.$emit('mounted', this)
     },
-
-    /**
-     *
-     * @vue-computed {String[]} codeArray
-     * @vue-computed {String} code
-     * @vue-computed {Piece} piece
-     * @vue-computed {String} username
-     * @vue-computed {Boolean} editable
-     * @vue-computed {PieceTable} pieceTable
-     * @vue-computed {Number | null} pieceDragStart
-     * @vue-computed {Number} pieceDragLength
-     */
     computed: {
       codeArray () {
         return this.pieces[this.index].text
@@ -148,15 +125,14 @@
     },
 
     methods: {
-      /**
-       * Initializes a codemirror editor.
-       * Also initiates the ghostcursors for this piece after
-       * codemirror has been initiated.
-       *
-       * Promise is made only once.
-       *
-       * @returns {Promise<CodeMirror>} The promise resolved with the made CodeMirror instance.
-       */
+      updateTheme (theme) {
+        const cm = this.$options.cminstance
+        if (this.theme) {
+          cm.setOption('theme', 'default')
+        } else {
+          cm.setOption('theme', 'monokai')
+        }
+      },
       initializeEditor () {
         if (!this.$options.myPromise) {
           this.$options.myPromise = new Promise(resolve => {
@@ -172,6 +148,10 @@
       },
 
       _initializeEditor () {
+        let initTheme = 'monokai'
+        if (this.theme) {
+          initTheme = 'default'
+        }
         if (!window.CodeMirror) window.CodeMirror = CodeMirror
         // debugger
         const cm = CodeMirror(this.$refs.cm, {
@@ -181,7 +161,7 @@
             startState: this.$options.startState
           },
           lineNumbers: true,
-          theme: 'monokai',
+          theme: initTheme,
           smartIndent: true,
           lineWrapping: true,
           showCursorWhenSelecting: true,
@@ -230,7 +210,6 @@
           cm.setGutterMarker(this.relativeLineToLine(i), 'user-gutter',
             this.gutterSelectMarker())
         }
-        // this.$emit('restoreScrollPosition')
       },
       updateDragLength (newDragLength, oldDragLength) {
         const cm = this.$options.cminstance
@@ -239,7 +218,6 @@
           cm.setGutterMarker(this.relativeLineToLine(i), 'user-gutter',
             this.gutterSelectMarker())
         }
-        // this.$emit('restoreScrollPosition')
       },
       lineToRelativeLine (line) {
         const cm = this.$options.cminstance
@@ -380,7 +358,7 @@
 
 .user-gutter {
   width: 1em;
-  background-color: var(--background-color, rgba(255, 255, 255, 0.5));
+  background-color: var(--background-color, #aaa);
 }
 
 .lock-gutter-marker {
