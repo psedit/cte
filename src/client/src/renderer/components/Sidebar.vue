@@ -125,7 +125,6 @@
        */
       saveFile () {
         let openFilePath = this.$store.state.fileTracker.openFile
-        console.log(openFilePath)
         if (openFilePath === undefined || openFilePath === '') {
           this.$toasted.show(`There was no open file. Open a file to save it.`)
           return
@@ -651,12 +650,27 @@
       },
 
       /**
-       * Open a new web socket and listen to file save broadcasts.
+       * Listen to file save broadcasts and display a toast indicating the saved
+       * file and the user that saved it.
        */
-      openSocketFileSave () {
-        connector.listenToMsg('file-save-broadcast', (content) => {
-          this.$toasted.show(`Succesfully saved ${content.file_path} by ${content.username}`)
-        })
+      listenToFileSave () {
+        /* Listen to file-save-broadcast messages and show a toast with the
+         * file_path and username of the save.
+         */
+        let listen = () => {
+          connector.listenToMsg('file-save-broadcast', (response) => {
+            this.$toasted.show(`Succesfully saved ${response.content.file_path} by ${response.content.username}`)
+          })
+        }
+
+        /* If connection is not open, first open the websocket. */
+        if (connector.isOpen()) {
+          listen()
+        } else {
+          connector.addEventListener('open', () => {
+            listen()
+          })
+        }
       },
 
       /**
@@ -676,7 +690,7 @@
     },
     mounted () {
       this.openSocketUpdateTree()
-      this.openSocketFileSave()
+      this.listenToFileSave()
 
       /* When the server URL is changes,
        * reset the directory tracker.
@@ -689,9 +703,9 @@
         }
       })
 
+      /* Save file is ctrl + s (or cmd + s on mac) is pressed. */
       addEventListener('keydown', (event) => {
-        console.log(navigator.platform)
-        console.log(navigator.platform.indexOf('Mac'))
+        /* When user has a Mac, check for command + s. */
         if (navigator.platform.indexOf('Mac') > -1) {
           if (event.metaKey && event.key === 's') this.saveFile()
         } else if (event.ctrlKey && event.key === 's') {
