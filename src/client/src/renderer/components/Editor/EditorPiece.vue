@@ -26,6 +26,9 @@
       index: Number,
       dragStart: Object,
       dragEnd: Object,
+      /* true: dark
+       * false: light
+       */
       theme: Boolean
     },
 
@@ -52,12 +55,7 @@
         this.updateDragLength(oldDragEnd, newDragEnd)
       },
       theme (newTheme) {
-        const cm = this.$options.cminstance
-        if (newTheme) {
-          cm.setOption('theme', 'default')
-        } else {
-          cm.setOption('theme', 'monokai')
-        }
+        this.updateTheme(newTheme)
       }
     },
     mounted () {
@@ -124,6 +122,14 @@
     },
 
     methods: {
+      updateTheme (theme) {
+        const cm = this.$options.cminstance
+        if (this.theme) {
+          cm.setOption('theme', 'default')
+        } else {
+          cm.setOption('theme', 'monokai')
+        }
+      },
       initializeEditor () {
         if (!this.$options.myPromise) {
           this.$options.myPromise = new Promise(resolve => {
@@ -139,6 +145,10 @@
       },
 
       _initializeEditor () {
+        let initTheme = 'monokai'
+        if (this.theme) {
+          initTheme = 'default'
+        }
         if (!window.CodeMirror) window.CodeMirror = CodeMirror
         // debugger
         const cm = CodeMirror(this.$refs.cm, {
@@ -148,7 +158,7 @@
             startState: this.$options.startState
           },
           lineNumbers: true,
-          theme: 'monokai',
+          theme: initTheme,
           smartIndent: true,
           lineWrapping: true,
           showCursorWhenSelecting: true,
@@ -173,7 +183,6 @@
         this.initializeEvents()
       },
       unlock () {
-        console.log('hoi')
         connector.request('file-unlock-request', 'file-unlock-response', {
           file_path: this.$store.state.fileTracker.openFile,
           lock_id: this.pieces[this.index].pieceID

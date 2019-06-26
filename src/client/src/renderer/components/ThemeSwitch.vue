@@ -1,7 +1,7 @@
 <template>
   <div>
-    <lightbulb-outline v-if="lightTheme" id="theme-button-on" class="button" @click="turnOff"/>
-    <lightbulb v-if="!lightTheme" id="theme-button-off" class="button" @click="turnOn"/>
+    <lightbulb-outline title="Light theme" v-if="lightTheme" id="theme-button-on" class="button" @click="turnOff"/>
+    <lightbulb title="Dark theme" v-if="!lightTheme" id="theme-button-off" class="button" @click="turnOn"/>
   </div>
 </template>
 
