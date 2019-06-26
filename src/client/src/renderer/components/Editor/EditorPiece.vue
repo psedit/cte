@@ -250,7 +250,6 @@
 
         if (this.editable) {
           cm.on('changes', ({cminstance}) => {
-            debugger
             const value = cm.getValue()
             const content = value.split('\n').map(val => val + '\n')
             const newPieceTable = edit(this.pieceTable, this.pieces[this.index].pieceID, content)
