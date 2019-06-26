@@ -170,10 +170,6 @@
         connector.request('file-unlock-request', 'file-unlock-response', {
           file_path: this.$store.state.fileTracker.openFile,
           lock_id: this.pieces[this.index].pieceID
-        }).then(({succes}) => {
-          if (!succes) {
-            console.error('faal')
-          }
         })
       },
       setText () {

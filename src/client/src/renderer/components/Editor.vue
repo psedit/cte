@@ -127,11 +127,9 @@
       restoreEditorScroll () {
         const editorElement = this.$refs.editorPiecesList
         if (editorElement.scrollHeight - editorElement.clientHeight <= this.restoreScrollY) {
-          console.log('Current editor too small for restoration.')
           this.restoreScrollY -= 1
           this.$nextTick(this.restoreEditorScroll)
         } else {
-          console.log(`Reset scroll from ${editorElement.scrollTop} to ${this.restoreScrollY}`)
           editorElement.scrollTop = Math.min(this.restoreScrollY, editorElement.scrollHeight - editorElement.clientHeight)
         }
       },
@@ -153,34 +151,23 @@
       lockDragEnd (line, index) {
         if (this.lockDragStartLocation === null) return
 
-        console.log(`Request lock from ${this.lockDragStartLocation.piece}:${this.lockDragStartLocation.line} to ${index}:${line}`)
-
         let draggedLock = rangeToAnchoredLength(this.$store.state.fileTracker.pieceTable,
           this.lockDragStartLocation.piece, this.lockDragStartLocation.line,
           this.lockDragEndLocation.piece, this.lockDragEndLocation.line)
-
-        console.log(`PieceIdx: ${draggedLock.index}, Offset: ${draggedLock.offset}, Length: ${draggedLock.length}`)
 
         connector.request('file-lock-request', 'file-lock-response', {
           file_path: this.$store.state.fileTracker.openFile,
           piece_uuid: this.pieces[draggedLock.index].pieceID,
           offset: draggedLock.offset,
           length: draggedLock.length
-        }).then(response => console.log(response))
+        })
 
         this.lockDragCancel()
-      },
-      showPieceLengths () {
-        const table = this.$store.state.fileTracker.pieceTable
-        for (let i = 0; i < table.table.length; i++) {
-          console.log(`piece ${i} has length ${table.table[i].length}`)
-        }
       },
       lockDragCancel () {
         if (this.lockDragStartLocation) {
           const editorElement = this.$refs.editorPiecesList
           this.restoreScrollY = editorElement.scrollTop
-          console.log('cancel')
           this.lockDragStartLocation = null
           this.lockDragEndLocation = null
           for (let key in this.components) {
