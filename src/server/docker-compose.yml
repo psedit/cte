@@ -3,7 +3,7 @@ services:
   testing:
     build:
       context: .
-      dockerfile: testing.dockerfile
+      dockerfile: Dockerfile
     environment:
       PSEDIT_BASE_DIR: "/app"
 

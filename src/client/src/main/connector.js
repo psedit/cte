@@ -152,7 +152,7 @@ class Connector {
     }, 5) // wait 5 milisecond for the connection...
   }
   /**
-   * Change the server URL and update the JSON file accordingly.
+   * Change the server URL
    * @param {string} newPathString string with path for new url
    */
   reload (newPathString) {

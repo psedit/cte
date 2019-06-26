@@ -1,5 +1,6 @@
 <template>
   <div class="editor" ref="mainEditor" @scroll="handleScroll">
+    <add-piece-button class="add-piece-button-top"/>
     <div class="editor-pieces" ref="editorPiecesList">
       <transition-group name="swap" tag="editorPieceGroup">
         <editor-piece class="editor-piece"
@@ -40,10 +41,12 @@
   import connector from '../../main/connector'
   import { getRandomColor } from './Editor/RandomColor'
   import { convertChangeToJS, edit, rangeToAnchoredLength } from '../../main/pieceTable'
+  import AddPieceButton from './Editor/AddPieceButton'
 
   export default {
     name: 'Editor',
     components: {
+      AddPieceButton,
       EditorPiece
     },
     data () {
@@ -65,7 +68,6 @@
           { file_path: val }
         ).then(({cursor_list: cursorList}) => {
           for (const [username, pieceID, line, ch] of cursorList) {
-            console.log(cursorList)
             this.$store.commit('addCursor', {
               username,
               pieceID,
