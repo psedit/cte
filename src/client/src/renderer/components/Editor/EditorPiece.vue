@@ -49,7 +49,8 @@
    */
     data () {
       return {
-        lang: null
+        lang: null,
+        focus: false
       }
     },
 
@@ -279,11 +280,13 @@
         const cm = this.$options.cminstance
 
         cm.on('blur', () => {
+          this.focus = false
           // cm.setCursor({line: 0, ch: 0}, {
           //   scroll: false
           // })
         })
         cm.on('focus', () => {
+          this.focus = true
           const cursorPos = cm.doc.getCursor()
           connector.send('cursor-move', {
             file_path: this.$store.state.fileTracker.openFile,
@@ -306,6 +309,7 @@
         })
 
         cm.on('cursorActivity', () => {
+          if (!this.focus) return
           const cursorPos = cm.doc.getCursor()
 
           connector.send('cursor-move', {
