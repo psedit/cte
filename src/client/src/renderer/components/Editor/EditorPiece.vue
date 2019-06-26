@@ -1,6 +1,7 @@
 <template>
   <div ref="cm" class="editor-piece" :class="{editable, open_editor: piece.username === ''}">
     <ghost-cursors ref="ghostCursors" :piece="piece"/>
+    <add-piece-button :pieceID="piece.pieceID"/>
   </div>
 </template>
 
@@ -15,11 +16,13 @@
   import connector from '../../../main/connector'
   import {getRandomColor} from './RandomColor'
   import GhostCursors from './GhostCursors'
+  import AddPieceButton from './AddPieceButton'
 
   export default {
     name: 'EditorPiece.vue',
     components: {
-      GhostCursors
+      GhostCursors,
+      AddPieceButton
     },
     props: {
       pieces: Array,
@@ -247,6 +250,7 @@
 
         if (this.editable) {
           cm.on('changes', ({cminstance}) => {
+            debugger
             const value = cm.getValue()
             const content = value.split('\n').map(val => val + '\n')
             const newPieceTable = edit(this.pieceTable, this.pieces[this.index].pieceID, content)
@@ -255,7 +259,7 @@
             connector.send('file-delta', {
               file_path: this.$store.state.fileTracker.openFile,
               piece_uuid: this.pieces[this.index].pieceID,
-              content: value
+              content: content.join('')
             })
           })
 
@@ -310,6 +314,7 @@
     }
   }
   border-bottom: 1px rgba(255, 255, 255, 0.2) dashed;
+  position: relative;
 }
 
 .CodeMirror {
