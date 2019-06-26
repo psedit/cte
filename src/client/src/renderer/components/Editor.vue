@@ -202,7 +202,10 @@
       },
       lang () {
         if (!this.filePath) return null
-        const ext = this.filePath.match(/\.\w+/)[0].toLowerCase()
+        let ext = this.filePath.match(/\.\w+/)
+        if (!ext) return null
+
+        ext = ext[0].toLowerCase()
         if (ext === '.py') {
           return 'python'
         } else if (ext === '.js') {
