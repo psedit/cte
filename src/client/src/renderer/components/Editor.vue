@@ -1,9 +1,9 @@
 <template>
-  <div class="editor">
+  <div class="editor" ref="mainEditor" @scroll="handleScroll">
     <add-piece-button class="add-piece-button-top"/>
-    <div class="editor-pieces">
-      <transition-group name="swap" tag="div">
-        <editor-piece
+    <div class="editor-pieces" ref="editorPiecesList">
+      <transition-group name="swap" tag="editorPieceGroup">
+        <editor-piece class="editor-piece"
           v-for="(piece, index) in pieces"
           v-if="piece.text.length > 0"
           :key="piece.pieceID + piece.username"
@@ -14,7 +14,6 @@
           @lockDragStart="lockDragStart"
           @lockDragUpdate="lockDragUpdate"
           @lockDragEnd="lockDragEnd"
-          @restoreScrollPosition="restoreEditorScroll"
           @mounted="editorMount"
           @update="editorUpdate"
           @viewportChange="editorViewPortChange"
@@ -80,21 +79,32 @@
           }
         })
       },
-      pieces: function () {
-        const editorElement = this.$refs.editorPiecesList
-        this.restoreScrollY = editorElement.scrollTop
+      pieces: function (newPieces, oldPieces) {
         Vue.nextTick(this.restoreEditorScroll)
+      },
+      pieceTable: function (newTable, oldTable) {
+        Vue.nextTick(this.restoreEditorScroll)
+      },
+      scrollHeight: function () {
+        this.$nextTick(this.restoreEditorScroll)
       }
     },
     methods: {
-      editorUpdate () {},
+      handleScroll () {
+        this.restoreScrollY = this.$refs.mainEditor.scrollTop
+      },
+      editorUpdate () {
+        this.$nextTick(this.restoreEditorScroll)
+      },
       editorViewPortChange (index) {
         setTimeout(() => {
           this.$refs.editorPieces.forEach(piece => {
             if (!piece) return
             piece.updateLineNumbers()
           })
+          // this.restoreEditorScroll()
         }, 10)
+        // this.$nextTick(self.restoreEditorScroll)
       },
       editorMount (editorPiece) {
         const index = this.$refs.editorPieces.indexOf(editorPiece)
@@ -125,30 +135,28 @@
         this.$store.dispatch('requestLock', payload)
       },
       restoreEditorScroll () {
-        const editorElement = this.$refs.editorPiecesList
+        const editorElement = this.$refs.mainEditor
         if (editorElement.scrollHeight - editorElement.clientHeight <= this.restoreScrollY) {
           console.log('Current editor too small for restoration.')
           this.restoreScrollY -= 1
           this.$nextTick(this.restoreEditorScroll)
         } else {
-          console.log(`Reset scroll from ${editorElement.scrollTop} to ${this.restoreScrollY}`)
+          // console.log(Math.min(this.restoreScrollY, editorElement.scrollHeight - editorElement.clientHeight))
           editorElement.scrollTop = Math.min(this.restoreScrollY, editorElement.scrollHeight - editorElement.clientHeight)
         }
       },
       lockDragStart (line, index) {
-        const editorElement = this.$refs.editorPiecesList
-        this.restoreScrollY = editorElement.scrollTop
         this.lockDragStartLocation = {piece: index, line}
         this.lockDragEndLocation = {piece: index, line}
         Vue.nextTick(this.restoreEditorScroll)
       },
       lockDragUpdate (line, index) {
-        const editorElement = this.$refs.editorPiecesList
-        this.restoreScrollY = editorElement.scrollTop
-        if (this.lockDragStartLocation) {
-          this.lockDragEndLocation = {piece: index, line}
+        if (this.lockDragStartLocation !== null) {
+          if (this.lockDragStartLocation) {
+            this.lockDragEndLocation = {piece: index, line}
+          }
+          Vue.nextTick(this.restoreEditorScroll)
         }
-        Vue.nextTick(this.restoreEditorScroll)
       },
       lockDragEnd (line, index) {
         if (this.lockDragStartLocation === null) return
@@ -167,9 +175,7 @@
         this.lockDragCancel()
       },
       lockDragCancel () {
-        if (this.lockDragStartLocation) {
-          const editorElement = this.$refs.editorPiecesList
-          this.restoreScrollY = editorElement.scrollTop
+        if (this.lockDragStartLocation !== null) {
           console.log('cancel')
           this.lockDragStartLocation = null
           this.lockDragEndLocation = null
@@ -212,6 +218,12 @@
           return 'javascript'
         }
         return null
+      },
+      scrollHeight () {
+        return this.$refs.mainEditor.scrollHeight
+      },
+      scrollTop () {
+        return this.$refs.mainEditor.scrollTop
       }
     },
     mounted () {
@@ -254,46 +266,43 @@
 </script>
 
 <style scoped lang="scss">
-.swap-enter-to {
-  opacity: 1;
-  max-height: 10000px;
-  margin-bottom: 0px;
-  // display: block;
-}
-
-.swap-enter {
-  opacity: 0;
-  max-height: 0px;
-  margin-bottom: -1px;
-}
-
-.swap-enter-active {
-  // display: none;
-  // transition: opacity 1s 5s;
-  transition: all 0s 0.35s;
-}
-
-.swap-leave-active {
-  // transition: opacity 0s 0.5s;
-  transition: opacity 0s 0.35s;
-}
-
-.swap-leave-to {
-  opacity: 0;
-}
 
 .editor {
-  width: 100%;
-  height: auto;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
   overflow-y: scroll;
   background-color: #272822;
 }
 
 .editor-pieces {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  overflow-y: auto;
+  // display: flex;
+  // flex-direction: column;
+  height: auto;
+  width: auto;
+  overflow-y: hidden;
+  padding-bottom: 1000px;
+}
+
+.editor-piece {
+  height: auto;
+  overflow-y: visible;
+  transition: all 0s;
+  display: block;
+  padding: 0;
+  margin: 0;
+  top: 0;
+}
+
+.editorPieceGroup-enter, .editorPieceGroup-leave-to {
+  opacity: 0;
+  max-height: 0;
+  position: absolute;
+}
+
+.editorPieceGroup-leave-active {
+  position: absolute;
 }
 
 #placeholder {
