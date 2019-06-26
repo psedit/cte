@@ -190,7 +190,6 @@
           cm.setGutterMarker(this.relativeLineToLine(i), 'user-gutter',
             this.gutterSelectMarker())
         }
-        // this.$emit('restoreScrollPosition')
       },
       updateDragLength (newDragLength, oldDragLength) {
         const cm = this.$options.cminstance
@@ -199,7 +198,6 @@
           cm.setGutterMarker(this.relativeLineToLine(i), 'user-gutter',
             this.gutterSelectMarker())
         }
-        // this.$emit('restoreScrollPosition')
       },
       lineToRelativeLine (line) {
         const cm = this.$options.cminstance
