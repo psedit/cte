@@ -1,5 +1,6 @@
 <template>
-  <div class="editor" ref="mainEditor" @scroll="handleScroll">
+  <div class="editor" :class="{lightTheme}" ref="mainEditor" @scroll="handleScroll">
+    <theme-switch @theme-change="themeChange"/>
     <add-piece-button class="add-piece-button-top"/>
     <div class="editor-pieces" ref="editorPiecesList">
       <transition-group name="swap" tag="editorPieceGroup">
@@ -8,6 +9,7 @@
           v-if="piece.text.length > 0"
           :key="piece.pieceID + piece.username"
           :index="index"
+          :theme="lightTheme"
           :pieces="pieces"
           :dragStart="lockDragStartLocation"
           :dragEnd="lockDragEndLocation"
@@ -37,6 +39,7 @@
 <script>
   import Vue from 'vue'
   import EditorPiece from './Editor/EditorPiece'
+  import ThemeSwitch from './ThemeSwitch'
   import convert from './Editor/cursor'
   import connector from '../../main/connector'
   import { getRandomColor } from './Editor/RandomColor'
@@ -46,14 +49,16 @@
   export default {
     name: 'Editor',
     components: {
-      AddPieceButton,
-      EditorPiece
+      EditorPiece,
+      ThemeSwitch,
+      AddPieceButton
     },
     data () {
       return {
         lockDragStartLocation: null,
         lockDragEndLocation: null,
         dragList: null,
+        lightTheme: false,
         restoreScrollY: 0
       }
     },
@@ -105,6 +110,10 @@
           // this.restoreEditorScroll()
         }, 10)
         // this.$nextTick(self.restoreEditorScroll)
+      },
+      themeChange (lightTheme) {
+        console.log('Changing theme')
+        this.lightTheme = lightTheme
       },
       editorMount (editorPiece) {
         const index = this.$refs.editorPieces.indexOf(editorPiece)
@@ -301,6 +310,24 @@
   position: absolute;
 }
 
+.editor {
+  width: 100%;
+  height: auto;
+  overflow-y: scroll;
+  background-color: #272822;
+  &.lightTheme {
+    background-color: #fff;
+
+  }
+}
+
+.editor-pieces {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow-y: auto;
+}  
+  
 .editorPieceGroup-leave-active {
   position: absolute;
 }

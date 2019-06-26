@@ -28,7 +28,11 @@
       pieces: Array,
       index: Number,
       dragStart: Object,
-      dragEnd: Object
+      dragEnd: Object,
+      /* true: dark
+       * false: light
+       */
+      theme: Boolean
     },
 
     data () {
@@ -52,6 +56,9 @@
       },
       pieceDragLength: function (newDragEnd, oldDragEnd) {
         this.updateDragLength(oldDragEnd, newDragEnd)
+      },
+      theme (newTheme) {
+        this.updateTheme(newTheme)
       }
     },
     mounted () {
@@ -118,6 +125,14 @@
     },
 
     methods: {
+      updateTheme (theme) {
+        const cm = this.$options.cminstance
+        if (this.theme) {
+          cm.setOption('theme', 'default')
+        } else {
+          cm.setOption('theme', 'monokai')
+        }
+      },
       initializeEditor () {
         if (!this.$options.myPromise) {
           this.$options.myPromise = new Promise(resolve => {
@@ -133,6 +148,10 @@
       },
 
       _initializeEditor () {
+        let initTheme = 'monokai'
+        if (this.theme) {
+          initTheme = 'default'
+        }
         if (!window.CodeMirror) window.CodeMirror = CodeMirror
         // debugger
         const cm = CodeMirror(this.$refs.cm, {
@@ -142,7 +161,7 @@
             startState: this.$options.startState
           },
           lineNumbers: true,
-          theme: 'monokai',
+          theme: initTheme,
           smartIndent: true,
           lineWrapping: true,
           showCursorWhenSelecting: true,
@@ -339,7 +358,7 @@
 
 .user-gutter {
   width: 1em;
-  background-color: var(--background-color, rgba(255, 255, 255, 0.5));
+  background-color: var(--background-color, #aaa);
 }
 
 .lock-gutter-marker {
