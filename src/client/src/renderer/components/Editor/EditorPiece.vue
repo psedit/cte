@@ -167,12 +167,10 @@
         this.initializeEvents()
       },
       unlock () {
-        console.log('hoi')
         connector.request('file-unlock-request', 'file-unlock-response', {
           file_path: this.$store.state.fileTracker.openFile,
           lock_id: this.pieces[this.index].pieceID
         }).then(({succes}) => {
-          console.log(succes, 'hoi ik ben')
           if (!succes) {
             console.error('faal')
           }
@@ -193,6 +191,7 @@
           cm.setGutterMarker(this.relativeLineToLine(i), 'user-gutter',
             this.gutterSelectMarker())
         }
+        // this.$emit('restoreScrollPosition')
       },
       updateDragLength (newDragLength, oldDragLength) {
         const cm = this.$options.cminstance
@@ -201,6 +200,7 @@
           cm.setGutterMarker(this.relativeLineToLine(i), 'user-gutter',
             this.gutterSelectMarker())
         }
+        // this.$emit('restoreScrollPosition')
       },
       lineToRelativeLine (line) {
         const cm = this.$options.cminstance
