@@ -1,4 +1,6 @@
 #!/bin/sh
+export PYRO_SERIALIZERS_ACCEPTED=pickle
+export PYRO_SERIALIZER=pickle
 python3.7 -m Pyro4.naming &
 PIDN=$!
 python3.7 message_bus.py &
@@ -8,8 +10,8 @@ PIDL=$!
 python3.7 filesystem.py &
 PIDF=$!
 python3.7 ws_server.py &
-PIDW=$1
+PIDW=$!
 
-trap 'pkill -f python' INT TERM QUIT
+trap 'kill $PIDN $PIDM $PIDL $PIDF $PIDW' INT TERM QUIT
 
 wait $PIDN

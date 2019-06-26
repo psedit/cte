@@ -7,6 +7,7 @@
     </div>
     <div class="file-tools">
       <file-plus title="Add new file/directory" class="button" @click="createItem"/>
+      <cloud-download-outline title="Download project" class="button" @click="downloadProject"/>
       <upload title="Upload directory" class="button" @click="uploadDir"/>
       <file-upload title="Upload file" class="button" @click="uploadFile"/>
     </div>
@@ -22,14 +23,15 @@
   import BackIcon from 'vue-material-design-icons/ArrowLeft'
   import FilePlus from 'vue-material-design-icons/FilePlus'
   import FileUpload from 'vue-material-design-icons/FileUpload'
+  import CloudDownloadOutline from 'vue-material-design-icons/CloudDownloadOutline'
   import Upload from 'vue-material-design-icons/Upload'
   import connector from '../../main/connector'
   import FileTree from './Sidebar/FileTree'
   import * as fileManager from './Sidebar/fileManager'
-  // import VueSimpleContextMenu from 'vue-simple-context-menu'
   import {convertToJS, stitch} from '../../main/pieceTable'
   const {dialog} = require('electron').remote
   const dialogs = require('dialogs')
+  const tar = require('tar')
   const fs = require('fs')
 
   export default {
@@ -46,8 +48,8 @@
       BackIcon,
       FilePlus,
       Upload,
-      FileUpload
-      // VueSimpleContextMenu
+      FileUpload,
+      CloudDownloadOutline
     },
     computed: {
       /**
@@ -115,6 +117,82 @@
       }
     },
     methods: {
+      /**
+       * Save project to disk.
+       *
+       * @param {string} dataBase64 base64 encoded string with binary data of project as tar file.
+       * @param {string} localPath path to local directory where project is downloaded.
+       */
+      saveToDisk (dataBase64, localPath) {
+        /* Decode base64 to binary and make a tar file of the tar string in
+         * localPath.
+         */
+        let buff = Buffer.from(dataBase64, 'base64')
+        let filePath = `${localPath}/.project.tar`
+        fs.writeFileSync(filePath, buff)
+
+        /* Unpack tar file. */
+        tar.x(
+          {
+            file: filePath,
+            cwd: localPath,
+            strip: 1
+          }
+        ).then(_ => {
+          /* Delete tar file. */
+          fs.unlinkSync(filePath)
+          this.$toasted.show(`Project succesfully downloaded to ${localPath}`)
+        })
+      },
+
+      /**
+       * Download entire project to local directory.
+       */
+      downloadProject () {
+        const homedir = require('os').homedir()
+        const settingsDirPath = homedir + '/pseditor-settings/'
+        const settingsPath = settingsDirPath + 'settings.json'
+
+        let errTitle = 'Error! Could not get local workspace path...'
+        let err = 'Specify the local workspace path via Settings --> Local Workspace'
+        let localPath = ''
+
+        /* If settings json does not exist, throw an error. */
+        if (!fs.existsSync(settingsPath)) {
+          dialog.showErrorBox(errTitle, err + '\nPath to settings.json does not exist.')
+          return
+        }
+
+        /* Try getting local file path from json. */
+        let jsonSettingsString = fs.readFileSync(settingsPath, 'utf8')
+        try {
+          localPath = JSON.parse(jsonSettingsString).workingPath
+        } catch (e) {
+          dialog.showErrorBox(errTitle, err + '\nCould not parse json file.')
+          return
+        }
+
+        /* Throw error if local path does not exist. */
+        if (!fs.existsSync(localPath)) {
+          dialog.showErrorBox(errTitle, `${err}\nLocal path (${localPath}) does not exist.`)
+          return
+        }
+
+        /* Get base64 encoded string with binary data of project as tar file
+         * from server.
+         */
+        this.$toasted.show(`Downloading project to ${localPath} (this may take upto 30 seconds)`)
+        let dataBase64 = ''
+        connector.request(
+          'file-project-request',
+          'file-project-response',
+          {}
+        ).then((response) => {
+          dataBase64 = response.data
+          this.saveToDisk(dataBase64, localPath)
+        })
+      },
+
       /**
        * Gives the file path of an item. If directory, it needs
        * to end on a '/'.
@@ -188,7 +266,7 @@
             let fileContent = stitch(convertToJS(data)).join('')
             fs.writeFile(downloadPath, fileContent, (err) => {
               if (err) {
-                console.log('error', err)
+                dialog.showErrorBox('error', err)
               }
             })
           })
@@ -269,7 +347,7 @@
           if (oldName.slice(-1) === '/') {
             newName = newName.slice(-1) !== '/' ? newName + '/' : newName
           } else if (newName.slice(-1) === '/') {
-            console.log('A file cannot be changed into a directory!')
+            dialog.showErrorBox('Renaming error', 'A file cannot be changed into a directory!')
             return
           }
 
@@ -373,7 +451,7 @@
         /* Read content from file and request file upload from server. */
         fs.readFile(localPath, (err, data) => {
           if (err) {
-            console.log(err)
+            dialog.showErrorBox('Reading error', err)
             return
           }
 
@@ -411,7 +489,7 @@
         /* Read local directory. */
         fs.readdir(newDirLocal, {withFileTypes: true}, (err, files) => {
           if (err) {
-            console.log(err)
+            dialog.showErrorBox('Reading error', err)
             return
           }
 
@@ -452,10 +530,10 @@
       uploadDir () {
         let localDirPath = dialog.showOpenDialog({ properties: ['openDirectory'] })
 
-        if (localDirPath === undefined || localDirPath[0].toString().toString() === '') {
+        if (localDirPath === undefined || localDirPath[0].toString() === '') {
           return
         } else {
-          localDirPath = localDirPath[0].toString().toString()
+          localDirPath = localDirPath[0].toString()
         }
 
         /* Recursively upload folder (and all its subfolders). */
@@ -612,7 +690,7 @@
   .file-tools {
     background-color: #555;
     display: grid;
-    grid-template-columns: 1fr auto auto auto;
+    grid-template-columns: 1fr auto auto auto auto;
     grid-gap: 0.5em;
     align-items: center;
     color: #fff;
