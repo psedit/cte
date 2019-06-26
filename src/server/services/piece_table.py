@@ -396,7 +396,7 @@ class PieceTable:
         Removes all unused blocks from the 'blocks' dictionary, and returns
         the block id's of the blocks which were removed from it.
         """
-        used = {p.block_id for p in self.table}
+        used = {p.block_id for p in self.table} + {0}
         unused = {k for k in self.blocks if k not in used}
 
         self.blocks = {k: v for k, v in self.blocks.items() if k in used}
