@@ -54,7 +54,7 @@ const { mergeLeft, clone } = require('ramda')
  */
 
 /**
- * Returns a create function
+ * Returns a create function.
  * @param {Function} UUID
  */
 export function _create (UUID) {
@@ -87,7 +87,7 @@ export let create = _create(uuid)
 
 /**
  * Converts the python representation of the piece table to the js
- * represenation.
+ * representation.
  * @param {Object} pyPiece
  * @returns {PieceTable} a pieceTable
  */
@@ -113,6 +113,7 @@ export function convertBlockToJS (obj, [blockID, closed, lines]) {
 }
 
 /**
+ * Mapping from piece list to piece object.
  * @param {any[]} piece
  * @returns {Piece}
  */
