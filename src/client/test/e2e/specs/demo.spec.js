@@ -1,6 +1,7 @@
 /* globals expect describe it */
 import utils from '../utils'
-// const name = uuid()
+const uuid = require('uuid/v4')
+const name = uuid()
 
 describe('Demo', function () {
   beforeEach(utils.beforeEach)
@@ -13,10 +14,9 @@ describe('Demo', function () {
       })
   })
 
-  // it('should create a file', async function () {
-  //   const text = await this.app.client.element('.material-design-icon.file-plus-icon.button').click().keys([name]).element('button.ok').click().element('ul.fileTree').getText()
-  //   return expect(text.split('\n')).to.include(name)
-  // })
+  it('should create a file', function () {
+    return this.app.client.element('.material-design-icon.file-plus-icon.button').click().keys([name]).element('button.ok').click().element('ul.fileTree').getText().waitUntilTextExists(`span=${name}`, name, 3000)
+  })
 
   it('should open a file', async function () {
     const tabFile = 'export default Tab'
