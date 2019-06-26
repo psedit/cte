@@ -153,13 +153,9 @@
       lockDragEnd (line, index) {
         if (this.lockDragStartLocation === null) return
 
-        console.log(`Request lock from ${this.lockDragStartLocation.piece}:${this.lockDragStartLocation.line} to ${index}:${line}`)
-
         let draggedLock = rangeToAnchoredLength(this.$store.state.fileTracker.pieceTable,
           this.lockDragStartLocation.piece, this.lockDragStartLocation.line,
           this.lockDragEndLocation.piece, this.lockDragEndLocation.line)
-
-        console.log(`PieceIdx: ${draggedLock.index}, Offset: ${draggedLock.offset}, Length: ${draggedLock.length}`)
 
         connector.request('file-lock-request', 'file-lock-response', {
           file_path: this.$store.state.fileTracker.openFile,
@@ -169,12 +165,6 @@
         }).then(response => console.log(response))
 
         this.lockDragCancel()
-      },
-      showPieceLengths () {
-        const table = this.$store.state.fileTracker.pieceTable
-        for (let i = 0; i < table.table.length; i++) {
-          console.log(`piece ${i} has length ${table.table[i].length}`)
-        }
       },
       lockDragCancel () {
         if (this.lockDragStartLocation) {
