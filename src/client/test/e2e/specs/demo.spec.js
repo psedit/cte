@@ -21,8 +21,8 @@ describe('Demo', function () {
   it('should open a file', async function () {
     const tabFile = 'export default Tab'
     await this.app.client.waitUntilWindowLoaded()
-    await this.app.client.waitUntilTextExists('span=tabType.js', 'tabType.js', 10000)
-    await this.app.client.element('span=tabType.js').click().waitForVisible('.CodeMirror-lines', 10000)
+    await this.app.client.waitUntilTextExists('span=test.js', 'test.js', 10000)
+    await this.app.client.element('span=test.js').click().waitForVisible('.CodeMirror-lines', 10000)
     const text = await this.app.client.element('.editor-pieces').getText()
     const arr = text.split('\n')
     return expect(arr[arr.length - 1]).to.equal(tabFile)
