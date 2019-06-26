@@ -27,6 +27,11 @@
       }
     },
     methods: {
+      methods: {
+      /**
+       * Scrolls to the next tab on the tab bar, based on the given scroll event.
+       * @param {Object} event the scroll event
+       */
       scrollTabs (e) {
         let direction = 1
         if (e.deltaY < 0) {
@@ -34,12 +39,22 @@
         }
         this.$store.dispatch('scrollTab', direction)
       },
-      tabClick (fileName) {
-        this.$store.dispatch('openFile', fileName)
+      /**
+       * Opens a file in the editor. This function is meant to be used for when
+       * a given tab is clicked.
+       * @param {string} filePath the file path to document to be opened
+       */
+      tabClick (filePath) {
+        this.$store.dispatch('openFile', filePath)
       },
+      /**
+       * Removes a tab from the tab bar
+       * @param {Object} tab the tab object that needs to be removed
+       */
       tabRemove (tab) {
         this.$store.dispatch('removeTab', tab)
       },
+      /* Checks if a given filePath is the currently opened path. */
       isActive (filePath) {
         return this.openFile === filePath
       }
