@@ -1,9 +1,9 @@
 <template>
-  <div class="editor">
+  <div class="editor" :class="{lightTheme}">
     <theme-switch @theme-change="themeChange"/>
     <div class="editor-pieces">
       <transition-group name="swap" tag="div">
-        <editor-piece 
+        <editor-piece
           v-for="(piece, index) in pieces"
           v-if="piece.text.length > 0"
           :key="piece.pieceID + piece.username"
@@ -276,6 +276,10 @@
   width: 100%;
   overflow-y: hidden;
   background-color: #272822;
+  &.lightTheme {
+    background-color: #fff;
+
+  }
 }
 
 .editor-pieces {
