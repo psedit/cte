@@ -66,7 +66,6 @@
           { file_path: val }
         ).then(({cursor_list: cursorList}) => {
           for (const [username, pieceID, line, ch] of cursorList) {
-            console.log(cursorList)
             this.$store.commit('addCursor', {
               username,
               pieceID,

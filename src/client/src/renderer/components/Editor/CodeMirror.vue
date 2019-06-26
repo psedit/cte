@@ -60,7 +60,6 @@
         // setup event handlers
         this.codemirror.on('gutterClick', (cm, line) => {
           const info = cm.lineInfo(line)
-          // console.log(info.wrapClass)
           if (info.wrapClass === 'lock') {
             this.unlock(line, line)
           } else {
@@ -69,7 +68,6 @@
         })
 
         this.codemirror.on('beforeChange', (cm, change) => {
-          // console.log(change)
           const line = change.to.line
           const info = cm.lineInfo(line)
           if (info.wrapClass === 'lock') {
