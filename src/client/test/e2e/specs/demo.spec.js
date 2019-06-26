@@ -2,7 +2,7 @@
 import utils from '../utils'
 // const name = uuid()
 
-describe("Demo", function () {
+describe('Demo', function () {
   beforeEach(utils.beforeEach)
   afterEach(utils.afterEach)
 
