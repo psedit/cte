@@ -1,6 +1,7 @@
 <template>
   <div ref="cm" class="editor-piece" :class="{editable, open_editor: piece.username === ''}">
     <ghost-cursors ref="ghostCursors" :piece="piece"/>
+    <add-piece-button :pieceID="piece.pieceID"/>
   </div>
 </template>
 
@@ -15,29 +16,54 @@
   import connector from '../../../main/connector'
   import {getRandomColor} from './RandomColor'
   import GhostCursors from './GhostCursors'
+  import AddPieceButton from './AddPieceButton'
 
+  /**
+   * @module Editor/EditorPiece
+   * @desc A piece of the editor.
+   */
   export default {
-    name: 'EditorPiece.vue',
+    name: 'EditorPiece',
     components: {
-      GhostCursors
+      GhostCursors,
+      AddPieceButton
     },
+    /**
+     * @vue-prop {Piece[]} pieces - The piece table
+     * @vue-prop {Number} index - The index of the current piece.
+     * @vue-prop {Object} dragStart - The start position of dragging.
+     * @vue-prop {Object} dragStop - The stop position of dragging.
+     */
     props: {
       pieces: Array,
       index: Number,
       dragStart: Object,
-      dragEnd: Object
+      dragEnd: Object,
+      /* true: dark
+       * false: light
+       */
+      theme: Boolean
     },
-
+    /**
+     * @vue-data {String} lang - The language of the code.
+   */
     data () {
       return {
-        lang: null
+        lang: null,
+        focus: false
       }
     },
 
+    /**
+     * The codemirror instance as a promise
+     * @type Promise | null
+     */
     myPromise: null,
+    /** @type CodeMirror | null */
     cminstance: null,
-    preText: null,
+    /** @type Object | null */
     startState: null,
+
     watch: {
       code (val) {
         if (!this.editable) {
@@ -49,11 +75,26 @@
       },
       pieceDragLength: function (newDragEnd, oldDragEnd) {
         this.updateDragLength(oldDragEnd, newDragEnd)
+      },
+      theme (newTheme) {
+        this.updateTheme(newTheme)
       }
     },
     mounted () {
       this.$emit('mounted', this)
     },
+
+    /**
+     *
+     * @vue-computed {String[]} codeArray
+     * @vue-computed {String} code
+     * @vue-computed {Piece} piece
+     * @vue-computed {String} username
+     * @vue-computed {Boolean} editable
+     * @vue-computed {PieceTable} pieceTable
+     * @vue-computed {Number | null} pieceDragStart
+     * @vue-computed {Number} pieceDragLength
+     */
     computed: {
       codeArray () {
         return this.pieces[this.index].text
@@ -115,6 +156,15 @@
     },
 
     methods: {
+      /**
+       * Initializes a codemirror editor.
+       * Also initiates the ghostcursors for this piece after
+       * codemirror has been initiated.
+       *
+       * Promise is made only once.
+       *
+       * @returns {Promise<CodeMirror>} The promise resolved with the made CodeMirror instance.
+       */
       initializeEditor () {
         if (!this.$options.myPromise) {
           this.$options.myPromise = new Promise(resolve => {
@@ -129,7 +179,20 @@
         return this.$options.myPromise
       },
 
+      updateTheme (theme) {
+        const cm = this.$options.cminstance
+        if (this.theme) {
+          cm.setOption('theme', 'default')
+        } else {
+          cm.setOption('theme', 'monokai')
+        }
+      },
+
       _initializeEditor () {
+        let initTheme = 'monokai'
+        if (this.theme) {
+          initTheme = 'default'
+        }
         if (!window.CodeMirror) window.CodeMirror = CodeMirror
         // debugger
         const cm = CodeMirror(this.$refs.cm, {
@@ -139,7 +202,7 @@
             startState: this.$options.startState
           },
           lineNumbers: true,
-          theme: 'monokai',
+          theme: initTheme,
           smartIndent: true,
           lineWrapping: true,
           showCursorWhenSelecting: true,
@@ -164,12 +227,10 @@
         this.initializeEvents()
       },
       unlock () {
-        console.log('hoi')
         connector.request('file-unlock-request', 'file-unlock-response', {
           file_path: this.$store.state.fileTracker.openFile,
           lock_id: this.pieces[this.index].pieceID
         }).then(({succes}) => {
-          console.log(succes, 'hoi ik ben')
           if (!succes) {
             console.error('faal')
           }
@@ -219,6 +280,7 @@
         const cm = this.$options.cminstance
 
         cm.on('focus', () => {
+          this.focus = true
           const cursorPos = cm.doc.getCursor()
           connector.send('cursor-move', {
             file_path: this.$store.state.fileTracker.openFile,
@@ -240,6 +302,18 @@
           e.preventDefault()
         })
 
+        cm.on('cursorActivity', () => {
+          if (!this.focus) return
+          const cursorPos = cm.doc.getCursor()
+
+          connector.send('cursor-move', {
+            file_path: this.$store.state.fileTracker.openFile,
+            piece_id: this.pieces[this.index].pieceID,
+            offset: cursorPos.line,
+            column: cursorPos.ch
+          })
+        })
+
         if (this.editable) {
           cm.on('changes', ({cminstance}) => {
             const value = cm.getValue()
@@ -250,7 +324,7 @@
             connector.send('file-delta', {
               file_path: this.$store.state.fileTracker.openFile,
               piece_uuid: this.pieces[this.index].pieceID,
-              content: value
+              content: content.join('')
             })
           })
 
@@ -305,6 +379,7 @@
     }
   }
   border-bottom: 1px rgba(255, 255, 255, 0.2) dashed;
+  position: relative;
 }
 
 .CodeMirror {
@@ -332,7 +407,7 @@
 
 .user-gutter {
   width: 1em;
-  background-color: var(--background-color, rgba(255, 255, 255, 0.5));
+  background-color: var(--background-color, #aaa);
 }
 
 .lock-gutter-marker {
