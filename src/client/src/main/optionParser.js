@@ -36,6 +36,53 @@ function correctJSON (currSettings) {
 }
 
 /**
+ * Sets a new serverURL or new local workspace.
+ *
+ * @param {string} newString either new working path or new serverURL
+ * @param {Object} settings default settings object, used when json file does
+ *                          not exist yet.
+ * @param {string} member either 'server' or 'workspace', indicating which
+ *                        member to set.
+ */
+function setter (newString, settings, member) {
+  /* Check if newString is a string. */
+  if (typeof newString !== 'string') return
+
+  /* If json file does not exist, create a new one with the given settings. */
+  if (!fs.existsSync(settingsPath)) {
+    writeJSON(settings)
+    return
+  }
+
+  /* If settings json file exists, read the file and update the given member.
+   * Write the new object to the json file.
+   */
+  let jsonSettingsString = fs.readFileSync(settingsPath, 'utf8')
+  let currSettings = {}
+
+  try {
+    currSettings = JSON.parse(jsonSettingsString)
+  } catch (err) {
+    dialog.showErrorBox('JSON parse error', err)
+    writeJSON(defaultSettings)
+    return
+  }
+
+  switch (member) {
+    case 'server':
+      currSettings.serverURL = newString
+      writeJSON(currSettings)
+      break
+    case 'workspace':
+      currSettings.workingPath = newString
+      writeJSON(currSettings)
+      break
+    default:
+      writeJSON(defaultSettings)
+  }
+}
+
+/**
  * Read the settings object from the JSON file if it exists.
  * Otherwise return the predefined settings object.
  */
@@ -72,31 +119,8 @@ export function getSettings () {
  * @param {string} newServerURL new server URL
  */
 export function setServerURL (newServerURL) {
-  /* Check if newServerURL is a string. */
-  if (typeof newServerURL !== 'string') {
-    return
-  }
-
-  /* If json file does not exist, create a new one with the given serverURL. */
-  if (!fs.existsSync(settingsPath)) {
-    let currSettings = {serverURL: newServerURL, workingPath: ''}
-    writeJSON(currSettings)
-    return
-  }
-
-  /* If settings json file exists, read the file and update the serverURL member.
-   * Write the new object to the json file.
-   */
-  let jsonSettingsString = fs.readFileSync(settingsPath, 'utf8')
-
-  try {
-    let currSettings = JSON.parse(jsonSettingsString)
-    currSettings.serverURL = newServerURL
-    writeJSON(currSettings)
-  } catch (err) {
-    dialog.showErrorBox('JSON parse error', err)
-    writeJSON(defaultSettings)
-  }
+  let currSettings = {serverURL: newServerURL, workingPath: ''}
+  setter(newServerURL, currSettings, 'server')
 }
 
 /**
@@ -105,29 +129,6 @@ export function setServerURL (newServerURL) {
  * @param {string} localWorkingPath path to local directory
  */
 export function setLocalWorkspace (localWorkingPath) {
-  /* Check if localWorkingPath is a string. */
-  if (typeof localWorkingPath !== 'string') {
-    return
-  }
-
-  /* If json file does not exist, create a new one with the given working path. */
-  if (!fs.existsSync(settingsPath)) {
-    let currSettings = {serverURL: defaultSettings.serverURL, workingPath: localWorkingPath}
-    writeJSON(currSettings)
-    return
-  }
-
-  /* If settings json file exists, read the file and update the local working path member.
-   * Write the new object to the json file.
-   */
-  let jsonSettingsString = fs.readFileSync(settingsPath, 'utf8')
-
-  try {
-    let currSettings = JSON.parse(jsonSettingsString)
-    currSettings.workingPath = localWorkingPath
-    writeJSON(currSettings)
-  } catch (err) {
-    dialog.showErrorBox('JSON parse error', err)
-    writeJSON(defaultSettings)
-  }
+  let currSettings = {serverURL: defaultSettings.serverURL, workingPath: localWorkingPath}
+  setter(localWorkingPath, currSettings, 'workspace')
 }
