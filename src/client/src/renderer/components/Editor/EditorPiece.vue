@@ -38,7 +38,11 @@
       pieces: Array,
       index: Number,
       dragStart: Object,
-      dragEnd: Object
+      dragEnd: Object,
+      /* true: dark
+       * false: light
+       */
+      theme: Boolean
     },
     /**
      * @vue-data {String} lang - The language of the code.
@@ -70,6 +74,9 @@
       },
       pieceDragLength: function (newDragEnd, oldDragEnd) {
         this.updateDragLength(oldDragEnd, newDragEnd)
+      },
+      theme (newTheme) {
+        this.updateTheme(newTheme)
       }
     },
     mounted () {
@@ -171,7 +178,20 @@
         return this.$options.myPromise
       },
 
+      updateTheme (theme) {
+        const cm = this.$options.cminstance
+        if (this.theme) {
+          cm.setOption('theme', 'default')
+        } else {
+          cm.setOption('theme', 'monokai')
+        }
+      },
+
       _initializeEditor () {
+        let initTheme = 'monokai'
+        if (this.theme) {
+          initTheme = 'default'
+        }
         if (!window.CodeMirror) window.CodeMirror = CodeMirror
         // debugger
         const cm = CodeMirror(this.$refs.cm, {
@@ -181,7 +201,7 @@
             startState: this.$options.startState
           },
           lineNumbers: true,
-          theme: 'monokai',
+          theme: initTheme,
           smartIndent: true,
           lineWrapping: true,
           showCursorWhenSelecting: true,
@@ -230,7 +250,6 @@
           cm.setGutterMarker(this.relativeLineToLine(i), 'user-gutter',
             this.gutterSelectMarker())
         }
-        // this.$emit('restoreScrollPosition')
       },
       updateDragLength (newDragLength, oldDragLength) {
         const cm = this.$options.cminstance
@@ -239,7 +258,6 @@
           cm.setGutterMarker(this.relativeLineToLine(i), 'user-gutter',
             this.gutterSelectMarker())
         }
-        // this.$emit('restoreScrollPosition')
       },
       lineToRelativeLine (line) {
         const cm = this.$options.cminstance
@@ -380,7 +398,7 @@
 
 .user-gutter {
   width: 1em;
-  background-color: var(--background-color, rgba(255, 255, 255, 0.5));
+  background-color: var(--background-color, #aaa);
 }
 
 .lock-gutter-marker {
