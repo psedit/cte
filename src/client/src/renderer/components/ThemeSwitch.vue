@@ -21,7 +21,7 @@ export default {
   },
   computed: {
     tooltip () {
-      return `Switch to ${this.lightTheme ? 'light' : 'dark'} theme.`
+      return `Switch to ${this.lightTheme ? 'dark' : 'light'} theme.`
     }
   },
   methods: {
