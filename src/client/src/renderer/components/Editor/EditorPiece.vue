@@ -16,6 +16,7 @@
   import 'codemirror/addon/hint/javascript-hint'
   import 'codemirror/addon/edit/closebrackets'
   import 'codemirror/addon/edit/matchbrackets'
+  import 'codemirror/addon/selection/active-line'
   import { edit, indexOffsetRangeSort } from '../../../main/pieceTable'
   import './multiEditor'
   import connector from '../../../main/connector'
@@ -216,6 +217,7 @@
           viewportMargin: Infinity,
           cursorBlinkRate: 0,
           autoCloseBrackets: true,
+          styleActiveLine: true,
           gutters: ['user-gutter', 'CodeMirror-linenumbers']
         })
 
@@ -280,7 +282,7 @@
       gutterSelectMarker () {
         const marker = document.createElement('div')
         marker.classList.add('lock-gutter-marker')
-        marker.innerHTML = '●'
+        marker.innerHTML = '&nbsp;'
         return marker
       },
 
@@ -433,6 +435,10 @@
   pointer-events: none;
   position: absolute;
 
+}
+
+.CodeMirror-activeline-gutter {
+  pointer-events: none;
 }
 
 @keyframes blink {
