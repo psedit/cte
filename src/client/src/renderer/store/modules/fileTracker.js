@@ -162,9 +162,6 @@ const actions = {
    * @param {Tab} tabToRemove the tab that needs to be removed
    */
   removeTab (store, tabToRemove) {
-    connector.send('file-save', {
-      file_path: store.state.openFile
-    })
     connector.send('file-leave', {
       file_path: store.state.openFile,
       force_exit: 1

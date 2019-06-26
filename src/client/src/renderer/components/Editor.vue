@@ -1,7 +1,8 @@
 <template>
   <div class="editor">
+    <add-piece-button class="add-piece-button-top"/>
     <div class="editor-pieces">
-      <transition-group name="swap" tag="editor-piece">
+      <transition-group name="swap" tag="div">
         <editor-piece
           v-for="(piece, index) in pieces"
           v-if="piece.text.length > 0"
@@ -13,8 +14,10 @@
           @lockDragStart="lockDragStart"
           @lockDragUpdate="lockDragUpdate"
           @lockDragEnd="lockDragEnd"
+          @restoreScrollPosition="restoreEditorScroll"
           @mounted="editorMount"
           @update="editorUpdate"
+          @viewportChange="editorViewPortChange"
           ref="editorPieces"
         />
       </transition-group>
@@ -36,15 +39,18 @@
   /**
    * @vue-prop {String} pizza
    */
+  import Vue from 'vue'
   import EditorPiece from './Editor/EditorPiece'
   import convert from './Editor/cursor'
   import connector from '../../main/connector'
   import { getRandomColor } from './Editor/RandomColor'
   import { convertChangeToJS, edit, rangeToAnchoredLength } from '../../main/pieceTable'
+  import AddPieceButton from './Editor/AddPieceButton'
 
   export default {
     name: 'Editor',
     components: {
+      AddPieceButton,
       EditorPiece
     },
     /**
@@ -55,7 +61,8 @@
       return {
         lockDragStartLocation: null,
         lockDragEndLocation: null,
-        dragList: null
+        dragList: null,
+        restoreScrollY: 0
       }
     },
     watch: {
@@ -69,7 +76,6 @@
           { file_path: val }
         ).then(({cursor_list: cursorList}) => {
           for (const [username, pieceID, line, ch] of cursorList) {
-            console.log(cursorList)
             this.$store.commit('addCursor', {
               username,
               pieceID,
@@ -80,10 +86,23 @@
             })
           }
         })
+      },
+      pieces: function () {
+        const editorElement = this.$refs.editorPiecesList
+        this.restoreScrollY = editorElement.scrollTop
+        Vue.nextTick(this.restoreEditorScroll)
       }
     },
     methods: {
       editorUpdate () {},
+      editorViewPortChange (index) {
+        setTimeout(() => {
+          this.$refs.editorPieces.forEach(piece => {
+            if (!piece) return
+            piece.updateLineNumbers()
+          })
+        }, 10)
+      },
       editorMount (editorPiece) {
         const index = this.$refs.editorPieces.indexOf(editorPiece)
         this.initializeEditor(index)
@@ -107,36 +126,43 @@
         }
         return cm.getStateAfter(cm.lastLine(), true)
       },
-      removeDragMarkers () {
-        for (let key in this.components) {
-          this.components[key].$options.cminstance.clearGutter('user-gutter')
-        }
-      },
       requestLock (startId, startOffset, endId, endOffset) {
         let payload = { start: {id: startId, offset: startOffset},
           end: {id: endId, offset: endOffset}}
         this.$store.dispatch('requestLock', payload)
       },
+      restoreEditorScroll () {
+        const editorElement = this.$refs.editorPiecesList
+        if (editorElement.scrollHeight - editorElement.clientHeight <= this.restoreScrollY) {
+          console.log('Current editor too small for restoration.')
+          this.restoreScrollY -= 1
+          this.$nextTick(this.restoreEditorScroll)
+        } else {
+          console.log(`Reset scroll from ${editorElement.scrollTop} to ${this.restoreScrollY}`)
+          editorElement.scrollTop = Math.min(this.restoreScrollY, editorElement.scrollHeight - editorElement.clientHeight)
+        }
+      },
       lockDragStart (line, index) {
-        // console.log('start', line, index)
+        const editorElement = this.$refs.editorPiecesList
+        this.restoreScrollY = editorElement.scrollTop
         this.lockDragStartLocation = {piece: index, line}
         this.lockDragEndLocation = {piece: index, line}
+        Vue.nextTick(this.restoreEditorScroll)
       },
       lockDragUpdate (line, index) {
+        const editorElement = this.$refs.editorPiecesList
+        this.restoreScrollY = editorElement.scrollTop
         if (this.lockDragStartLocation) {
           this.lockDragEndLocation = {piece: index, line}
         }
+        Vue.nextTick(this.restoreEditorScroll)
       },
       lockDragEnd (line, index) {
         if (this.lockDragStartLocation === null) return
 
-        console.log(`Request lock from ${this.lockDragStartLocation.piece}:${this.lockDragStartLocation.line} to ${index}:${line}`)
-
         let draggedLock = rangeToAnchoredLength(this.$store.state.fileTracker.pieceTable,
           this.lockDragStartLocation.piece, this.lockDragStartLocation.line,
           this.lockDragEndLocation.piece, this.lockDragEndLocation.line)
-
-        console.log(`PieceIdx: ${draggedLock.index}, Offset: ${draggedLock.offset}, Length: ${draggedLock.length}`)
 
         connector.request('file-lock-request', 'file-lock-response', {
           file_path: this.$store.state.fileTracker.openFile,
@@ -147,18 +173,17 @@
 
         this.lockDragCancel()
       },
-      showPieceLengths () {
-        const table = this.$store.state.fileTracker.pieceTable
-        for (let i = 0; i < table.table.length; i++) {
-          console.log(`piece ${i} has length ${table.table[i].length}`)
-        }
-      },
       lockDragCancel () {
-        console.log('cancel')
-        this.lockDragStartLocation = null
-        this.lockDragEndLocation = null
-        for (let key in this.components) {
-          this.components[key].$options.cminstance.clearGutter('user-gutter')
+        if (this.lockDragStartLocation) {
+          const editorElement = this.$refs.editorPiecesList
+          this.restoreScrollY = editorElement.scrollTop
+          console.log('cancel')
+          this.lockDragStartLocation = null
+          this.lockDragEndLocation = null
+          for (let key in this.components) {
+            this.components[key].$options.cminstance.clearGutter('user-gutter')
+          }
+          this.$nextTick(this.restoreEditorScroll)
         }
       }
     },
@@ -171,7 +196,7 @@
         return this.$store.state.user.username
       },
       pieces () {
-        return this.$store.state.fileTracker.pieces
+        return this.$store.state.fileTracker.pieces || []
       },
       pieceTable () {
         return this.$store.state.fileTracker.pieceTable
@@ -184,7 +209,10 @@
       },
       lang () {
         if (!this.filePath) return null
-        const ext = this.filePath.match(/\.\w+/)[0].toLowerCase()
+        let ext = this.filePath.match(/\.\w+/)
+        if (!ext) return null
+
+        ext = ext[0].toLowerCase()
         if (ext === '.py') {
           return 'python'
         } else if (ext === '.js') {
@@ -263,7 +291,8 @@
 
 .editor {
   width: 100%;
-  overflow-y: hidden;
+  height: auto;
+  overflow-y: scroll;
   background-color: #272822;
 }
 
