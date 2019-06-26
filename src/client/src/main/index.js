@@ -1,15 +1,10 @@
 'use strict'
 
 import { app, BrowserWindow, Menu } from 'electron'
-
 import * as optionParser from './optionParser'
-const homedir = require('os').homedir()
-const settingsDirPath = homedir + '/TeamCode-settings/'
-const settingsPath = settingsDirPath + 'settings.json'
 
 const prompt = require('electron-prompt')
 const dialog = require('electron').dialog
-const fs = require('fs')
 
 /**
  * Set `__static` path to static files in production
@@ -67,37 +62,14 @@ function createWindow () {
         {
           label: 'Local Workspace',
           click () {
-            let settings = {serverURL: '', workingPath: ''}
-
             /* Let user select local directory. */
             let localDirPath = dialog.showOpenDialog({ properties: ['openDirectory'] })
 
             if (localDirPath === undefined || localDirPath[0].toString() === '') {
               return
-            } else {
-              settings.workingPath = localDirPath[0].toString()
             }
 
-            /* If settings json file exists, read the server member from the JSON object. */
-            if (fs.existsSync(settingsPath)) {
-              let jsonSettingsString = fs.readFileSync(settingsPath, 'utf8')
-              try {
-                settings.serverURL = JSON.parse(jsonSettingsString).serverURL
-              } catch (err) {
-                dialog.showErrorBox('Reading error', err)
-              }
-            }
-
-            /* Make a json object and write it to the settings.json file. */
-            const jsonSettingsString = JSON.stringify(settings)
-
-            /* Make the pseditor-settings directory if it does not exist yet. */
-            if (!fs.existsSync(settingsDirPath)) fs.mkdirSync(settingsDirPath)
-
-            /* Write json string to file. */
-            fs.writeFile(settingsPath, jsonSettingsString, 'utf8', (e) => {
-              if (e) dialog.showErrorBox('Writing error', e)
-            })
+            optionParser.setLocalWorkspace(localDirPath[0].toString())
           }
         }
       ]
