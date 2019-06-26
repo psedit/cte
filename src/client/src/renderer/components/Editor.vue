@@ -80,29 +80,23 @@
         })
       },
       pieces: function (newPieces, oldPieces) {
-        console.log('length', newPieces.length)
-        this.saveEditorScroll()
         Vue.nextTick(this.restoreEditorScroll)
       },
       pieceTable: function (newTable, oldTable) {
-        this.saveEditorScroll()
         Vue.nextTick(this.restoreEditorScroll)
       },
       scrollHeight: function () {
-        this.saveEditorScroll()
         this.$nextTick(this.restoreEditorScroll)
       }
     },
     methods: {
       handleScroll () {
-        console.log(`scrolled to ${this.$refs.mainEditor.scrollTop}`)
         this.restoreScrollY = this.$refs.mainEditor.scrollTop
       },
       editorUpdate () {
         this.$nextTick(this.restoreEditorScroll)
       },
       editorViewPortChange (index) {
-        // this.saveEditorScroll()
         setTimeout(() => {
           this.$refs.editorPieces.forEach(piece => {
             if (!piece) return
@@ -140,17 +134,7 @@
           end: {id: endId, offset: endOffset}}
         this.$store.dispatch('requestLock', payload)
       },
-      saveEditorScroll () {
-        console.groupCollapsed('saveEditorScroll')
-        console.trace()
-        const editorElement = this.$refs.mainEditor
-        // this.restoreScrollY = editorElement.scrollTop
-        console.log('Saved scroll: ', editorElement.scrollTop)
-        console.groupEnd()
-      },
       restoreEditorScroll () {
-        console.groupCollapsed('restoreEditorScroll')
-        console.trace()
         const editorElement = this.$refs.mainEditor
         if (editorElement.scrollHeight - editorElement.clientHeight <= this.restoreScrollY) {
           console.log('Current editor too small for restoration.')
@@ -158,20 +142,16 @@
           this.$nextTick(this.restoreEditorScroll)
         } else {
           // console.log(Math.min(this.restoreScrollY, editorElement.scrollHeight - editorElement.clientHeight))
-          console.log(`Reset scroll from ${editorElement.scrollTop} to ${this.restoreScrollY} out of ${editorElement.scrollHeight - editorElement.clientHeight}`)
           editorElement.scrollTop = Math.min(this.restoreScrollY, editorElement.scrollHeight - editorElement.clientHeight)
         }
-        console.groupEnd()
       },
       lockDragStart (line, index) {
-        this.saveEditorScroll()
         this.lockDragStartLocation = {piece: index, line}
         this.lockDragEndLocation = {piece: index, line}
         Vue.nextTick(this.restoreEditorScroll)
       },
       lockDragUpdate (line, index) {
         if (this.lockDragStartLocation !== null) {
-          this.saveEditorScroll()
           if (this.lockDragStartLocation) {
             this.lockDragEndLocation = {piece: index, line}
           }
@@ -206,7 +186,6 @@
       },
       lockDragCancel () {
         if (this.lockDragStartLocation !== null) {
-          this.saveEditorScroll()
           console.log('cancel')
           this.lockDragStartLocation = null
           this.lockDragEndLocation = null
@@ -258,7 +237,6 @@
       connector.addEventListener('open', () => {
         connector.listenToMsg('file-delta-broadcast', ({ content }) => {
           if (content.file_path === this.filePath) {
-            // this.saveEditorScroll()
             const newPieceTable = edit(this.pieceTable, content.piece_uuid, content.content.split('\n').map(val => val + '\n'))
             this.$store.dispatch('updatePieceTable', newPieceTable)
           }
@@ -268,7 +246,6 @@
           const { textBlocks } = this.pieceTable
           const update = convertChangeToJS(textBlocks, content)
           if (update.filePath === this.filePath) {
-            // this.saveEditorScroll()
             this.$store.dispatch('updatePieceTable', update.pieceTable)
           }
         })
@@ -296,33 +273,6 @@
 </script>
 
 <style scoped lang="scss">
-// .swap-enter-to {
-//   opacity: 1;
-//   max-height: 0px;
-//   margin-bottom: 0px;
-//   // display: block;
-// }
-
-// .swap-enter {
-//   opacity: 0;
-//   max-height: 0px;
-//   margin-bottom: -1px;
-// }
-
-// .swap-enter-active {
-//   // display: none;
-//   // transition: opacity 1s 5s;
-//   transition: all 0s 0.35s;
-// }
-
-// .swap-leave-active {
-//   // transition: opacity 0s 0.5s;
-//   transition: opacity 0s 0.35s;
-// }
-
-// .swap-leave-to {
-//   opacity: 0;
-// }
 
 .editor {
   left: 0;
@@ -330,7 +280,6 @@
   top: 0;
   bottom: 0;
   overflow-y: scroll;
-  overflow-x: scroll;
   background-color: #272822;
 }
 
@@ -345,7 +294,7 @@
 
 .editor-piece {
   height: auto;
-  overflow-y: hidden;
+  overflow-y: visible;
   transition: all 0s;
   display: block;
   padding: 0;
