@@ -213,8 +213,6 @@ const actions = {
    * @param {start: {id, offset}, end: {id, offset}} payload
    */
   requestLockAction (state, payload) {
-    console.log('request Lock of length', lengthBetween(this.state.pieces, payload.start.id,
-      payload.start.offset, payload.end.start, payload.end.offset))
     connector.request('file-lock-request', 'file-lock-response',
       {
         'file_path': state.openFile,
