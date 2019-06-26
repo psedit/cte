@@ -27,7 +27,6 @@
       }
     },
     methods: {
-      methods: {
       /**
        * Scrolls to the next tab on the tab bar, based on the given scroll event.
        * @param {Object} event the scroll event
