@@ -305,6 +305,17 @@
           e.preventDefault()
         })
 
+        cm.on('cursorActivity', () => {
+          const cursorPos = cm.doc.getCursor()
+
+          connector.send('cursor-move', {
+            file_path: this.$store.state.fileTracker.openFile,
+            piece_id: this.pieces[this.index].pieceID,
+            offset: cursorPos.line,
+            column: cursorPos.ch
+          })
+        })
+
         if (this.editable) {
           cm.on('changes', ({cminstance}) => {
             const value = cm.getValue()
@@ -316,17 +327,6 @@
               file_path: this.$store.state.fileTracker.openFile,
               piece_uuid: this.pieces[this.index].pieceID,
               content: content.join('')
-            })
-          })
-
-          cm.on('cursorActivity', () => {
-            const cursorPos = cm.doc.getCursor()
-
-            connector.send('cursor-move', {
-              file_path: this.$store.state.fileTracker.openFile,
-              piece_id: this.pieces[this.index].pieceID,
-              offset: cursorPos.line,
-              column: cursorPos.ch
             })
           })
         }
