@@ -1,3 +1,4 @@
+import Vue from 'vue'
 const state = {
   username: '',
   cursors: []
@@ -19,7 +20,8 @@ const mutations = {
    */
   addCursor (state, cursor) {
     if (cursor.username === state.username) return
-    state.cursors = [...state.cursors, cursor]
+    Vue.set(state, 'cursors', [...state.cursors, cursor])
+    // state.cursors = [...state.cursors, cursor]
   },
   /**
    * Updates the value of the cursor at state.cursors at the index
@@ -29,7 +31,8 @@ const mutations = {
    * @param {Cursor} payload.cursor
    */
   updateCursor (state, { index, cursor }) {
-    state.cursors[index] = cursor
+    // state.cursors.$set(index, cursor)
+    Vue.set(state.cursors, index, cursor)
   },
   /**
    * Removes a cursor with a certain username and filepath from state.cursors
@@ -37,7 +40,8 @@ const mutations = {
    * @param {Cursor} cursor
    */
   removeCursor (state, { username, filepath }) {
-    state.cursors = state.cursors.filter(cursor => cursor.username !== username && cursor.filepath !== filepath)
+    Vue.set(state, 'cursors', state.cursors.filter(cursor => cursor.username !== username && cursor.filepath !== filepath))
+    // state.cursors = state.cursors.filter(cursor => cursor.username !== username && cursor.filepath !== filepath)
   },
   /**
    * Removes all cursors
