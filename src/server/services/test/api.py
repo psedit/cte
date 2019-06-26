@@ -1,28 +1,28 @@
 import json
-import asyncio
-import websockets
+
 
 def has_file(tree, path):
     """
     Ensure the path is valid in the specified tree
     """
     try:
-        l = path.split('/')
+        lst = path.split('/')
         index = 0
-        for f in l:
+        for f in lst:
             for t in tree:
-                if isinstance(t, list) and t[0] == l[index]:
+                if isinstance(t, list) and t[0] == lst[index]:
                     tree = t[1]
                     index += 1
                     break
 
-        if index == len(l) - 1:
+        if index == len(lst) - 1:
             for t in tree:
                 if t == f:
                     return True
         return False
     except IndexError:
         return False
+
 
 async def get_file_data(sock, path):
     data = {"type": "file-content-request", "content": {"file_path": path}}
@@ -32,6 +32,7 @@ async def get_file_data(sock, path):
     msg = await sock.recv()
     data = json.loads(msg)
     return data['content']
+
 
 async def open_file(sock, path):
     data = {"type": "file-list-request", "content": ""}
@@ -49,9 +50,11 @@ async def open_file(sock, path):
     msg = json.dumps(data)
     await sock.send(msg)
 
+
 async def open_file_data(sock, path):
     await open_file(sock, path)
     return await get_file_data(sock, path)
+
 
 async def close_file(sock, path, exit=True):
     data = {
@@ -60,6 +63,7 @@ async def close_file(sock, path, exit=True):
     }
     msg = json.dumps(data)
     await sock.send(msg)
+
 
 async def edit_file(sock, path, uuid, content):
     payload = {
@@ -70,6 +74,7 @@ async def edit_file(sock, path, uuid, content):
     data = {"type": "file-delta", "content": payload}
     msg = json.dumps(data)
     await sock.send(msg)
+
 
 async def save_file(sock, path):
     data = {"type": "file-save", "content": {"file_path": path}}

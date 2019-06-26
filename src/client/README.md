@@ -1,46 +1,30 @@
-# Setup
-You need to install SDL2 with your package manager.
-  sudo apt install sdl2
+# Collaborative Text Editor - Client
 
-Or download and install ![Windows SDL2](http://www.libsdl.org/download-2.0.php)
-
-# Collaborative Text Editor
-
-## Overview
-
-See README in src/client and src/server for installing dependencies.
-
-## Status
-
-At the moment, there is nothing special to see here yet...
-
-## Credits
-
-See COPYING.md for all names
-
-# cte-client
-
-> the client of cte
-
-#### Build Setup
+## Build Setup
 
 ``` bash
 # install dependencies
 npm install
+```
 
+## Running development/production build
+```bash
 # serve with hot reload at localhost:9080
 npm run dev
 
 # build electron application for production
 npm run build
+```
 
+### Unit testing
+```bash
 # run unit & end-to-end tests
 npm test
+```
 
-
-# lint all JS/Vue component files in `src/`
+### lint all JS/Vue component files in `src/`
+```bash
 npm run lint
-
 ```
 
 ---

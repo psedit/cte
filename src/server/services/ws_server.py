@@ -1,13 +1,20 @@
 #!/usr/bin/env python3
 from functools import partial
+import traceback
 import Pyro4
 import asyncio
 import json
 import websockets
 from typedefs import Address
 from service import Service, message_type
-from typing import Dict
+from typing import Dict, List
 from collections import defaultdict
+import socket
+
+
+def list_ser(obj):
+    """ Try serializing unknown objects as lists. """
+    return [*obj]
 
 
 @Pyro4.expose
@@ -49,7 +56,7 @@ class WSServer(Service):
         """
         self._asio_event_loop = asyncio.get_event_loop()
         self._pyro_daemon = inst_d
-        self._known_pyro_socks = []
+        self._known_pyro_socks: List[socket.socket] = []
         for sock in inst_d.sockets:
             self._known_pyro_socks.append(sock)
             self._asio_event_loop.add_reader(
@@ -73,9 +80,24 @@ class WSServer(Service):
                                            return_when=asyncio.FIRST_COMPLETED)
 
     def _disconnect_ws(self, client_address):
-        del self.clients[client_address]
-        del self.usernames[client_address]
-        self._send_message("client-disconnect", {"address": client_address})
+        username = self.usernames.get(client_address)
+        try:
+            del self.clients[client_address]
+            del self.usernames[client_address]
+        except KeyError:
+            self._warning(traceback.format_exc())
+        self._send_message("client-disconnect",
+                           {"address": client_address,
+                            "username": username})
+
+    def _maybe_remap_recipients(self, recipients) -> List[Address]:
+        if not any(isinstance(i, str) for i in recipients):
+            return recipients
+
+        rmap = {v: k for k, v in self.usernames.items()}
+        new_rec = [rmap[r] for r in recipients if r in rmap]
+        self._info(f"Mapped recipients {recipients} to {new_rec}")
+        return new_rec
 
     async def ws_write_loop(self):
         """
@@ -85,10 +107,11 @@ class WSServer(Service):
             msg = await self.messages_to_send.get()
             recipients = msg["content"]["response_addrs"]
             self._info("Sending message %r to clients %r", msg, recipients)
+            recipients = self._maybe_remap_recipients(recipients)
             for recipient in recipients:
                 try:
                     await self.clients[recipient].send(
-                            json.dumps(msg["content"]["msg"])
+                            json.dumps(msg["content"]["msg"], default=list_ser)
                         )
                 except Exception:
                     self._warning("Websocket %r unexpectedly disconnected!",

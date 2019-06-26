@@ -180,7 +180,6 @@ class MessageBus(LoggerMixin):
 
                 handlers = self.handlers[message["type"]]
                 for uri in handlers:
-                    print(f"Calling handle_message on URI {uri}")
                     handled = True
                     retcode = self._get_proxy(uri).handle_message(message)
                     if (retcode == HandlerCode.Halt):
