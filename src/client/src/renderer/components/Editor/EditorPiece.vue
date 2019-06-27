@@ -11,6 +11,12 @@
   import 'codemirror/theme/monokai.css'
   import 'codemirror/mode/javascript/javascript'
   import 'codemirror/mode/python/python'
+  import 'codemirror/addon/hint/show-hint'
+  import 'codemirror/addon/hint/show-hint.css'
+  import 'codemirror/addon/hint/javascript-hint'
+  import 'codemirror/addon/edit/closebrackets'
+  import 'codemirror/addon/edit/matchbrackets'
+  import 'codemirror/addon/selection/active-line'
   import { edit, indexOffsetRangeSort } from '../../../main/pieceTable'
   import './multiEditor'
   import connector from '../../../main/connector'
@@ -207,19 +213,23 @@
           lineWrapping: true,
           showCursorWhenSelecting: true,
           readOnly: !this.editable,
-          // inputStyle: 'contenteditable',
-          // lineNumberFormatter: this.lineNumberFormatter,
           firstLineNumber: this.firstLineNumber,
           viewportMargin: Infinity,
           cursorBlinkRate: 0,
+          autoCloseBrackets: true,
+          styleActiveLine: true,
           gutters: ['user-gutter', 'CodeMirror-linenumbers']
         })
 
         this.$options.cminstance = cm
 
+        if (this.lang === 'javascript') {
+          cm.addKeyMap({'Ctrl-Space': 'autocomplete'}, false)
+          cm.setOption('matchBrackets', true)
+          cm.setOption('autoCloseBrackets ', true)
+        }
         cm.setValue(this.code)
 
-        // cm.getGutterElement().querySelector('.user-gutter').style.backgroundColor = getRandomColor(this.username).string()
         if (this.username) {
           cm.getGutterElement().style.setProperty('--background-color', getRandomColor(this.username).string())
         }
@@ -378,6 +388,7 @@
 </script>
 
 <style lang="scss">
+@import url(https://cdn.jsdelivr.net/gh/tonsky/FiraCode@1.206/distr/fira_code.css);
 .editor-piece {
   &:last-child {
     .CodeMirror {
@@ -390,6 +401,8 @@
 
 .CodeMirror {
   height: auto;
+  font-family: 'Fira Code', monospace;
+  font-variant-ligatures: contextual;
 }
 
 .CodeMirror-lines {
@@ -422,6 +435,10 @@
   pointer-events: none;
   position: absolute;
 
+}
+
+.CodeMirror-activeline-gutter {
+  pointer-events: none;
 }
 
 @keyframes blink {
