@@ -479,7 +479,10 @@
   background-color: #fff;
   pointer-events: none;
   position: absolute;
+}
 
+.CodeMirror:not(.CodeMirror-focused) .CodeMirror-activeline-background{
+  background-color: transparent;
 }
 
 .CodeMirror-activeline-gutter {
