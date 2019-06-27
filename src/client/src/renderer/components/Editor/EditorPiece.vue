@@ -424,7 +424,6 @@
   background-color: #fff;
   pointer-events: none;
   position: absolute;
-
 }
 
 .CodeMirror-activeline-gutter {

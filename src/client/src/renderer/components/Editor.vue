@@ -89,10 +89,9 @@
         })
       },
       pieces: function (newPieces, oldPieces) {
-        Vue.nextTick(this.restoreEditorScroll)
-      },
-      pieceTable: function (newTable, oldTable) {
-        Vue.nextTick(this.restoreEditorScroll)
+        this.$refs.editorPiecesList.style.minHeight = this.$refs.mainEditor.scrollHeight + 100
+        Vue.nextTick(() => { this.$refs.editorPiecesList.style.minHeight = null })
+        // Vue.nextTick(this.restoreEditorScroll)
       },
       scrollHeight: function () {
         this.$nextTick(this.restoreEditorScroll)
@@ -298,11 +297,11 @@
 .editor-pieces {
   // display: flex;
   // flex-direction: column;
-  height: 1000000pt;
+  // height: 1000000pt;
   width: auto;
   overflow-y: visible;
-  padding-bottom: 1000px;
-  min-height: 1000000pt;
+  padding-bottom: 100vh;
+  // min-height: 1000000pt;
 }
 
 .editor-piece {
