@@ -21,6 +21,8 @@
     components: { Editor, Sidebar, Tabs, ErrorMessenger },
     mounted () {
       const username = require('os').userInfo().username
+      /* Request connection to server.
+       */
       connector.addEventListener('open', () => {
         connector.request(
           'login-request',

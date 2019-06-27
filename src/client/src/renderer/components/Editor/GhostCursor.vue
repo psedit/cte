@@ -3,6 +3,22 @@
 </template>
 
 <script>
+  /**
+   * @module Editor/GhostCursor
+   * @desc The cursor of another user.
+   *
+   * @vue-prop {String} username - The username of the owner of the cursor.
+   * @vue-prop {String} filepath - The filepath the cursor is in.
+   * @vue-prop {Number} line - The line number inside the piece (thus not the global line number) the cursor is at.
+   * @vue-prop {String} ch - The character position (thus horizontal position) of the cursor.
+   * @vue-prop {Object} backgroundColor - The color of the user and thus also the cursor.
+   * @vue-prop {Object} cminstance - The CodeMirror instance of the editor this cursor is in.
+   *
+   * @vue-data {Number} top - The relative vertical position of the cursor in pixels
+   * @vue-data {Number} left - The relative horizontal position of the cursor in pixels
+   *
+   * @vue-computed {String} color - The recommended text color for the best contrast against the background.
+   */
   export default {
     name: 'GhostCursor',
     props: {

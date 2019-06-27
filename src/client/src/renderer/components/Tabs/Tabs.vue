@@ -10,13 +10,19 @@
 
 <script>
   import CloseIcon from 'vue-material-design-icons/CloseCircle'
+
+  /**
+   * Displays the tab bar and manages everything relevant to the tabs.
+   *
+   * @module Tabs
+   *
+   * @vue-computed {Array} tabs - A list of all tab objects
+   * @vue-computed {String} openFile - The filepath to the file which is currently opened
+   */
   export default {
     name: 'tabs',
     components: {
-      CloseIcon
-    },
-    data () {
-      return {scrollPosition: 0}
+      CloseIcon /* The icon for closing a tab. */
     },
     computed: {
       tabs () {
@@ -29,6 +35,7 @@
     methods: {
       /**
        * Scrolls to the next tab on the tab bar, based on the given scroll event.
+       * The scroll event determines in which direction you scroll the tab bar.
        * @param {Object} event the scroll event
        */
       scrollTabs (e) {

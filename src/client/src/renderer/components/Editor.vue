@@ -54,7 +54,7 @@
       AddPieceButton
     },
     /**
-     *
+     * Data properties
      * @returns {{dragList: null, lockDragStartLocation: null, lockDragEndLocation: null}}
      */
     data () {
@@ -67,6 +67,9 @@
       }
     },
     watch: {
+      /* When filePath changes,
+       * handle changing cursors.
+       */
       filePath (val) {
         this.$store.commit('emptyCursors')
         if (val === '') return
@@ -107,6 +110,8 @@
       editorUpdate () {
         this.$nextTick(this.restoreEditorScroll)
       },
+      /* Update the line numbers for each piece.
+       */
       editorViewPortChange (index) {
         setTimeout(() => {
           this.$refs.editorPieces.forEach(piece => {
@@ -132,6 +137,8 @@
         piece.$options.startState = await this.getPreviousState(index)
         return piece.initializeEditor()
       },
+      /* Let the editor piece at index get the state of the previous piece.
+       */
       async getPreviousState (index) {
         if (index === 0) return undefined
         const prevPiece = this.$refs.editorPieces[index - 1]
@@ -141,6 +148,8 @@
         }
         return cm.getStateAfter(cm.lastLine(), true)
       },
+      /* request to lock part of the file.
+       */
       requestLock (startId, startOffset, endId, endOffset) {
         let payload = { start: {id: startId, offset: startOffset},
           end: {id: endId, offset: endOffset}}
@@ -155,6 +164,8 @@
           editorElement.scrollTop = Math.min(this.restoreScrollY, editorElement.scrollHeight - editorElement.clientHeight)
         }
       },
+      /* Handles the selection of a locking area.
+       */
       lockDragStart (line, index) {
         this.lockDragStartLocation = {piece: index, line}
         this.lockDragEndLocation = {piece: index, line}
@@ -168,6 +179,8 @@
           Vue.nextTick(this.restoreEditorScroll)
         }
       },
+      /* Requests lock when region is selected
+       */
       lockDragEnd (line, index) {
         if (this.lockDragStartLocation === null) return
 
@@ -184,6 +197,8 @@
 
         this.lockDragCancel()
       },
+      /* Cancels lock selection.
+       */
       lockDragCancel () {
         if (this.lockDragStartLocation) {
           const editorElement = this.$refs.mainEditor
@@ -238,6 +253,8 @@
       }
     },
     mounted () {
+      /* Listen to changes in the
+       */
       connector.addEventListener('open', () => {
         connector.listenToMsg('file-delta-broadcast', ({ content }) => {
           if (content.file_path === this.filePath) {

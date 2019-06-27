@@ -159,7 +159,7 @@ class WSServer(Service):
                 print(f"Received message: {data}")
                 self._send_message_from_client(new_type, data['content'],
                                                client_info)
-        except websockets.exceptions.ConnectionClosed:
+        except Exception:
             print(f'Websocket {websocket} unexpectedly closed connection.')
         finally:
             self._disconnect_ws(websocket.remote_address)

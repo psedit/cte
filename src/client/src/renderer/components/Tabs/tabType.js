@@ -1,6 +1,11 @@
 const path = require('path')
 
-/** Definition for a tab */
+/**
+ * Defines a tab object and stores all data relevant to a tab.
+ *
+ * @module TabType
+ */
+ 
 class Tab {
   /**
   * @param {string} filePath a path to a document
