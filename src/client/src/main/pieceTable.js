@@ -447,7 +447,7 @@ export function edit ({ textBlocks, table }, pieceID, lines) {
     length: lines.length
   }
 
-  // Ensure we make a deep copy of the table and textblocks
+  // Ensure we make a deep copy of the table and the textblocks
   const newTable = clone(table)
   newTable[index] = newPiece
   const newBlock = mergeLeft({ lines }, block)
