@@ -1,8 +1,10 @@
 <template>
-  <div class="editor" :class="{lightTheme}" ref="mainEditor" @scroll="handleScroll">
+  <div class="editor" :class="{lightTheme}" ref="mainEditor">
     <theme-switch @theme-change="themeChange"/>
     <add-piece-button class="add-piece-button-top"/>
-    <div class="editor-pieces" ref="editorPiecesList" :style="{transform: `translateY(${scrollPos}px)`}">
+    <scroll-bar :max="scrollHeight" v-model="scrollPos" ref="scrollbar"/>
+
+    <div class="editor-pieces" ref="editorPiecesList" :style="{transform: `translateY(${-scrollPos}px)`}">
       <transition-group name="swap" tag="editorPieceGroup">
         <editor-piece class="editor-piece"
           v-for="(piece, index) in pieces"
@@ -17,8 +19,8 @@
           @lockDragUpdate="lockDragUpdate"
           @lockDragEnd="lockDragEnd"
           @mounted="editorMount"
-          @update="editorUpdate"
           @viewportChange="editorViewPortChange"
+          @update="editorUpdate"
           ref="editorPieces"
         />
       </transition-group>
@@ -37,7 +39,7 @@
 </template>
 
 <script>
-  import Vue from 'vue'
+  // import Vue from 'vue'
   import EditorPiece from './Editor/EditorPiece'
   import ThemeSwitch from './ThemeSwitch'
   import convert from './Editor/cursor'
@@ -45,13 +47,15 @@
   import { getRandomColor } from './Editor/RandomColor'
   import { convertChangeToJS, edit, rangeToAnchoredLength } from '../../main/pieceTable'
   import AddPieceButton from './Editor/AddPieceButton'
+  import ScrollBar from './Editor/ScrollBar'
 
   export default {
     name: 'Editor',
     components: {
       EditorPiece,
       ThemeSwitch,
-      AddPieceButton
+      AddPieceButton,
+      ScrollBar
     },
     /**
      * Data properties
@@ -63,7 +67,6 @@
         lockDragEndLocation: null,
         dragList: null,
         lightTheme: false,
-        restoreScrollY: 0,
         scrollPos: 0
       }
     },
@@ -92,25 +95,16 @@
           }
         })
       },
-      pieces: function (newPieces, oldPieces) {
-        Vue.nextTick(this.restoreEditorScroll)
-      },
-      pieceTable: function (newTable, oldTable) {
-        Vue.nextTick(this.restoreEditorScroll)
-      },
-      scrollHeight: function () {
-        this.$nextTick(this.restoreEditorScroll)
+
+      scrollPos () {
+        if (this.scrollPos < 0) {
+          this.scrollPos = 0
+        } else if (this.scrollPos > this.$refs.editorPiecesList.clientHeight - 20) {
+          this.scrollPos = this.$refs.editorPiecesList.clientHeight - 20
+        }
       }
     },
     methods: {
-      handleScroll () {
-        if (this.$refs.mainEditor.scrollTop !== 0) {
-          this.restoreScrollY = this.$refs.mainEditor.scrollTop
-        }
-      },
-      editorUpdate () {
-        this.$nextTick(this.restoreEditorScroll)
-      },
       /* Update the line numbers for each piece.
        */
       editorViewPortChange (index) {
@@ -127,6 +121,8 @@
       editorMount (editorPiece) {
         const index = this.$refs.editorPieces.indexOf(editorPiece)
         this.initializeEditor(index)
+      },
+      editorUpdate () {
       },
 
       async initializeEditor (index) {
@@ -156,28 +152,17 @@
           end: {id: endId, offset: endOffset}}
         this.$store.dispatch('requestLock', payload)
       },
-      restoreEditorScroll () {
-        const editorElement = this.$refs.mainEditor
-        if (editorElement.scrollHeight - editorElement.clientHeight <= this.restoreScrollY) {
-          this.restoreScrollY -= 1
-          this.$nextTick(this.restoreEditorScroll)
-        } else {
-          editorElement.scrollTop = Math.min(this.restoreScrollY, editorElement.scrollHeight - editorElement.clientHeight)
-        }
-      },
       /* Handles the selection of a locking area.
        */
       lockDragStart (line, index) {
         this.lockDragStartLocation = {piece: index, line}
         this.lockDragEndLocation = {piece: index, line}
-        Vue.nextTick(this.restoreEditorScroll)
       },
       lockDragUpdate (line, index) {
         if (this.lockDragStartLocation !== null) {
           if (this.lockDragStartLocation) {
             this.lockDragEndLocation = {piece: index, line}
           }
-          Vue.nextTick(this.restoreEditorScroll)
         }
       },
       /* Requests lock when region is selected
@@ -202,14 +187,11 @@
        */
       lockDragCancel () {
         if (this.lockDragStartLocation) {
-          const editorElement = this.$refs.mainEditor
-          this.restoreScrollY = editorElement.scrollTop
           this.lockDragStartLocation = null
           this.lockDragEndLocation = null
           for (let key in this.components) {
             this.components[key].$options.cminstance.clearGutter('user-gutter')
           }
-          this.$nextTick(this.restoreEditorScroll)
         }
       }
     },
@@ -247,10 +229,8 @@
         return null
       },
       scrollHeight () {
-        return this.$refs.mainEditor.scrollHeight
-      },
-      scrollTop () {
-        return this.$refs.mainEditor.scrollTop
+        if (!this.$refs.editorPiecesList) return 0
+        return this.$refs.editorPiecesList.clientHeight
       }
     },
     mounted () {
@@ -288,9 +268,9 @@
       this.$refs.editorPiecesList.style.top = 0
 
       this.$el.addEventListener('wheel', event => {
-        this.scrollPos = this.scrollPos - event.deltaY * 0.2
-        this.scrollPos = Math.min(0, this.scrollPos)
-        this.scrollPos = Math.max(-this.$refs.editorPiecesList.clientHeight + 20, this.scrollPos)
+        this.scrollPos = this.scrollPos + event.deltaY * 0.2
+        this.scrollPos = Math.max(0, this.scrollPos)
+        this.scrollPos = Math.min(this.$refs.editorPiecesList.clientHeight - 20, this.scrollPos)
       })
 
       addEventListener('mouseup', (e) => {
@@ -348,7 +328,7 @@
 }
 
 .swap-enter-active {
-  position: float;
+  /*position: float;*/
   opacity: 1;
   // max-height: 0;
   // display: block;
