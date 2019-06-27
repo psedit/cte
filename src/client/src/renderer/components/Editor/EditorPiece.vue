@@ -272,7 +272,7 @@
       gutterSelectMarker () {
         const marker = document.createElement('div')
         marker.classList.add('lock-gutter-marker')
-        marker.innerHTML = '●'
+        marker.innerHTML = '&nbsp;'
         return marker
       },
 

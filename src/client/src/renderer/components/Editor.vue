@@ -285,7 +285,7 @@
   right: 0;
   top: 0;
   bottom: 0;
-  overflow-y: scroll;
+  overflow-y: inherit;
   background-color: #272822;
 }
 
@@ -294,7 +294,7 @@
   // flex-direction: column;
   height: auto;
   width: auto;
-  overflow-y: hidden;
+  overflow-y: scroll;
   padding-bottom: 1000px;
 }
 
@@ -317,7 +317,6 @@
 .editor {
   width: 100%;
   height: auto;
-  overflow-y: scroll;
   background-color: #272822;
   &.lightTheme {
     background-color: #fff;

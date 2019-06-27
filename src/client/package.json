@@ -1,5 +1,5 @@
 {
-  "name": "cte-client",
+  "name": "teamcode",
   "version": "0.0.1",
   "author": "groep A",
   "description": "the client of cte",
@@ -26,7 +26,7 @@
     "postinstall": "npm run lint:fix"
   },
   "build": {
-    "productName": "cte-client",
+    "productName": "TeamCode",
     "appId": "com.client.cte",
     "directories": {
       "output": "build"
