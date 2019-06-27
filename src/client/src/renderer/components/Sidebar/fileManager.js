@@ -1,4 +1,6 @@
 /**
+ * Sends messages to the server when changes are made to the files.
+ *
  * @module fileManager
  */
 
