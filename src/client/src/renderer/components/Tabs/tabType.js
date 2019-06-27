@@ -5,7 +5,7 @@ const path = require('path')
  *
  * @module TabType
  */
- 
+
 class Tab {
   /**
   * @param {string} filePath a path to a document

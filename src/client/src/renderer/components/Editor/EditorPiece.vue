@@ -228,15 +228,17 @@
           cursorBlinkRate: 0,
           autoCloseBrackets: true,
           styleActiveLine: true,
+          hintOptions: CodeMirror.pythonHint,
           gutters: ['user-gutter', 'CodeMirror-linenumbers']
         })
 
         this.$options.cminstance = cm
 
-        if (this.lang === 'javascript') {
-          cm.addKeyMap({'Ctrl-Space': 'autocomplete'}, false)
+        debugger
+        if (this.lang === 'javascript' || this.lang === 'python') {
           cm.setOption('matchBrackets', true)
           cm.setOption('autoCloseBrackets ', true)
+          cm.addKeyMap({'Ctrl-Space': 'autocomplete'}, false)
         }
         cm.setValue(this.code)
 
