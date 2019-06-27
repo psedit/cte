@@ -50,9 +50,10 @@ async def file_open(sock, path, exists=True):
     file_tree = data['content']['root_tree']
 
     if has_file(file_tree, path) != exists:
-        raise RuntimeError('file not found')
+        raise FileNotFoundError(path)
 
-    await join_file(sock, path)
+    if exists:
+        await join_file(sock, path)
 
 
 async def file_open_data(sock, path):
@@ -95,6 +96,25 @@ async def edit_file(sock, path, uuid, content):
 async def file_lock(sock, path, uuid, offset, length):
     content = {"file_path": path, "piece_uuid": uuid, "offset": offset, "length": length}
     data = {"type": "file-lock-request", "content": content}
+    msg = json.dumps(data)
+    await sock.send(msg)
+    #msg = await sock.recv()
+    #data = json.loads(msg)
+    #return data['content']
+
+
+async def file_lock_insert(sock, path, uuid, offset, length):
+    content = {"file_path": path, "piece_uuid": uuid, "offset": offset, "length": length}
+    data = {"type": "file-lock-insert-request", "content": content}
+    msg = json.dumps(data)
+    await sock.send(msg)
+    #msg = await sock.recv()
+    #data = json.loads(msg)
+    #return data['content']
+
+
+async def file_move(sock, old, new):
+    data = {"type": "file-change", "content": {"old_path": old, "new_path": new}}
     msg = json.dumps(data)
     await sock.send(msg)
 

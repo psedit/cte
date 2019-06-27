@@ -1,6 +1,6 @@
 import asyncio
 import websockets
-from api import file_open_data
+from api import file_open_data, file_open
 
 
 async def dump_content(path):
