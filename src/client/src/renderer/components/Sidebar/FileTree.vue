@@ -48,10 +48,6 @@
     },
     props: {
       fileList: Array,
-      startOpen: {
-        type: Boolean,
-        default: false
-      }
     },
     mounted () {
       addEventListener('click', (e) => {
@@ -61,7 +57,6 @@
     },
     data () {
       return {
-        isOpen: this.startOpen,
         rightClickOptionsFile: [{name: 'Download'}, {name: 'Rename'}, {name: 'Relocate'}, {name: 'Delete'}],
         rightClickOptionsDir: [{name: 'Rename'}, {name: 'Relocate'}, {name: 'Delete'}]
       }

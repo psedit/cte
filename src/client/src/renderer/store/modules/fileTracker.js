@@ -3,7 +3,7 @@ import connector from '../../../main/connector'
 import { convertToJS, getFile, create, lengthBetween } from '../../../main/pieceTable'
 
 /**
- * Manages the changes of files on the server, and the list of tabs.
+ * Manages the changes of files on the server, and manages the list of tabs.
  *
  * @module fileTracker
  */
