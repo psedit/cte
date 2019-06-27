@@ -65,6 +65,17 @@ async def close_file(sock, path, exit=True):
     await sock.send(msg)
 
 
+async def fetch_files(sock):
+    data = {"type": "file-project-request", "content": ""}
+    msg = json.dumps(data)
+    await sock.send(msg)
+
+    msg = await sock.recv()
+    if msg['type'] != "file-project-response":
+        raise ValueError("invalid type:", msg['type'])
+
+    return json.loads(msg)
+
 async def edit_file(sock, path, uuid, content):
     payload = {
         "file_path": path,

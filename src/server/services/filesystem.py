@@ -57,14 +57,6 @@ class Filesystem(Service):
     # FILE I/O
     #
 
-    def load_file(self, file_path: str) -> None:
-        """
-        Add the file to the Filesystem. Path file is relative to root
-        directory.
-        """
-        if file_path not in self.files:
-            self.files[file_path] = ServerFile(self.root_dir, file_path)
-
     def parse_walk(self, walk, path):
         """
         Creates directory tree of the root directory.

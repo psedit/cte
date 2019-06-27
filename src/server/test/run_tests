@@ -1,0 +1,8 @@
+#!/bin/bash
+for i in file_get file_change file_save get_project; do
+	f=./"$i".py
+	timeout 10s python3 "$f"
+	if [ $? -ne 0 ]; then
+		echo "TEST FAILED: $f"
+	fi
+done

@@ -36,11 +36,9 @@ case $1 in
         python3 -m pytest --cov-report= --cov=services test/
         START_CMD='coverage run -p'
         launch
-        cd test
-        for i in file_*.py; do
-            python3 $i
-        done
-        cd $START_DIR
+        pushd test
+        ./run_tests || echo 'TESTS FAILED TO RUN' 1>&2
+        popd
         pkill -USR1 coverage
         wait $PIDM $PIDL $PIDF $PIDW
         coverage combine --append
