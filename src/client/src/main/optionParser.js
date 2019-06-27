@@ -132,3 +132,10 @@ export function setLocalWorkspace (localWorkingPath) {
   let currSettings = {serverURL: defaultSettings.serverURL, workingPath: localWorkingPath}
   setter(localWorkingPath, currSettings, 'workspace')
 }
+
+/**
+ * This function resets the serverURL in the json file.
+ */
+export function resetServerURL () {
+  setServerURL(defaultSettings.serverURL)
+}
