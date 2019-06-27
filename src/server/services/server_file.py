@@ -1,10 +1,8 @@
-from typedefs import LockError
+from .cursor import Cursor
+from .piece_table import PieceTable
+from .typedefs import LockError
 from typing import Dict, List, Tuple, Optional
-from cursor import Cursor
-from piece_table import PieceTable
 import os
-
-
 
 
 class ServerFile:
@@ -123,7 +121,7 @@ class ServerFile:
 
         return piece.piece_id, offset, column
 
-    def get_cursor_list(self, exclude: List[str]) -> Dict[str, Cursor]:
+    def get_cursor_list(self, exclude: List[str] = []) -> Dict[str, Cursor]:
         return {uname: cursor for uname, cursor in self.cursors.items()
                 if uname not in exclude}
 

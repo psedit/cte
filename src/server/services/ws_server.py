@@ -1,12 +1,11 @@
-#!/usr/bin/env python3
+from .typedefs import Address
+from .service import Service, message_type
 from functools import partial
 import traceback
 import Pyro4
 import asyncio
 import json
 import websockets
-from typedefs import Address
-from service import Service, message_type
 from typing import Dict, List
 from collections import defaultdict
 import socket
@@ -213,7 +212,11 @@ class WSServer(Service):
                            resp_uuid=msg["uuid"])
 
 
-if __name__ == '__main__':
+def main():
     # threading causes weird issues
     Pyro4.config.SERVERTYPE = 'multiplex'
     WSServer.start()
+
+
+if __name__ == '__main__':
+    main()
