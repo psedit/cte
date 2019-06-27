@@ -35,6 +35,7 @@
   const dialogs = require('dialogs')
   const tar = require('tar')
   const fs = require('fs')
+  const path = require('path')
 
   export default {
     name: 'sidebar',
@@ -480,6 +481,7 @@
        * Upload new file to server.
        */
       uploadFile () {
+        debugger
         let localPath = dialog.showOpenDialog({ properties: ['openFile'] })
 
         if (localPath === undefined || localPath.toString() === '') {
@@ -489,7 +491,7 @@
         }
 
         /* Get name of file from path. */
-        let folderPath = localPath.split('/')
+        let folderPath = localPath.split(path.split)
         let newFileName = folderPath[folderPath.length - 1]
         let serverPath = this.currPathString + newFileName
 
@@ -511,7 +513,7 @@
           }
 
           /* Get dir name from newDirLocal. */
-          let folderPath = newDirLocal.split('/')
+          let folderPath = newDirLocal.split(path.sep)
           let newDirName = folderPath[folderPath.length - 1]
 
           let dirs = []
