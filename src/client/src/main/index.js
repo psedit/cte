@@ -54,7 +54,8 @@ function createWindow () {
               value: currSettings.serverURL
             }).then((newURLString) => {
               if (newURLString !== undefined && newURLString !== null) {
-                mainWindow.webContents.send('changeURL', newURLString)
+                let toast = `Switching to server ${newURLString}`
+                mainWindow.webContents.send('changeURL', {url: newURLString, toast: toast})
               }
             })
           }
@@ -70,6 +71,10 @@ function createWindow () {
             }
 
             optionParser.setLocalWorkspace(localDirPath[0].toString())
+
+            /* Send a toast. */
+            let toast = `Succesfully set ${localDirPath[0].toString()} as local workspace`
+            mainWindow.webContents.send('showWorkspaceToast', toast)
           }
         }
       ]

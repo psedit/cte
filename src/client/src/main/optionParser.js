@@ -1,7 +1,7 @@
 const fs = require('fs')
 const {dialog} = require('electron')
 const homedir = require('os').homedir()
-const settingsDirPath = homedir + '/TeamCode-settings/'
+const settingsDirPath = homedir + '/.TeamCode-settings/'
 const settingsPath = settingsDirPath + 'settings.json'
 const defaultSettings = { serverURL: 'ws://segfault.party:12345', workingPath: '' }
 

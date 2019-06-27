@@ -60,6 +60,13 @@
        *  Use completeTree to get all items in the current folder.
        */
       currItems () {
+        /* When the sidebar is empty, show user a message that connection
+         * with the server is being established.
+         */
+        if (this.completeTree.length === 0) {
+          this.$toasted.show(`Getting file tree from server...`)
+        }
+
         let items = this.completeTree
 
         /* For all folders in the current path (meaning, all parents)
@@ -298,7 +305,9 @@
             fs.writeFile(downloadPath, fileContent, (err) => {
               if (err) {
                 dialog.showErrorBox('error', err)
+                return
               }
+              this.$toasted.show(`Downloaded ${filePath} to ${downloadPath}`)
             })
           })
         })
@@ -714,6 +723,7 @@
           connector.waitUntillOpen(() => {
             this.home()
           })
+          this.$toasted.show(`Connecting to server...`)
         }
       })
 
