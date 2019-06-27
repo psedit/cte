@@ -27,7 +27,7 @@ def python3(*args, **kwargs) -> sh.RunningCommand:
 
 
 def start_service(fname: str):
-    process = python3(fname)
+    process = python3("-m", "services", fname)
     _service_procs.append(process)
 
 
@@ -38,10 +38,9 @@ def start_nameserver():
 
 def start_services(*service_list: str, wait=True):
     """ Start services. """
-    with service_dir:
-        start_service("logger.py")
-        for service in service_list:
-            start_service(f"{snake(service)}.py")
+    start_service("logger")
+    for service in service_list:
+        start_service(f"{snake(service)}")
 
     if wait:
         wait_for_services(service_list)

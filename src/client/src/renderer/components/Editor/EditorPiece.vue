@@ -11,6 +11,12 @@
   import 'codemirror/theme/monokai.css'
   import 'codemirror/mode/javascript/javascript'
   import 'codemirror/mode/python/python'
+  import 'codemirror/addon/hint/show-hint'
+  import 'codemirror/addon/hint/show-hint.css'
+  import 'codemirror/addon/hint/javascript-hint'
+  import 'codemirror/addon/edit/closebrackets'
+  import 'codemirror/addon/edit/matchbrackets'
+  import 'codemirror/addon/selection/active-line'
   import { edit, indexOffsetRangeSort } from '../../../main/pieceTable'
   import './multiEditor'
   import connector from '../../../main/connector'
@@ -60,7 +66,8 @@
    */
     data () {
       return {
-        lang: null
+        lang: null,
+        focus: false
       }
     },
 
@@ -219,11 +226,18 @@
           firstLineNumber: this.firstLineNumber,
           viewportMargin: Infinity,
           cursorBlinkRate: 0,
+          autoCloseBrackets: true,
+          styleActiveLine: true,
           gutters: ['user-gutter', 'CodeMirror-linenumbers']
         })
 
         this.$options.cminstance = cm
 
+        if (this.lang === 'javascript') {
+          cm.addKeyMap({'Ctrl-Space': 'autocomplete'}, false)
+          cm.setOption('matchBrackets', true)
+          cm.setOption('autoCloseBrackets ', true)
+        }
         cm.setValue(this.code)
 
         if (this.username) {
@@ -240,10 +254,6 @@
         connector.request('file-unlock-request', 'file-unlock-response', {
           file_path: this.$store.state.fileTracker.openFile,
           lock_id: this.pieces[this.index].pieceID
-        }).then(({succes}) => {
-          if (!succes) {
-            console.error('faal')
-          }
         })
       },
 
@@ -317,7 +327,7 @@
       gutterSelectMarker () {
         const marker = document.createElement('div')
         marker.classList.add('lock-gutter-marker')
-        marker.innerHTML = '●'
+        marker.innerHTML = '&nbsp;'
         return marker
       },
 
@@ -327,12 +337,8 @@
       initializeEvents () {
         const cm = this.$options.cminstance
 
-        cm.on('blur', () => {
-          // cm.setCursor({line: 0, ch: 0}, {
-          //   scroll: false
-          // })
-        })
         cm.on('focus', () => {
+          this.focus = true
           const cursorPos = cm.doc.getCursor()
           connector.send('cursor-move', {
             file_path: this.$store.state.fileTracker.openFile,
@@ -355,6 +361,7 @@
         })
 
         cm.on('cursorActivity', () => {
+          if (!this.focus) return
           const cursorPos = cm.doc.getCursor()
 
           connector.send('cursor-move', {
@@ -426,6 +433,7 @@
 </script>
 
 <style lang="scss">
+@import url(https://cdn.jsdelivr.net/gh/tonsky/FiraCode@1.206/distr/fira_code.css);
 .editor-piece {
   &:last-child {
     .CodeMirror {
@@ -438,6 +446,8 @@
 
 .CodeMirror {
   height: auto;
+  font-family: 'Fira Code', monospace;
+  font-variant-ligatures: contextual;
 }
 
 .CodeMirror-lines {
@@ -470,6 +480,10 @@
   pointer-events: none;
   position: absolute;
 
+}
+
+.CodeMirror-activeline-gutter {
+  pointer-events: none;
 }
 
 @keyframes blink {

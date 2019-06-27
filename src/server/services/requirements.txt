@@ -1,4 +1,0 @@
-Pyro4
-coloredlogs
-websockets
-pytest

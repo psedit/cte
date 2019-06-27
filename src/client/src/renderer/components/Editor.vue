@@ -159,11 +159,9 @@
       restoreEditorScroll () {
         const editorElement = this.$refs.mainEditor
         if (editorElement.scrollHeight - editorElement.clientHeight <= this.restoreScrollY) {
-          console.log('Current editor too small for restoration.')
           this.restoreScrollY -= 1
           this.$nextTick(this.restoreEditorScroll)
         } else {
-          // console.log(Math.min(this.restoreScrollY, editorElement.scrollHeight - editorElement.clientHeight))
           editorElement.scrollTop = Math.min(this.restoreScrollY, editorElement.scrollHeight - editorElement.clientHeight)
         }
       },
@@ -196,15 +194,16 @@
           piece_uuid: this.pieces[draggedLock.index].pieceID,
           offset: draggedLock.offset,
           length: draggedLock.length
-        }).then(response => console.log(response))
+        })
 
         this.lockDragCancel()
       },
       /* Cancels lock selection.
        */
       lockDragCancel () {
-        if (this.lockDragStartLocation !== null) {
-          console.log('cancel')
+        if (this.lockDragStartLocation) {
+          const editorElement = this.$refs.editorPiecesList
+          this.restoreScrollY = editorElement.scrollTop
           this.lockDragStartLocation = null
           this.lockDragEndLocation = null
           for (let key in this.components) {
@@ -302,7 +301,7 @@
   right: 0;
   top: 0;
   bottom: 0;
-  overflow-y: scroll;
+  overflow-y: inherit;
   background-color: #272822;
 }
 
@@ -311,7 +310,7 @@
   // flex-direction: column;
   height: auto;
   width: auto;
-  overflow-y: hidden;
+  overflow-y: scroll;
   padding-bottom: 1000px;
 }
 
@@ -334,7 +333,6 @@
 .editor {
   width: 100%;
   height: auto;
-  overflow-y: scroll;
   background-color: #272822;
   &.lightTheme {
     background-color: #fff;
