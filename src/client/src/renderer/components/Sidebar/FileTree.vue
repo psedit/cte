@@ -33,7 +33,7 @@
    *
    * @module fileTracker
    *
-   * @vue-data {Boolean} isOpen - 
+   * @vue-data {Boolean} isOpen -
    * @vue-data {Object[]} rightClickOptionsFile - a list of all options for when you rightclick a file.
    * @vue-data {Object[]} rightClickOptionsDir - a list of all options for when you rightclick a directory.
    */
