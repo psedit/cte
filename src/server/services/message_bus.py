@@ -4,8 +4,21 @@ from collections import defaultdict
 from typing import Dict, List
 import queue
 import threading
+import signal
 from .typedefs import UUID, ServiceAddress
 from .mixins import LoggerMixin
+
+
+_running = True
+
+
+def handler(*args):
+    global _running
+    print("Received signal, exiting...")
+    _running = False
+
+
+signal.signal(signal.SIGUSR1, handler)
 
 
 @Pyro4.expose
@@ -190,10 +203,17 @@ class MessageBus(LoggerMixin):
 
 
 def main():
+    global _running
     mb = MessageBus()
-    Pyro4.Daemon.serveSimple({
-        mb: 'service.MessageBus'
-    }, ns=True)
+
+    # Register Pyro4 daemon
+    ns = Pyro4.locateNS()
+    inst_d = Pyro4.Daemon()
+    inst_uri = inst_d.register(mb)
+    ns.register(f"service.MessageBus", inst_uri)
+
+    # Start request loop
+    inst_d.requestLoop(lambda: _running)
 
 
 if __name__ == '__main__':

@@ -1,4 +1,5 @@
 import sys
+import traceback
 import importlib
 
 try:
@@ -17,5 +18,6 @@ except ImportError:
 try:
     mod.main()
 except AttributeError:
+    traceback.print_exc()
     print(f"Error: module '{sys.argv[1]}' has no main function - is it a "
           f"service?")

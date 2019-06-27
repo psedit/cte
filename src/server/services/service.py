@@ -8,6 +8,7 @@ import asyncio
 from collections import defaultdict
 from .typedefs import Address
 from .mixins import LoggerMixin
+import signal
 
 
 def message_type(msg_type: str):
@@ -19,6 +20,14 @@ def message_type(msg_type: str):
         f._msg_type = msg_type
         return f
     return decorator
+
+
+def usr1_signal_handler(signum, frame):
+    print("Signal handler called, exiting service...")
+    Service._running = False
+
+
+signal.signal(signal.SIGUSR1, usr1_signal_handler)
 
 
 @Pyro4.expose
@@ -41,6 +50,7 @@ class Service(LoggerMixin):
     method accepts by adding the @message_type(<type>) decorator,
     where <type> is a string containing the message type name.
     """
+    _running = True
     def __init__(self, msg_bus, logger):
         self._msg_bus = msg_bus
 
@@ -137,7 +147,7 @@ class Service(LoggerMixin):
         # Start request loop
         print(f"{cls.__name__} service running")
         if start_request_loop:
-            inst_d.requestLoop()
+            inst_d.requestLoop(lambda: Service._running)
 
     def get_wanted_messages(self):
         """
