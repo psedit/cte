@@ -33,7 +33,6 @@
    *
    * @module fileTracker
    *
-   * @vue-data {Boolean} isOpen - 
    * @vue-data {Object[]} rightClickOptionsFile - a list of all options for when you rightclick a file.
    * @vue-data {Object[]} rightClickOptionsDir - a list of all options for when you rightclick a directory.
    */
@@ -48,10 +47,6 @@
     },
     props: {
       fileList: Array,
-      startOpen: {
-        type: Boolean,
-        default: false
-      }
     },
     mounted () {
       addEventListener('click', (e) => {
@@ -61,7 +56,6 @@
     },
     data () {
       return {
-        isOpen: this.startOpen,
         rightClickOptionsFile: [{name: 'Download'}, {name: 'Rename'}, {name: 'Relocate'}, {name: 'Delete'}],
         rightClickOptionsDir: [{name: 'Rename'}, {name: 'Relocate'}, {name: 'Delete'}]
       }
