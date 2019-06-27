@@ -16,13 +16,19 @@ Vue.config.productionTip = false
  * Is called from index.js
  */
 require('electron').ipcRenderer.on('changeURL', (event, message) => {
-  connector.reload(message)
+  Vue.toasted.show(message.toast)
+  connector.reload(message.url)
   /* Join the new server
    */
   connector.addEventListener('open', () => {})
   /* Remove all tabs
    */
   store.dispatch('serverURLChange')
+})
+
+/* Show a toast message. Called from index.js. */
+require('electron').ipcRenderer.on('showWorkspaceToast', (event, message) => {
+  Vue.toasted.show(message)
 })
 
 /* eslint-disable no-new */

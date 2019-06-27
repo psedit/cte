@@ -1,0 +1,13 @@
+{
+  "plugins": [
+    "node_modules/jsdoc-vuejs"
+  ],
+  "source": {
+    "includePattern": "\\.(vue|js)$"
+  },
+  "opts": {
+    "template": "node_modules/minami",
+    "destination": "docs",
+    "recurse": true
+  }
+}

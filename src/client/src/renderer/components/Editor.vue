@@ -1,5 +1,6 @@
 <template>
-  <div class="editor" ref="mainEditor" @scroll="handleScroll">
+  <div class="editor" :class="{lightTheme}" ref="mainEditor" @scroll="handleScroll">
+    <theme-switch @theme-change="themeChange"/>
     <add-piece-button class="add-piece-button-top"/>
     <div class="editor-pieces" ref="editorPiecesList">
       <transition-group name="swap" tag="editorPieceGroup">
@@ -8,6 +9,7 @@
           v-if="piece.text.length > 0"
           :key="piece.pieceID"
           :index="index"
+          :theme="lightTheme"
           :pieces="pieces"
           :dragStart="lockDragStartLocation"
           :dragEnd="lockDragEndLocation"
@@ -37,6 +39,7 @@
 <script>
   import Vue from 'vue'
   import EditorPiece from './Editor/EditorPiece'
+  import ThemeSwitch from './ThemeSwitch'
   import convert from './Editor/cursor'
   import connector from '../../main/connector'
   import { getRandomColor } from './Editor/RandomColor'
@@ -46,14 +49,20 @@
   export default {
     name: 'Editor',
     components: {
-      AddPieceButton,
-      EditorPiece
+      EditorPiece,
+      ThemeSwitch,
+      AddPieceButton
     },
+    /**
+     *
+     * @returns {{dragList: null, lockDragStartLocation: null, lockDragEndLocation: null}}
+     */
     data () {
       return {
         lockDragStartLocation: null,
         lockDragEndLocation: null,
         dragList: null,
+        lightTheme: false,
         restoreScrollY: 0
       }
     },
@@ -92,7 +101,9 @@
     },
     methods: {
       handleScroll () {
-        this.restoreScrollY = this.$refs.mainEditor.scrollTop
+        if (this.$refs.mainEditor.scrollTop !== 0) {
+          this.restoreScrollY = this.$refs.mainEditor.scrollTop
+        }
       },
       editorUpdate () {
         this.$nextTick(this.restoreEditorScroll)
@@ -106,6 +117,10 @@
           // this.restoreEditorScroll()
         }, 10)
         // this.$nextTick(self.restoreEditorScroll)
+      },
+      themeChange (lightTheme) {
+        console.log('Changing theme')
+        this.lightTheme = lightTheme
       },
       editorMount (editorPiece) {
         const index = this.$refs.editorPieces.indexOf(editorPiece)
@@ -138,11 +153,9 @@
       restoreEditorScroll () {
         const editorElement = this.$refs.mainEditor
         if (editorElement.scrollHeight - editorElement.clientHeight <= this.restoreScrollY) {
-          console.log('Current editor too small for restoration.')
           this.restoreScrollY -= 1
           this.$nextTick(this.restoreEditorScroll)
         } else {
-          // console.log(Math.min(this.restoreScrollY, editorElement.scrollHeight - editorElement.clientHeight))
           editorElement.scrollTop = Math.min(this.restoreScrollY, editorElement.scrollHeight - editorElement.clientHeight)
         }
       },
@@ -162,32 +175,23 @@
       lockDragEnd (line, index) {
         if (this.lockDragStartLocation === null) return
 
-        console.log(`Request lock from ${this.lockDragStartLocation.piece}:${this.lockDragStartLocation.line} to ${index}:${line}`)
-
         let draggedLock = rangeToAnchoredLength(this.$store.state.fileTracker.pieceTable,
           this.lockDragStartLocation.piece, this.lockDragStartLocation.line,
           this.lockDragEndLocation.piece, this.lockDragEndLocation.line)
-
-        console.log(`PieceIdx: ${draggedLock.index}, Offset: ${draggedLock.offset}, Length: ${draggedLock.length}`)
 
         connector.request('file-lock-request', 'file-lock-response', {
           file_path: this.$store.state.fileTracker.openFile,
           piece_uuid: this.pieces[draggedLock.index].pieceID,
           offset: draggedLock.offset,
           length: draggedLock.length
-        }).then(response => console.log(response))
+        })
 
         this.lockDragCancel()
       },
-      showPieceLengths () {
-        const table = this.$store.state.fileTracker.pieceTable
-        for (let i = 0; i < table.table.length; i++) {
-          console.log(`piece ${i} has length ${table.table[i].length}`)
-        }
-      },
       lockDragCancel () {
-        if (this.lockDragStartLocation !== null) {
-          console.log('cancel')
+        if (this.lockDragStartLocation) {
+          const editorElement = this.$refs.mainEditor
+          this.restoreScrollY = editorElement.scrollTop
           this.lockDragStartLocation = null
           this.lockDragEndLocation = null
           for (let key in this.components) {
@@ -219,7 +223,10 @@
       },
       lang () {
         if (!this.filePath) return null
-        const ext = this.filePath.match(/\.\w+/)[0].toLowerCase()
+        let ext = this.filePath.match(/\.\w+/)
+        if (!ext) return null
+
+        ext = ext[0].toLowerCase()
         if (ext === '.py') {
           return 'python'
         } else if (ext === '.js') {
@@ -238,7 +245,7 @@
       connector.addEventListener('open', () => {
         connector.listenToMsg('file-delta-broadcast', ({ content }) => {
           if (content.file_path === this.filePath) {
-            const newPieceTable = edit(this.pieceTable, content.piece_uuid, content.content.split('\n').map(val => val + '\n'))
+            const newPieceTable = edit(this.pieceTable, content.piece_uuid, content.content.replace(/\n$/, '').split('\n').map(val => val + '\n'))
             this.$store.dispatch('updatePieceTable', newPieceTable)
           }
         })
@@ -286,15 +293,20 @@
   bottom: 0;
   overflow-y: scroll;
   background-color: #272822;
+  &.lightTheme {
+    background-color: #fff;
+
+  }
 }
 
 .editor-pieces {
   // display: flex;
   // flex-direction: column;
-  height: auto;
+  height: 1000000pt;
   width: auto;
-  overflow-y: hidden;
+  overflow-y: visible;
   padding-bottom: 1000px;
+  min-height: 1000000pt;
 }
 
 .editor-piece {
@@ -313,15 +325,15 @@
 
 .swap-enter-active {
   position: float;
-  opacity: 0;
-  max-height: 0;
+  opacity: 1;
+  // max-height: 0;
   // display: block;
   transition: all 1s;
 }
 
 .swap-leave-active {
   position: relative;
-  // opacity: 0;
+  opacity: 1;
   transition: all 1s;
   // max-height: 0;
   // display: block;

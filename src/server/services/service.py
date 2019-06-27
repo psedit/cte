@@ -3,11 +3,11 @@ import inspect
 import Pyro4
 from typing import Dict, Any, Callable, List, Tuple
 import uuid
-from typedefs import Address
 import time
 import asyncio
 from collections import defaultdict
-from mixins import LoggerMixin
+from .typedefs import Address
+from .mixins import LoggerMixin
 
 
 def message_type(msg_type: str):

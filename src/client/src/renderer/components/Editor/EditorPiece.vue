@@ -11,6 +11,12 @@
   import 'codemirror/theme/monokai.css'
   import 'codemirror/mode/javascript/javascript'
   import 'codemirror/mode/python/python'
+  import 'codemirror/addon/hint/show-hint'
+  import 'codemirror/addon/hint/show-hint.css'
+  import 'codemirror/addon/hint/javascript-hint'
+  import 'codemirror/addon/edit/closebrackets'
+  import 'codemirror/addon/edit/matchbrackets'
+  import 'codemirror/addon/selection/active-line'
   import { edit, indexOffsetRangeSort } from '../../../main/pieceTable'
   import './multiEditor'
   import connector from '../../../main/connector'
@@ -18,29 +24,52 @@
   import GhostCursors from './GhostCursors'
   import AddPieceButton from './AddPieceButton'
 
+  /**
+   * @module Editor/EditorPiece
+   * @desc A piece of the editor.
+   */
   export default {
-    name: 'EditorPiece.vue',
+    name: 'EditorPiece',
     components: {
       GhostCursors,
       AddPieceButton
     },
+    /**
+     * @vue-prop {Piece[]} pieces - The piece table
+     * @vue-prop {Number} index - The index of the current piece.
+     * @vue-prop {Object} dragStart - The start position of dragging.
+     * @vue-prop {Object} dragStop - The stop position of dragging.
+     */
     props: {
       pieces: Array,
       index: Number,
       dragStart: Object,
-      dragEnd: Object
+      dragEnd: Object,
+      /* true: dark
+       * false: light
+       */
+      theme: Boolean
     },
-
+    /**
+     * @vue-data {String} lang - The language of the code.
+   */
     data () {
       return {
-        lang: null
+        lang: null,
+        focus: false
       }
     },
 
+    /**
+     * The codemirror instance as a promise
+     * @type Promise | null
+     */
     myPromise: null,
+    /** @type CodeMirror | null */
     cminstance: null,
-    preText: null,
+    /** @type Object | null */
     startState: null,
+
     watch: {
       code (val) {
         if (!this.editable) {
@@ -52,11 +81,26 @@
       },
       pieceDragLength: function (newDragEnd, oldDragEnd) {
         this.updateDragLength(oldDragEnd, newDragEnd)
+      },
+      theme (newTheme) {
+        this.updateTheme(newTheme)
       }
     },
     mounted () {
       this.$emit('mounted', this)
     },
+
+    /**
+     *
+     * @vue-computed {String[]} codeArray
+     * @vue-computed {String} code
+     * @vue-computed {Piece} piece
+     * @vue-computed {String} username
+     * @vue-computed {Boolean} editable
+     * @vue-computed {PieceTable} pieceTable
+     * @vue-computed {Number | null} pieceDragStart
+     * @vue-computed {Number} pieceDragLength
+     */
     computed: {
       codeArray () {
         return this.pieces[this.index].text
@@ -118,6 +162,15 @@
     },
 
     methods: {
+      /**
+       * Initializes a codemirror editor.
+       * Also initiates the ghostcursors for this piece after
+       * codemirror has been initiated.
+       *
+       * Promise is made only once.
+       *
+       * @returns {Promise<CodeMirror>} The promise resolved with the made CodeMirror instance.
+       */
       initializeEditor () {
         if (!this.$options.myPromise) {
           this.$options.myPromise = new Promise(resolve => {
@@ -132,7 +185,20 @@
         return this.$options.myPromise
       },
 
+      updateTheme (theme) {
+        const cm = this.$options.cminstance
+        if (this.theme) {
+          cm.setOption('theme', 'default')
+        } else {
+          cm.setOption('theme', 'monokai')
+        }
+      },
+
       _initializeEditor () {
+        let initTheme = 'monokai'
+        if (this.theme) {
+          initTheme = 'default'
+        }
         if (!window.CodeMirror) window.CodeMirror = CodeMirror
         // debugger
         const cm = CodeMirror(this.$refs.cm, {
@@ -142,24 +208,28 @@
             startState: this.$options.startState
           },
           lineNumbers: true,
-          theme: 'monokai',
+          theme: initTheme,
           smartIndent: true,
           lineWrapping: true,
           showCursorWhenSelecting: true,
           readOnly: !this.editable,
-          // inputStyle: 'contenteditable',
-          // lineNumberFormatter: this.lineNumberFormatter,
           firstLineNumber: this.firstLineNumber,
           viewportMargin: Infinity,
           cursorBlinkRate: 0,
+          autoCloseBrackets: true,
+          styleActiveLine: true,
           gutters: ['user-gutter', 'CodeMirror-linenumbers']
         })
 
         this.$options.cminstance = cm
 
+        if (this.lang === 'javascript') {
+          cm.addKeyMap({'Ctrl-Space': 'autocomplete'}, false)
+          cm.setOption('matchBrackets', true)
+          cm.setOption('autoCloseBrackets ', true)
+        }
         cm.setValue(this.code)
 
-        // cm.getGutterElement().querySelector('.user-gutter').style.backgroundColor = getRandomColor(this.username).string()
         if (this.username) {
           cm.getGutterElement().style.setProperty('--background-color', getRandomColor(this.username).string())
         }
@@ -170,10 +240,6 @@
         connector.request('file-unlock-request', 'file-unlock-response', {
           file_path: this.$store.state.fileTracker.openFile,
           lock_id: this.pieces[this.index].pieceID
-        }).then(({succes}) => {
-          if (!succes) {
-            console.error('faal')
-          }
         })
       },
       setText () {
@@ -212,19 +278,15 @@
       gutterSelectMarker () {
         const marker = document.createElement('div')
         marker.classList.add('lock-gutter-marker')
-        marker.innerHTML = '●'
+        marker.innerHTML = '&nbsp;'
         return marker
       },
 
       initializeEvents () {
         const cm = this.$options.cminstance
 
-        cm.on('blur', () => {
-          // cm.setCursor({line: 0, ch: 0}, {
-          //   scroll: false
-          // })
-        })
         cm.on('focus', () => {
+          this.focus = true
           const cursorPos = cm.doc.getCursor()
           connector.send('cursor-move', {
             file_path: this.$store.state.fileTracker.openFile,
@@ -244,6 +306,18 @@
 
         cm.on('scrollCursorIntoView', (_, e) => {
           e.preventDefault()
+        })
+
+        cm.on('cursorActivity', () => {
+          if (!this.focus) return
+          const cursorPos = cm.doc.getCursor()
+
+          connector.send('cursor-move', {
+            file_path: this.$store.state.fileTracker.openFile,
+            piece_id: this.pieces[this.index].pieceID,
+            offset: cursorPos.line,
+            column: cursorPos.ch
+          })
         })
 
         if (this.editable) {
@@ -304,6 +378,7 @@
 </script>
 
 <style lang="scss">
+@import url(https://cdn.jsdelivr.net/gh/tonsky/FiraCode@1.206/distr/fira_code.css);
 .editor-piece {
   &:last-child {
     .CodeMirror {
@@ -316,6 +391,8 @@
 
 .CodeMirror {
   height: auto;
+  font-family: 'Fira Code', monospace;
+  font-variant-ligatures: contextual;
 }
 
 .CodeMirror-lines {
@@ -339,7 +416,7 @@
 
 .user-gutter {
   width: 1em;
-  background-color: var(--background-color, rgba(255, 255, 255, 0.5));
+  background-color: var(--background-color, #aaa);
 }
 
 .lock-gutter-marker {
@@ -348,6 +425,10 @@
   pointer-events: none;
   position: absolute;
 
+}
+
+.CodeMirror-activeline-gutter {
+  pointer-events: none;
 }
 
 @keyframes blink {

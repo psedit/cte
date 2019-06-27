@@ -7,6 +7,7 @@
     </div>
     <div class="file-tools">
       <file-plus title="Add new file/directory" class="button" @click="createItem"/>
+      <content-save title="Save current file" class="button" @click="saveFile"/>
       <cloud-download-outline title="Download project" class="button" @click="downloadProject"/>
       <upload title="Upload directory" class="button" @click="uploadDir"/>
       <file-upload title="Upload file" class="button" @click="uploadFile"/>
@@ -23,16 +24,19 @@
   import BackIcon from 'vue-material-design-icons/ArrowLeft'
   import FilePlus from 'vue-material-design-icons/FilePlus'
   import FileUpload from 'vue-material-design-icons/FileUpload'
+  import ContentSave from 'vue-material-design-icons/ContentSave'
   import CloudDownloadOutline from 'vue-material-design-icons/CloudDownloadOutline'
   import Upload from 'vue-material-design-icons/Upload'
   import connector from '../../main/connector'
   import FileTree from './Sidebar/FileTree'
   import * as fileManager from './Sidebar/fileManager'
+  import * as optionParser from '../../main/optionParser'
   import {convertToJS, stitch} from '../../main/pieceTable'
   const {dialog} = require('electron').remote
   const dialogs = require('dialogs')
   const tar = require('tar')
   const fs = require('fs')
+  const path = require('path')
 
   export default {
     name: 'sidebar',
@@ -49,6 +53,7 @@
       FilePlus,
       Upload,
       FileUpload,
+      ContentSave,
       CloudDownloadOutline
     },
     computed: {
@@ -56,6 +61,13 @@
        *  Use completeTree to get all items in the current folder.
        */
       currItems () {
+        /* When the sidebar is empty, show user a message that connection
+         * with the server is being established.
+         */
+        if (this.completeTree.length === 0) {
+          this.$toasted.show(`Getting file tree from server...`)
+        }
+
         let items = this.completeTree
 
         /* For all folders in the current path (meaning, all parents)
@@ -118,6 +130,20 @@
     },
     methods: {
       /**
+       * Save current open file.
+       */
+      saveFile () {
+        let openFilePath = this.$store.state.fileTracker.openFile
+        if (openFilePath === undefined || openFilePath === '') {
+          this.$toasted.show(`There was no open file. Open a file to save it.`)
+          return
+        }
+        connector.send('file-save', {
+          file_path: openFilePath
+        })
+      },
+
+      /**
        * Save project to disk.
        *
        * @param {string} dataBase64 base64 encoded string with binary data of project as tar file.
@@ -146,51 +172,64 @@
       },
 
       /**
-       * Download entire project to local directory.
+       * Do a file-project-request to  save the project to localDirPath.
+       *
+       * @param {string} localDirPath path to local working space
        */
-      downloadProject () {
-        const homedir = require('os').homedir()
-        const settingsDirPath = homedir + '/pseditor-settings/'
-        const settingsPath = settingsDirPath + 'settings.json'
-
-        let errTitle = 'Error! Could not get local workspace path...'
-        let err = 'Specify the local workspace path via Settings --> Local Workspace'
-        let localPath = ''
-
-        /* If settings json does not exist, throw an error. */
-        if (!fs.existsSync(settingsPath)) {
-          dialog.showErrorBox(errTitle, err + '\nPath to settings.json does not exist.')
-          return
-        }
-
-        /* Try getting local file path from json. */
-        let jsonSettingsString = fs.readFileSync(settingsPath, 'utf8')
-        try {
-          localPath = JSON.parse(jsonSettingsString).workingPath
-        } catch (e) {
-          dialog.showErrorBox(errTitle, err + '\nCould not parse json file.')
-          return
-        }
-
-        /* Throw error if local path does not exist. */
-        if (!fs.existsSync(localPath)) {
-          dialog.showErrorBox(errTitle, `${err}\nLocal path (${localPath}) does not exist.`)
-          return
-        }
-
-        /* Get base64 encoded string with binary data of project as tar file
-         * from server.
+      requestProject (localDirPath) {
+        /* Get base64 encoded string with binary data of project
+         * as tar file from server.
          */
-        this.$toasted.show(`Downloading project to ${localPath} (this may take upto 30 seconds)`)
-        let dataBase64 = ''
         connector.request(
           'file-project-request',
           'file-project-response',
           {}
         ).then((response) => {
-          dataBase64 = response.data
-          this.saveToDisk(dataBase64, localPath)
+          this.saveToDisk(response.data, localDirPath)
         })
+      },
+
+      /**
+       * Download entire project to local directory.
+       */
+      downloadProject () {
+        let currSettings = optionParser.getSettings()
+        let localDirPath = currSettings.workingPath
+
+        /* Options for message box. */
+        const options = {
+          type: 'question',
+          buttons: ['Cancel', 'Choose Workspace'],
+          defaultId: 1,
+          title: 'Local workspace not found',
+          message: 'There is no local workspace specified yet.',
+          detail: 'Choose a local directory in which to save the project'
+        }
+
+        /* If user has not set a local workspace (or has set a non-existing one),
+         * ask for one and save the choice in the json file.
+         */
+        if (localDirPath === '' || (!fs.existsSync(localDirPath))) {
+          dialog.showMessageBox(null, options, (response) => {
+            /* If user clicks cancel, do nothing. */
+            if (response === 0) return
+
+            localDirPath = dialog.showOpenDialog({ properties: ['openDirectory'] })
+
+            /* If user clicks cancel, do nothing. */
+            if (localDirPath === undefined || localDirPath[0].toString() === '') {
+              return
+            }
+
+            localDirPath = localDirPath[0].toString()
+            optionParser.setLocalWorkspace(localDirPath)
+            this.$toasted.show(`Succesfully set ${localDirPath} as local workspace`)
+          })
+          return
+        }
+
+        this.$toasted.show(`Downloading project to ${localDirPath} (this may take upto 30 seconds)`)
+        this.requestProject(localDirPath)
       },
 
       /**
@@ -267,7 +306,9 @@
             fs.writeFile(downloadPath, fileContent, (err) => {
               if (err) {
                 dialog.showErrorBox('error', err)
+                return
               }
+              this.$toasted.show(`Downloaded ${filePath} to ${downloadPath}`)
             })
           })
         })
@@ -472,7 +513,7 @@
         }
 
         /* Get name of file from path. */
-        let folderPath = localPath.split('/')
+        let folderPath = localPath.split(path.split)
         let newFileName = folderPath[folderPath.length - 1]
         let serverPath = this.currPathString + newFileName
 
@@ -494,7 +535,7 @@
           }
 
           /* Get dir name from newDirLocal. */
-          let folderPath = newDirLocal.split('/')
+          let folderPath = newDirLocal.split(path.sep)
           let newDirName = folderPath[folderPath.length - 1]
 
           let dirs = []
@@ -633,6 +674,30 @@
       },
 
       /**
+       * Listen to file save broadcasts and display a toast indicating the saved
+       * file and the user that saved it.
+       */
+      listenToFileSave () {
+        /* Listen to file-save-broadcast messages and show a toast with the
+         * file_path and username of the save.
+         */
+        let listen = () => {
+          connector.listenToMsg('file-save-broadcast', (response) => {
+            this.$toasted.show(`Succesfully saved ${response.content.file_path} by ${response.content.username}`)
+          })
+        }
+
+        /* If connection is not open, first open the websocket. */
+        if (connector.isOpen()) {
+          listen()
+        } else {
+          connector.addEventListener('open', () => {
+            listen()
+          })
+        }
+      },
+
+      /**
        * Open a new web socket and update the file tree.
        */
       openSocketUpdateTree () {
@@ -649,6 +714,8 @@
     },
     mounted () {
       this.openSocketUpdateTree()
+      this.listenToFileSave()
+
       /* When the server URL is changes,
        * reset the directory tracker.
        */
@@ -657,6 +724,17 @@
           connector.waitUntillOpen(() => {
             this.home()
           })
+          this.$toasted.show(`Connecting to server...`)
+        }
+      })
+
+      /* Save file is ctrl + s (or cmd + s on mac) is pressed. */
+      addEventListener('keydown', (event) => {
+        /* When user has a Mac, check for command + s. */
+        if (navigator.platform.indexOf('Mac') > -1) {
+          if (event.metaKey && event.key === 's') this.saveFile()
+        } else if (event.ctrlKey && event.key === 's') {
+          this.saveFile()
         }
       })
     }
@@ -690,7 +768,7 @@
   .file-tools {
     background-color: #555;
     display: grid;
-    grid-template-columns: 1fr auto auto auto auto;
+    grid-template-columns: 1fr auto auto auto auto auto;
     grid-gap: 0.5em;
     align-items: center;
     color: #fff;
