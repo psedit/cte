@@ -6,6 +6,8 @@
 </template>
 
 <script>
+/* Code for button that switched the theme.
+ */
 import LightbulbOutline from 'vue-material-design-icons/LightbulbOutline'
 import Lightbulb from 'vue-material-design-icons/Lightbulb'
 export default {
@@ -16,10 +18,14 @@ export default {
   },
   data () {
     return {
+      /* Theme of editorpieces.
+       */
       lightTheme: false
     }
   },
   computed: {
+    /* Title for the button.
+     */
     tooltip () {
       return `Switch to ${this.lightTheme ? 'dark' : 'light'} theme.`
     }

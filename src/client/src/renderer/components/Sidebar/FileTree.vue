@@ -27,6 +27,17 @@
   import 'vue-simple-context-menu/dist/vue-simple-context-menu.css'
   import VueSimpleContextMenu from 'vue-simple-context-menu'
 
+  /**
+   * Displays a list of all files, i.e., the file tree, as seen on the sidebar.
+   * Also manages everything relevant to the file tree.
+   *
+   * @module fileTracker
+   *
+   * @vue-data {Boolean} isOpen -
+   * @vue-data {Object[]} rightClickOptionsFile - a list of all options for when you rightclick a file.
+   * @vue-data {Object[]} rightClickOptionsDir - a list of all options for when you rightclick a directory.
+   */
+
   export default {
     name: 'FileTree',
     components: {
@@ -36,11 +47,7 @@
       VueSimpleContextMenu
     },
     props: {
-      fileList: Array,
-      startOpen: {
-        type: Boolean,
-        default: false
-      }
+      fileList: Array
     },
     mounted () {
       addEventListener('click', (e) => {
@@ -50,7 +57,6 @@
     },
     data () {
       return {
-        isOpen: this.startOpen,
         rightClickOptionsFile: [{name: 'Download'}, {name: 'Rename'}, {name: 'Relocate'}, {name: 'Delete'}],
         rightClickOptionsDir: [{name: 'Rename'}, {name: 'Relocate'}, {name: 'Delete'}]
       }

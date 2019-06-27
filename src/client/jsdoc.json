@@ -8,6 +8,7 @@
   "opts": {
     "template": "node_modules/minami",
     "destination": "docs",
+    "readme": "README.md",
     "recurse": true
   }
 }

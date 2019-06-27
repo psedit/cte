@@ -9,6 +9,14 @@ import websockets
 from typing import Dict, List
 from collections import defaultdict
 import socket
+import signal
+
+
+def handler(*args):
+    WSServer._asio_loop.call_soon_threadsafe(WSServer._asio_loop.stop)
+
+
+signal.signal(signal.SIGUSR1, handler)
 
 
 def list_ser(obj):
@@ -18,6 +26,7 @@ def list_ser(obj):
 
 @Pyro4.expose
 class WSServer(Service):
+    _asio_loop = asyncio.get_event_loop()
     """
     WebSocket server which is also available over Pyro.
     """
@@ -53,18 +62,17 @@ class WSServer(Service):
         """
         Hooks Pyro into the asyncio event loop and starts it.
         """
-        self._asio_event_loop = asyncio.get_event_loop()
         self._pyro_daemon = inst_d
         self._known_pyro_socks: List[socket.socket] = []
         for sock in inst_d.sockets:
             self._known_pyro_socks.append(sock)
-            self._asio_event_loop.add_reader(
+            self._asio_loop.add_reader(
                     sock.fileno(), partial(self.handle_pyro_event, sock)
                 )
 
-        self._asio_event_loop.run_until_complete(
+        self._asio_loop.run_until_complete(
             websockets.serve(self.ws_loop, '0.0.0.0', 12345))
-        self._asio_event_loop.run_forever()
+        self._asio_loop.run_forever()
 
     async def ws_loop(self, websocket, path):
         """
@@ -151,7 +159,7 @@ class WSServer(Service):
                 print(f"Received message: {data}")
                 self._send_message_from_client(new_type, data['content'],
                                                client_info)
-        except websockets.exceptions.ConnectionClosed:
+        except Exception:
             print(f'Websocket {websocket} unexpectedly closed connection.')
         finally:
             self._disconnect_ws(websocket.remote_address)
@@ -165,14 +173,14 @@ class WSServer(Service):
         for sock in self._pyro_daemon.sockets:
             if sock not in self._known_pyro_socks:
                 self._known_pyro_socks.append(sock)
-                self._asio_event_loop.add_reader(
+                self._asio_loop.add_reader(
                         sock.fileno(), partial(self.handle_pyro_event, sock)
                     )
 
     @message_type("net-send")
     async def send_message(self, msg):
         asyncio.run_coroutine_threadsafe(self.messages_to_send.put(msg),
-                                         self._asio_event_loop)
+                                         self._asio_loop)
 
     @message_type("login-request")
     async def _register_user(self, msg):

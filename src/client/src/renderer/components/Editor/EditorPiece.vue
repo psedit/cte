@@ -11,6 +11,12 @@
   import 'codemirror/theme/monokai.css'
   import 'codemirror/mode/javascript/javascript'
   import 'codemirror/mode/python/python'
+  import 'codemirror/addon/hint/show-hint'
+  import 'codemirror/addon/hint/show-hint.css'
+  import 'codemirror/addon/hint/javascript-hint'
+  import 'codemirror/addon/edit/closebrackets'
+  import 'codemirror/addon/edit/matchbrackets'
+  import 'codemirror/addon/selection/active-line'
   import { edit, indexOffsetRangeSort } from '../../../main/pieceTable'
   import './multiEditor'
   import connector from '../../../main/connector'
@@ -20,7 +26,25 @@
 
   /**
    * @module Editor/EditorPiece
-   * @desc A piece of the editor.
+   * @desc Represents a piece of the editor.
+   *       Handles the actual editing behaviour.
+   *
+   * @vue-prop {Piece[]} pieces - The piece table
+   * @vue-prop {Number} index - The index of the current piece.
+   * @vue-prop {Object} dragStart - The start position of dragging.
+   * @vue-prop {Object} dragStop - The stop position of dragging.
+   * @vue-prop {Boolean} theme - If true, the theme should be a light theme, otherwise a dark theme.
+   *
+   * @vue-data {String} lang - The language of the code.
+   *
+   * @vue-computed {String[]} codeArray - The code of this piece with lines separated in items in the array.
+   * @vue-computed {String} code - The code of this piece as one continuous string.
+   * @vue-computed {Piece} piece - The piece of the piece table that this editor represents.
+   * @vue-computed {String} username - The owner of the piece. An empty string if there is no owner.
+   * @vue-computed {Boolean} editable - If the piece should be editable or that it should be read only.
+   * @vue-computed {PieceTable} pieceTable - The full piece table.
+   * @vue-computed {Number | null} pieceDragStart - The line where the user started dragging in the lock-gutter.
+   * @vue-computed {Number} pieceDragLength - The length of the lock the user is currently dragging.
    */
   export default {
     name: 'EditorPiece',
@@ -28,12 +52,6 @@
       GhostCursors,
       AddPieceButton
     },
-    /**
-     * @vue-prop {Piece[]} pieces - The piece table
-     * @vue-prop {Number} index - The index of the current piece.
-     * @vue-prop {Object} dragStart - The start position of dragging.
-     * @vue-prop {Object} dragStop - The stop position of dragging.
-     */
     props: {
       pieces: Array,
       index: Number,
@@ -45,7 +63,6 @@
       theme: Boolean
     },
     /**
-     * @vue-data {String} lang - The language of the code.
    */
     data () {
       return {
@@ -55,11 +72,12 @@
     },
 
     /**
-     * The codemirror instance as a promise
-     * @type Promise | null
+     * @alias $options.myPromise
      */
     myPromise: null,
-    /** @type CodeMirror | null */
+    /**
+     * @alias $options.cminstance
+     */
     cminstance: null,
     /** @type Object | null */
     startState: null,
@@ -84,17 +102,6 @@
       this.$emit('mounted', this)
     },
 
-    /**
-     *
-     * @vue-computed {String[]} codeArray
-     * @vue-computed {String} code
-     * @vue-computed {Piece} piece
-     * @vue-computed {String} username
-     * @vue-computed {Boolean} editable
-     * @vue-computed {PieceTable} pieceTable
-     * @vue-computed {Number | null} pieceDragStart
-     * @vue-computed {Number} pieceDragLength
-     */
     computed: {
       codeArray () {
         return this.pieces[this.index].text
@@ -179,7 +186,10 @@
         return this.$options.myPromise
       },
 
-      updateTheme (theme) {
+      /**
+       * Changes the theme between a light and dark theme as set by this.theme.
+       */
+      updateTheme () {
         const cm = this.$options.cminstance
         if (this.theme) {
           cm.setOption('theme', 'default')
@@ -188,13 +198,19 @@
         }
       },
 
+      /**
+       * Initializes the editor.
+       *
+       * Makes a CodeMirror instance and sets all the configuration.
+       * Also makes the lock-gutter and calls to initialize all the events.
+       * @private
+       */
       _initializeEditor () {
         let initTheme = 'monokai'
         if (this.theme) {
           initTheme = 'default'
         }
         if (!window.CodeMirror) window.CodeMirror = CodeMirror
-        // debugger
         const cm = CodeMirror(this.$refs.cm, {
           mode: {
             name: 'multi_editor',
@@ -207,43 +223,59 @@
           lineWrapping: true,
           showCursorWhenSelecting: true,
           readOnly: !this.editable,
-          // inputStyle: 'contenteditable',
-          // lineNumberFormatter: this.lineNumberFormatter,
           firstLineNumber: this.firstLineNumber,
           viewportMargin: Infinity,
           cursorBlinkRate: 0,
+          autoCloseBrackets: true,
+          styleActiveLine: true,
           gutters: ['user-gutter', 'CodeMirror-linenumbers']
         })
 
         this.$options.cminstance = cm
 
+        if (this.lang === 'javascript') {
+          cm.addKeyMap({'Ctrl-Space': 'autocomplete'}, false)
+          cm.setOption('matchBrackets', true)
+          cm.setOption('autoCloseBrackets ', true)
+        }
         cm.setValue(this.code)
 
-        // cm.getGutterElement().querySelector('.user-gutter').style.backgroundColor = getRandomColor(this.username).string()
         if (this.username) {
           cm.getGutterElement().style.setProperty('--background-color', getRandomColor(this.username).string())
         }
         cm.getGutterElement().setAttribute('title', this.username || 'Click and drag to lock a piece.')
         this.initializeEvents()
       },
+
+      /**
+       * Does an request to unlock the current piece.
+       */
       unlock () {
         connector.request('file-unlock-request', 'file-unlock-response', {
           file_path: this.$store.state.fileTracker.openFile,
           lock_id: this.pieces[this.index].pieceID
-        }).then(({succes}) => {
-          if (!succes) {
-            console.error('faal')
-          }
         })
       },
+
+      /**
+       * Updates current code to be the same as this.code
+       */
       setText () {
         const cm = this.$options.cminstance
 
         const from = {line: 0, ch: 0}
         const lastLine = cm.lastLine()
         const to = {line: lastLine, ch: cm.getLine(lastLine).length}
+        // Use replaceRange instead of setValue to prevent scrolling.
         cm.replaceRange(this.code, from, to)
       },
+
+      /**
+       * Changes the drag start position in the lock gutter.
+       *
+       * @param newDragStart The current position where the user is dragging.
+       * @param oldDragStart The previous position where the user is dragging.
+       */
       updateDragStart (newDragStart, oldDragStart) {
         const cm = this.$options.cminstance
         cm.clearGutter('user-gutter')
@@ -252,6 +284,12 @@
             this.gutterSelectMarker())
         }
       },
+
+      /**
+       * Changes the drag length position in the lock gutter.
+       * @param newDragLength The current length of the lock the user is dragging.
+       * @param oldDragLength The previous length of the lock the user is dragging.
+       */
       updateDragLength (newDragLength, oldDragLength) {
         const cm = this.$options.cminstance
         cm.clearGutter('user-gutter')
@@ -260,15 +298,32 @@
             this.gutterSelectMarker())
         }
       },
+
+      /**
+       *
+       * @deprecated Because changes will return line again.
+       * @param line
+       * @returns {number}
+       */
       lineToRelativeLine (line) {
         const cm = this.$options.cminstance
         return line - cm.firstLine()
       },
+      /**
+       *
+       * @deprecated Because changes will return line again.
+       * @param line
+       * @returns {number}
+       */
       relativeLineToLine (line) {
         const cm = this.$options.cminstance
         return (cm.firstLine() + line)
       },
 
+      /**
+       * Makes an marker element for highlighting the dragged lock region.
+       * @returns {HTMLElement} - The element with a class lock-gutter-marker.
+       */
       gutterSelectMarker () {
         const marker = document.createElement('div')
         marker.classList.add('lock-gutter-marker')
@@ -276,15 +331,12 @@
         return marker
       },
 
+      /**
+       * Initializes all events.
+       */
       initializeEvents () {
         const cm = this.$options.cminstance
 
-        cm.on('blur', () => {
-          this.focus = false
-          // cm.setCursor({line: 0, ch: 0}, {
-          //   scroll: false
-          // })
-        })
         cm.on('focus', () => {
           this.focus = true
           const cursorPos = cm.doc.getCursor()
@@ -369,6 +421,9 @@
         }
       },
 
+      /**
+       * Changes the first line to this.$options.firstLineNumber
+       */
       updateLineNumbers () {
         const cm = this.$options.cminstance
         cm.setOption('firstLineNumber', this.firstLineNumber)
@@ -378,6 +433,7 @@
 </script>
 
 <style lang="scss">
+@import url(https://cdn.jsdelivr.net/gh/tonsky/FiraCode@1.206/distr/fira_code.css);
 .editor-piece {
   &:last-child {
     .CodeMirror {
@@ -390,6 +446,8 @@
 
 .CodeMirror {
   height: auto;
+  font-family: 'Fira Code', monospace;
+  font-variant-ligatures: contextual;
 }
 
 .CodeMirror-lines {
@@ -422,6 +480,10 @@
   pointer-events: none;
   position: absolute;
 
+}
+
+.CodeMirror-activeline-gutter {
+  pointer-events: none;
 }
 
 @keyframes blink {

@@ -7,7 +7,7 @@
         <editor-piece class="editor-piece"
           v-for="(piece, index) in pieces"
           v-if="piece.text.length > 0"
-          :key="piece.pieceID + piece.username"
+          :key="piece.pieceID"
           :index="index"
           :theme="lightTheme"
           :pieces="pieces"
@@ -54,7 +54,7 @@
       AddPieceButton
     },
     /**
-     *
+     * Data properties
      * @returns {{dragList: null, lockDragStartLocation: null, lockDragEndLocation: null}}
      */
     data () {
@@ -67,6 +67,9 @@
       }
     },
     watch: {
+      /* When filePath changes,
+       * handle changing cursors.
+       */
       filePath (val) {
         this.$store.commit('emptyCursors')
         if (val === '') return
@@ -100,23 +103,24 @@
     },
     methods: {
       handleScroll () {
-        this.restoreScrollY = this.$refs.mainEditor.scrollTop
+        if (this.$refs.mainEditor.scrollTop !== 0) {
+          this.restoreScrollY = this.$refs.mainEditor.scrollTop
+        }
       },
       editorUpdate () {
         this.$nextTick(this.restoreEditorScroll)
       },
+      /* Update the line numbers for each piece.
+       */
       editorViewPortChange (index) {
         setTimeout(() => {
           this.$refs.editorPieces.forEach(piece => {
             if (!piece) return
             piece.updateLineNumbers()
           })
-          // this.restoreEditorScroll()
         }, 10)
-        // this.$nextTick(self.restoreEditorScroll)
       },
       themeChange (lightTheme) {
-        console.log('Changing theme')
         this.lightTheme = lightTheme
       },
       editorMount (editorPiece) {
@@ -133,6 +137,8 @@
         piece.$options.startState = await this.getPreviousState(index)
         return piece.initializeEditor()
       },
+      /* Let the editor piece at index get the state of the previous piece.
+       */
       async getPreviousState (index) {
         if (index === 0) return undefined
         const prevPiece = this.$refs.editorPieces[index - 1]
@@ -142,6 +148,8 @@
         }
         return cm.getStateAfter(cm.lastLine(), true)
       },
+      /* request to lock part of the file.
+       */
       requestLock (startId, startOffset, endId, endOffset) {
         let payload = { start: {id: startId, offset: startOffset},
           end: {id: endId, offset: endOffset}}
@@ -150,14 +158,14 @@
       restoreEditorScroll () {
         const editorElement = this.$refs.mainEditor
         if (editorElement.scrollHeight - editorElement.clientHeight <= this.restoreScrollY) {
-          console.log('Current editor too small for restoration.')
           this.restoreScrollY -= 1
           this.$nextTick(this.restoreEditorScroll)
         } else {
-          // console.log(Math.min(this.restoreScrollY, editorElement.scrollHeight - editorElement.clientHeight))
           editorElement.scrollTop = Math.min(this.restoreScrollY, editorElement.scrollHeight - editorElement.clientHeight)
         }
       },
+      /* Handles the selection of a locking area.
+       */
       lockDragStart (line, index) {
         this.lockDragStartLocation = {piece: index, line}
         this.lockDragEndLocation = {piece: index, line}
@@ -171,6 +179,8 @@
           Vue.nextTick(this.restoreEditorScroll)
         }
       },
+      /* Requests lock when region is selected
+       */
       lockDragEnd (line, index) {
         if (this.lockDragStartLocation === null) return
 
@@ -183,13 +193,16 @@
           piece_uuid: this.pieces[draggedLock.index].pieceID,
           offset: draggedLock.offset,
           length: draggedLock.length
-        }).then(response => console.log(response))
+        })
 
         this.lockDragCancel()
       },
+      /* Cancels lock selection.
+       */
       lockDragCancel () {
-        if (this.lockDragStartLocation !== null) {
-          console.log('cancel')
+        if (this.lockDragStartLocation) {
+          const editorElement = this.$refs.mainEditor
+          this.restoreScrollY = editorElement.scrollTop
           this.lockDragStartLocation = null
           this.lockDragEndLocation = null
           for (let key in this.components) {
@@ -240,6 +253,8 @@
       }
     },
     mounted () {
+      /* Listen to changes in the
+       */
       connector.addEventListener('open', () => {
         connector.listenToMsg('file-delta-broadcast', ({ content }) => {
           if (content.file_path === this.filePath) {
@@ -280,43 +295,16 @@
 
 <style scoped lang="scss">
 
+[v-cloak] {
+  display: none;
+}
+
 .editor {
   left: 0;
   right: 0;
   top: 0;
   bottom: 0;
-  overflow-y: inherit;
-  background-color: #272822;
-}
-
-.editor-pieces {
-  // display: flex;
-  // flex-direction: column;
-  height: auto;
-  width: auto;
   overflow-y: scroll;
-  padding-bottom: 1000px;
-}
-
-.editor-piece {
-  height: auto;
-  overflow-y: visible;
-  transition: all 0s;
-  display: block;
-  padding: 0;
-  margin: 0;
-  top: 0;
-}
-
-.editorPieceGroup-enter, .editorPieceGroup-leave-to {
-  opacity: 0;
-  max-height: 0;
-  position: absolute;
-}
-
-.editor {
-  width: 100%;
-  height: auto;
   background-color: #272822;
   &.lightTheme {
     background-color: #fff;
@@ -325,13 +313,43 @@
 }
 
 .editor-pieces {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
+  // display: flex;
+  // flex-direction: column;
+  height: 1000000pt;
+  width: auto;
+  overflow-y: visible;
+  padding-bottom: 1000px;
+  min-height: 1000000pt;
 }
 
-.editorPieceGroup-leave-active {
-  position: absolute;
+.editor-piece {
+  height: auto;
+  overflow-y: visible;
+  display: block;
+  padding: 0;
+  margin: 0;
+  top: 0;
+  opacity: 1;
+}
+
+.editorPieceGroup {
+  min-height: 100%
+}
+
+.swap-enter-active {
+  position: float;
+  opacity: 1;
+  // max-height: 0;
+  // display: block;
+  transition: all 1s;
+}
+
+.swap-leave-active {
+  position: relative;
+  opacity: 1;
+  transition: all 1s;
+  // max-height: 0;
+  display: none;
 }
 
 #placeholder {

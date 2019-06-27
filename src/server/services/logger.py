@@ -2,10 +2,20 @@ import Pyro4
 import logging
 import coloredlogs
 import functools
+import signal
+import sys
 
 
 LOGLEVEL = logging.INFO
 FORMAT = "[%(asctime)s] [%(levelname)7s] %(name)7s: %(message)s"
+
+
+def handler(*args):
+    print("Received signal, exiting...")
+    sys.exit()
+
+
+signal.signal(signal.SIGUSR1, handler)
 
 
 def logsetup(filename, format, loglevel):
