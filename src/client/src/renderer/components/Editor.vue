@@ -304,7 +304,7 @@
   right: 0;
   top: 0;
   bottom: 0;
-  overflow-y: scroll;
+  overflow-y: hidden;
   background-color: #272822;
   &.lightTheme {
     background-color: #fff;
@@ -315,11 +315,11 @@
 .editor-pieces {
   // display: flex;
   // flex-direction: column;
-  height: 1000000pt;
+  // height: 1000000pt;
   width: auto;
   overflow-y: visible;
-  padding-bottom: 1000px;
-  min-height: 1000000pt;
+  // padding-bottom: 1000px;
+  // min-height: 1000000pt;
 }
 
 .editor-piece {
