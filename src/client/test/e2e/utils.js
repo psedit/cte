@@ -10,12 +10,12 @@ export default {
     }
   },
   beforeEach () {
-    this.timeout(10000)
+    this.timeout(5000)
     this.app = new Application({
       path: electron,
       args: ['dist/electron/main.js'],
-      startTimeout: 10000,
-      waitTimeout: 10000
+      startTimeout: 5000,
+      waitTimeout: 5000
     })
 
     return this.app.start()
