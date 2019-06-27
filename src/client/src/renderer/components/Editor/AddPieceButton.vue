@@ -32,7 +32,13 @@
 </script>
 
 <style scoped lang="scss">
+.lightTheme .add-piece-button {
+  --background-color: #333;
+  color: #fff;
+}
+
 .add-piece-button {
+  --background-color: #fff;
   $height: 1.2em;
   position: absolute;
   height: $height;
@@ -49,7 +55,7 @@
     &:before {
       border-bottom: solid $height transparent !important;
       border-left: solid 0 transparent !important;
-      border-right: solid $height/2 #fff !important;
+      border-right: solid $height/2 var(--background-color) !important;
       border-top: solid 0 transparent !important;
       /*border-color: transparent #fff transparent transparent;*/
     }
@@ -68,7 +74,7 @@
     border-top: $height/2 solid transparent;
     border-bottom: $height/2 solid transparent;
 
-    border-right: .6em solid #fff;
+    border-right: .6em solid var(--background-color);
   }
   &:after {
     content: '';
@@ -81,7 +87,7 @@
   }
 
   &-icon {
-    background-color: #fff;
+    background-color: var(--background-color);
     height: $height;
     display: inline-block;
     /*padding: .1em;*/

@@ -1,3 +1,9 @@
+/**
+ * Initiates a connection to a webpocket server once and
+ * simplifies the connection with some helper methods.
+ *
+ * @module connector
+ */
 import * as optionParser from './optionParser'
 const WebSocket = require('ws')
 const uuid = require('uuid/v4')
@@ -41,13 +47,14 @@ class Connector {
   /**
    * The websocket interface.
    *
-   * @type {WebSocket}
+   * @type WebSocket
    */
   ws;
 
   /**
+   * The url to the server
    *
-   * @type {string} URLString
+   * @type string
    */
   URLString;
 

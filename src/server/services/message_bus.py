@@ -4,10 +4,8 @@ from collections import defaultdict
 from typing import Dict, List
 import queue
 import threading
-from typedefs import UUID, ServiceAddress
-
-from handler_code import HandlerCode
-from mixins import LoggerMixin
+from .typedefs import UUID, ServiceAddress
+from .mixins import LoggerMixin
 
 
 @Pyro4.expose
@@ -150,7 +148,8 @@ class MessageBus(LoggerMixin):
         try:
             self._get_proxy(name).handle_message(message)
         except Pyro4.errors.CommunicationError:
-            self._warning("Error communicating with %s, removing proxy...", name)
+            self._warning("Error communicating with %s, removing proxy...",
+                          name)
             self._remove_service(name)
             return False
         else:
@@ -181,9 +180,7 @@ class MessageBus(LoggerMixin):
                 handlers = self.handlers[message["type"]]
                 for uri in handlers:
                     handled = True
-                    retcode = self._get_proxy(uri).handle_message(message)
-                    if (retcode == HandlerCode.Halt):
-                        break
+                    self._get_proxy(uri).handle_message(message)
             if not handled:
                 # Puts a message back on the queue if it was not handled.
                 # This may cause some problematic behaviour, but it has
@@ -192,9 +189,12 @@ class MessageBus(LoggerMixin):
                 self.mqueue.put(message)
 
 
-mb = MessageBus()
-
-if __name__ == '__main__':
+def main():
+    mb = MessageBus()
     Pyro4.Daemon.serveSimple({
         mb: 'service.MessageBus'
     }, ns=True)
+
+
+if __name__ == '__main__':
+    main()

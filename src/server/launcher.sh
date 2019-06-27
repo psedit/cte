@@ -10,16 +10,15 @@ function sitrap () {
 function launch () {
     export PYRO_SERIALIZERS_ACCEPTED=pickle
     export PYRO_SERIALIZER=pickle
-    cd services
     python3 -m Pyro4.naming &
     PIDN=$!
-    python3 message_bus.py &
+    python3 -m services message_bus &
     PIDM=$!
-    python3 logger.py &
+    python3 -m services logger &
     PIDL=$!
-    python3 filesystem.py &
+    python3 -m services filesystem &
     PIDF=$!
-    python3 ws_server.py &
+    python3 -m services ws_server &
     PIDW=$!
 
     trap 'kill $PIDN $PIDM $PIDL $PIDF $PIDW' INT TERM QUIT
@@ -32,11 +31,7 @@ case $1 in
         launch
         ;;
     "test")
-        coverage run run_tests.py
-        coverage report
-        cd services
-        python3 -m pytest test
-        cd $START_DIR
+        python3 -m pytest --cov-report term-missing --cov=services test/
         ;;
     *)
         echo "Usage: $0 (start|test)"

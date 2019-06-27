@@ -60,8 +60,12 @@ class Logger():
         logger.error(msg, *args, **kwargs)
 
 
-if __name__ == '__main__':
+def main():
     log = Logger()
     Pyro4.Daemon.serveSimple({
             log: "meta.Logger",
         }, ns=True)
+
+
+if __name__ == '__main__':
+    main()
