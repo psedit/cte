@@ -6,18 +6,19 @@ const uuid = require('uuid/v4')
 const { mergeLeft, clone } = require('ramda')
 
 /**
- * A text block
- * @typedef {Object} TextBlock
+ * A text block that contains an array of text lines.
+ * @typedef {Object} TextBlock a textblock object
  * @property {boolean} open signals whether you can modify the TextBlock
  * @property {string[]} lines An array with text lines
  */
 
 /**
- * @typedef {Object} Piece
- * @property {string} pieceID
- * @property {string|number} blockID
- * @property {number} start
- * @property {number} length
+ * A piece containing information about how to read the buffer of a corresponding block.
+ * @typedef {Object} Piece A piece object
+ * @property {string} pieceID a unique piece ID
+ * @property {string|number} blockID a block ID that corresponds to a block
+ * @property {number} start where we should start reading in the text buffer of the block
+ * @property {number} length the length of the text of the piece
  */
 
 /**
@@ -25,9 +26,9 @@ const { mergeLeft, clone } = require('ramda')
  * Text file data structure consisting of the original file together with
  * so-called "edit-blocks" (see the TextBlock class), for which a table is
  * used to couple these seperate blocks into one single file.
- * @typedef {Object} PieceTable
- * @property {Object.<string, TextBlock>} textBlocks
- * @property {Piece[]} table
+ * @typedef {Object} PieceTable a piece table object
+ * @property {Object.<string, TextBlock>} textBlocks a dictionary of textblocks
+ * @property {Piece[]} table a table containing pieces
  */
 
 /**
@@ -43,28 +44,30 @@ const { mergeLeft, clone } = require('ramda')
  */
 
 /**
- * @typedef {Object} Update
- * @property {string} filePath
+ * An update object containing the update that was broadcast.
+ * @typedef {Object} Update an update object
+ * @property {string} filePath In which file the update happened
  * @property {PieceTable} pieceTable the updated piece table
  * @property {TextBlock} changedBlock the block that is changed
  */
 
 /**
- * @typedef FilePiece
- * @property {string} pieceID
+ * A FilePiece object that can be rendered via an editor piece.
+ * @typedef {Object} FilePiece a file piec object
+ * @property {string} pieceID the piece ID of the corresponding piece
  * @property {string[]} text the text of the file
  * @property {boolean} open whether the block is open
  * @property {string} username username of the person that locked the piece
  */
 
 /**
- * Returns a create function
- * @param {Function} UUID
+ * Returns a create functio that can create a PieceTable.
+ * @param {Function} UUID a function that can create an UUID.
  */
 export function _create (UUID) {
   /**
    * Creates a new piece table object
-   * @param {string|string[]} text
+   * @param {string|string[]} text The text we want in the piece table
    * @returns {PieceTable} a piece table
    */
   return function c (text) {
@@ -92,20 +95,20 @@ export let create = _create(uuid)
 /**
  * Converts the python representation of the piece table to the js
  * represenation.
- * @param {Object} pyPiece
+ * @param {Object} pyPiece The python representation of an piece table
  * @returns {PieceTable} a pieceTable
  */
 export function convertToJS (pyPieceTable) {
   return {
     textBlocks: pyPieceTable['block_list'].reduce(convertBlockToJS, {}),
-    table: pyPieceTable['piece_table'].map(convertTableTojs)
+    table: pyPieceTable['piece_table'].map(convertPieceToJS)
   }
 }
 
 /**
- * Converts an individual block from python to javascript.
- * @param {Object.<string, TextBlock>} obj
- * @param {any[]} block
+ * Converts an individual block from python to javascript and adds it to obj.
+ * @param {Object.<string, TextBlock>} obj A TextBlock dictionary can also be an empty object
+ * @param {any[]} block The python representation of an textblock
  * @returns {Object.<string, TextBlock>} text blocks
  */
 export function convertBlockToJS (obj, [blockID, closed, lines]) {
@@ -118,11 +121,11 @@ export function convertBlockToJS (obj, [blockID, closed, lines]) {
 }
 
 /**
- * Convert the table to python.
- * @param {any[]} piece
- * @returns {Piece}
+ * Convert a python piece to a js piece.
+ * @param {any[]} piece The python representation of a piece
+ * @returns {Piece} the js representation of a piece.
  */
-export function convertTableTojs ([pieceID, blockID, start, length, username]) {
+export function convertPieceToJS ([pieceID, blockID, start, length, username]) {
   return {
     pieceID,
     blockID,
@@ -133,17 +136,17 @@ export function convertTableTojs ([pieceID, blockID, start, length, username]) {
 }
 
 /**
- * Converts the indivual properties of update to javascript.
- * @param {Object.<string, TextBlock>} textBlocks
- * @param {Object} update
- * @returns {Update}
+ * Converts the indivual properties of a python update to js.
+ * @param {Object.<string, TextBlock>} textBlocks A Textblock dictionary
+ * @param {Object} update the python update object
+ * @returns {Update} A js Update object
  */
 export function convertChangeToJS (textBlocks, update) {
   return {
     filePath: update['file_path'],
     pieceTable: {
       textBlocks: update['changed_blocks'].reduce(convertBlockToJS, textBlocks),
-      table: update['piece_table'].map(convertTableTojs)
+      table: update['piece_table'].map(convertPieceToJS)
     },
     changedBlocks: update['changed_blocks'].reduce(convertBlockToJS, {})
   }
@@ -151,7 +154,7 @@ export function convertChangeToJS (textBlocks, update) {
 
 /**
  * Converts a javascript piecetable to python
- * @param {PieceTable} pieceTable
+ * @param {PieceTable} pieceTable A pieceTable to convert
  * @returns {Object} an python piece table to send over sockets
  */
 export function convertToPy ({ textBlocks, table }) {
@@ -163,7 +166,7 @@ export function convertToPy ({ textBlocks, table }) {
 
 /**
  * Convert the blocks in a piecetable to python.
- * @param {PieceTable} pieceTable
+ * @param {PieceTable} pieceTable A pieceTable
  * @returns {any[]} a block list
  */
 export function convertTextBlocksToPy ({ textBlocks, table }) {
@@ -175,7 +178,7 @@ export function convertTextBlocksToPy ({ textBlocks, table }) {
 /**
  * Convert individual javascript textblock to python
  * @param {Object.<string, TextBlock>} textBlocks
- * @param {number} blockID
+ * @param {number} blockID The ID of a block
  * @return {any[]} a block
  */
 export function convertTextBlockToPy (textBlocks, blockID) {
@@ -185,7 +188,7 @@ export function convertTextBlockToPy (textBlocks, blockID) {
 
 /**
  * Convert a single pice from javascript to python.
- * @param {Piece} piece
+ * @param {Piece} piece A piece to convert
  * @returns {any[]} piece
  */
 export function convertPieceToPy ({ pieceID, blockID, start, length }) {
@@ -194,7 +197,7 @@ export function convertPieceToPy ({ pieceID, blockID, start, length }) {
 
 /**
  * Returns the length of the stitched file according to the table.
- * @param {Piece[]} table
+ * @param {Piece[]} table A table containing pieces
  * @returns {number} the length of the table
  */
 export function len (table) {
@@ -203,8 +206,8 @@ export function len (table) {
 
 /**
  * Return A and B in order.
- * @param {*} A
- * @param {*} B
+ * @param {Object} A
+ * @param {Object} B
  */
 export function indexOffsetRangeSort (A, B) {
   const comp = indexOffsetCompare(A, B)
@@ -232,11 +235,11 @@ export function indexOffsetCompare (A, B) {
 
 /**
  * Make a new piece based on selected lines.
- * @param {PieceTable} table
- * @param {int} idxA
- * @param {int} offsetA
- * @param {int} idxB
- * @param {int} offsetB
+ * @param {PieceTable} table A piece table
+ * @param {number} idxA
+ * @param {number} offsetA
+ * @param {number} idxB
+ * @param {number} offsetB
  */
 export function rangeToAnchoredLength (table, idxA, offsetA,
   idxB, offsetB) {
@@ -263,11 +266,11 @@ export function rangeToAnchoredLength (table, idxA, offsetA,
 
 /**
  * Compute number of lines between two locations in the piece table
- * @param {Piece[]} table
- * @param {Piece} startpiece
- * @param {int} startoffset
- * @param {piece} endpiece
- * @param {int} endoffset
+ * @param {Piece[]} table a piece table
+ * @param {Piece} startpiece the piece where to start counting
+ * @param {int} startoffset the offset from the start piece
+ * @param {piece} endpiece the piece where to stop counting
+ * @param {int} endoffset the offset from the end piece
  */
 export function lengthBetween (table, startpiece, startoffset,
   endpiece, endoffset) {
@@ -282,9 +285,9 @@ export function lengthBetween (table, startpiece, startoffset,
 /**
  * Returns the corresponding piece index and piece offset
  * for a given file line. When line number is invalid returns 0, 0.
- * @param {Piece[]} table
+ * @param {Piece[]} table a piece table
  * @param {number} lineNumber the number where we need the piece of
- * @returns {Position}
+ * @returns {Position} the postion in table index
  */
 export function lineToTableIndex (table, lineNumber) {
   let pieceStart = 0
@@ -307,7 +310,7 @@ export function lineToTableIndex (table, lineNumber) {
 /**
  * Returns the line at which the given piece (table index) begins within
  * the stitched file.
- * @param {Piece[]} table
+ * @param {Piece[]} table a piece table
  * @param {number} index table index
  * @returns {number} the start
  */
@@ -316,9 +319,10 @@ export function getStart (table, index) {
 }
 
 /**
- * @param {Piece[]} table
- * @param {number} lineNumber
- * @param {number} length
+ * Calculates which pieces cover a certain line range
+ * @param {Piece[]} table a piece table
+ * @param {number} lineNumber the line number where to start the range
+ * @param {number} length the amount of lines in the range
  * @returns {Range} a range of pieces which cover the given line range
  */
 export function getRange (table, lineNumber, length) {
@@ -339,9 +343,9 @@ export function getRange (table, lineNumber, length) {
 
 /**
  * Determine the start and end pieces based on ID's.
- * @param {Piece[]} table
- * @param {PieceID} startPieceID
- * @param {PieceID} endPieceID
+ * @param {Piece[]} table a piece table
+ * @param {PieceID} startPieceID the piece ID of the first piece in the range
+ * @param {PieceID} endPieceID the piece ID of the last piece in the range
  * @returns {Range} a range of pieces which cover the given piece ID's
  */
 export function getRangeById (table, startPieceID, endPieceID) {
@@ -356,8 +360,8 @@ export function getRangeById (table, startPieceID, endPieceID) {
 
 /**
  * Get a block by pieceID
- * @param {pieceTable} pieceTable
- * @param {string} pieceID
+ * @param {pieceTable} pieceTable a piece table
+ * @param {string} pieceID the piece ID of the block
  * @returns {TextBlock} the corresponding TextBlock
  */
 export function getBlock ({ textBlocks, table }, pieceID) {
@@ -367,9 +371,9 @@ export function getBlock ({ textBlocks, table }, pieceID) {
 
 /**
  * Return a piece with corresponding ID.
- * @param {Piece[]} table
- * @param {string} pieceID
- * @returns {Piece}
+ * @param {Piece[]} table a piece table
+ * @param {string} pieceID the piece ID of the piece
+ * @returns {Piece} the corresponding piece
  */
 export function getPieceByPieceID (table, pieceID) {
   return table.find(x => x.pieceID === pieceID)
@@ -377,9 +381,9 @@ export function getPieceByPieceID (table, pieceID) {
 
 /**
  * Get the piece index based on piece ID.
- * @param {Piece[]} table
- * @param {string} pieceID
- * @returns {number}
+ * @param {Piece[]} table a piece table
+ * @param {string} pieceID the piece id of the piece
+ * @returns {number} the index of the corresponding piece
  */
 export function getPieceIndexByPieceID (table, pieceID) {
   return table.findIndex(x => x.pieceID === pieceID)
@@ -387,7 +391,7 @@ export function getPieceIndexByPieceID (table, pieceID) {
 
 /**
  * Returns the new stitched file according to the piece table.
- * @param {PieceTable} pieceTable
+ * @param {PieceTable} pieceTable a piece table
  * @returns {string[]} the stiched file
  */
 export function stitch ({ textBlocks, table }) {
@@ -400,8 +404,8 @@ export function stitch ({ textBlocks, table }) {
 
 /**
  * Get the text from a piece based on the PieceID
- * @param {PieceTable} pieceTable
- * @param {string} pieceID
+ * @param {PieceTable} pieceTable a piece table
+ * @param {string} pieceID a piece ID that corresponds to a block of text
  * @returns {string[]} the text of the corresponding block
  */
 export function getTextByPieceID ({ textBlocks, table }, pieceID) {
@@ -412,7 +416,7 @@ export function getTextByPieceID ({ textBlocks, table }, pieceID) {
 
 /**
  * Get file pieces from the piecetable.
- * @param {PieceTable}
+ * @param {PieceTable} a piece table
  * @returns {FilePiece[]} a list of file pieces
  */
 export function getFile ({ textBlocks, table }) {
@@ -427,11 +431,11 @@ export function getFile ({ textBlocks, table }) {
 }
 
 /**
- * Return new piecetable based on an edit.
- * @param {PieceTable} pieceTable
- * @param {number} pieceID
- * @param {string[]} lines
- * @return {PieceTable}
+ * Computes a new piece table based on lines changed in a certain piece.
+ * @param {PieceTable} pieceTable a piece table
+ * @param {number} pieceID the piece ID of the piece that contains the updated text
+ * @param {string[]} lines the updated text of the piece
+ * @return {PieceTable} an updated piece table.
  */
 export function edit ({ textBlocks, table }, pieceID, lines) {
   const index = getPieceIndexByPieceID(table, pieceID)
@@ -443,10 +447,12 @@ export function edit ({ textBlocks, table }, pieceID, lines) {
     length: lines.length
   }
 
+  // Ensure we make a deep copy of the table and the textblocks
   const newTable = clone(table)
   newTable[index] = newPiece
   const newBlock = mergeLeft({ lines }, block)
   const newTextblocks = clone(textBlocks)
+
   newTextblocks[piece.blockID] = newBlock
 
   return {
