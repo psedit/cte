@@ -92,6 +92,17 @@ async def edit_file(sock, path, uuid, content):
     await sock.send(msg)
 
 
+async def file_lock(sock, path, uuid, offset, length):
+    content = {"file_path": path, "piece_uuid": uuid, "offset": offset, "length": length}
+    data = {"type": "file-lock-request", "content": content}
+    msg = json.dumps(data)
+    await sock.send(msg)
+
+    msg = await sock.recv()
+    data = json.loads(msg)
+    return data['content']
+
+
 async def save_file(sock, path):
     data = {"type": "file-save", "content": {"file_path": path}}
     msg = json.dumps(data)
