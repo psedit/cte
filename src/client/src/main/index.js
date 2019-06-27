@@ -5,6 +5,7 @@ import * as optionParser from './optionParser'
 
 const prompt = require('electron-prompt')
 const dialog = require('electron').dialog
+const path = require('path')
 
 /**
  * Set `__static` path to static files in production
@@ -27,6 +28,7 @@ function createWindow () {
     height: 563,
     useContentSize: true,
     width: 1000,
+    icon: path.join(__dirname, '../renderer/assets/logoKlein.png'),
     webPreferences: {
       nodeIntegration: true // attempt to fix process not found error
     }
