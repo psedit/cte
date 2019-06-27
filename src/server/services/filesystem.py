@@ -49,7 +49,7 @@ class Filesystem(Service):
         super().__init__(*super_args)
         # Check server config for root directory
         # TODO: retrieve from server
-        self.root_dir: str = os.path.realpath('../file_root')
+        self.root_dir: str = os.path.realpath('file_root')
         os.makedirs(self.root_dir, exist_ok=True)
         self.files: Dict[str, ServerFile] = {}
 
