@@ -152,7 +152,7 @@
         } else if (end.piece > this.index) {
           return cm.lineCount() - this.pieceDragStart
         } else {
-          if (start.line < this.index) {
+          if (start.index < this.index) {
             return end.line + 1
           } else {
             return end.line - start.line + 1
