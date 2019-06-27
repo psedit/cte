@@ -1,8 +1,0 @@
-Pyro4
-sh
-coloredlogs
-websockets
-pytest
-path.py
-coverage
-pytest-cov
