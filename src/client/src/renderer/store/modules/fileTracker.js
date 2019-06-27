@@ -3,7 +3,7 @@ import connector from '../../../main/connector'
 import { convertToJS, getFile, create, lengthBetween } from '../../../main/pieceTable'
 
 /**
- * Manages the changes of files on the server.
+ * Manages the changes of files on the server, and manages the list of tabs.
  *
  * @module fileTracker
  */
@@ -20,7 +20,7 @@ const mutations = {
   serverURLChange (store) {
   },
   /**
-   * Updates the piecetable using the getFile function from pieceTable.js
+   * Updates the pieces using the getFile function from pieceTable.js
    * @param {Object} state
    * @param {pieceTable} pieceTable
    */
@@ -36,6 +36,7 @@ const mutations = {
     state.tabs = []
   },
   /**
+   * Updates the pieceTable.
    * @param {Object} state
    * @param {pieceTable} pieceTable
    */
@@ -54,7 +55,7 @@ const mutations = {
     }
   },
   /**
-   * Removes tab to state.
+   * Removes tab from state.
    * @param {Object} state vuex state
    * @param {string} filePath filepath to file of the tab that needs to removed
    */
