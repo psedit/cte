@@ -2,7 +2,7 @@
   <div class="editor" :class="{lightTheme}" ref="mainEditor" @scroll="handleScroll">
     <theme-switch @theme-change="themeChange"/>
     <add-piece-button class="add-piece-button-top"/>
-    <div class="editor-pieces" ref="editorPiecesList" :style="{top: scrollPos + 'px'}">
+    <div class="editor-pieces" ref="editorPiecesList" :style="{transform: `translateY(${scrollPos}px)`}">
       <transition-group name="swap" tag="editorPieceGroup">
         <editor-piece class="editor-piece"
           v-for="(piece, index) in pieces"
@@ -290,8 +290,7 @@
       this.$el.addEventListener('wheel', event => {
         this.scrollPos = this.scrollPos - event.deltaY * 0.2
         this.scrollPos = Math.min(0, this.scrollPos)
-        this.scrollPos = Math.max(-this.$refs.editorPiecesList.clientHeight, this.scrollPos)
-        console.info(event.deltaY, this.scrollPos)
+        this.scrollPos = Math.max(-this.$refs.editorPiecesList.clientHeight + 20, this.scrollPos)
       })
 
       addEventListener('mouseup', (e) => {
@@ -329,6 +328,7 @@
   position: relative;
   width: auto;
   overflow-y: visible;
+  transition: transform linear 100ms;
   // padding-bottom: 1000px;
   // min-height: 1000000pt;
 }

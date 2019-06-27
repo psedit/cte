@@ -364,6 +364,9 @@
           if (!this.focus) return
           const cursorPos = cm.doc.getCursor()
 
+          // if (ghostCursors)
+          console.log(cm.cursorCoords(true, 'window'))
+
           connector.send('cursor-move', {
             file_path: this.$store.state.fileTracker.openFile,
             piece_id: this.pieces[this.index].pieceID,
