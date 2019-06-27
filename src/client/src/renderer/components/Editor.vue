@@ -308,7 +308,6 @@
   background-color: #272822;
   &.lightTheme {
     background-color: #fff;
-
   }
 }
 
@@ -375,7 +374,7 @@
 
   &-item {
     border-style: solid;
-    border-width: 0.1em;
+    border-width: 0.5em;
     display: inline-block;
     padding: 0.05em 0.5em;
     border-radius: 2em;
