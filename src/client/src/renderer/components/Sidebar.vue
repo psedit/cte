@@ -504,7 +504,6 @@
        * Upload new file to server.
        */
       uploadFile () {
-        debugger
         let localPath = dialog.showOpenDialog({ properties: ['openFile'] })
 
         if (localPath === undefined || localPath.toString() === '') {
