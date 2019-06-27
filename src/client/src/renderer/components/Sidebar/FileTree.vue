@@ -2,7 +2,7 @@
   <div>
     <ul class="fileTree">
       <file-tree-item v-for="(item, index) in fileList" :item="item" :key="index" @click="fileClick" @rightClick="rightClick"/>
-      <a v-if="fileList.length === 0">File tree is empty. Try adding files...</a>
+      <a v-if="fileList.length === 0" class="empty">File tree is empty.<br>Try adding files...</a>
     </ul>
 
     <vue-simple-context-menu
@@ -124,5 +124,8 @@
   .fileTree {
     color: white;
     list-style: none;
+  }
+  .empty {
+    font-size: 1.2em;
   }
 </style>
