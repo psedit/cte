@@ -336,7 +336,7 @@
   opacity: 1;
   transition: all 1s;
   // max-height: 0;
-  // display: block;
+  display: none;
 }
 
 #placeholder {
