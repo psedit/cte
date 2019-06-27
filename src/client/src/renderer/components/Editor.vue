@@ -7,7 +7,7 @@
         <editor-piece class="editor-piece"
           v-for="(piece, index) in pieces"
           v-if="piece.text.length > 0"
-          :key="piece.pieceID + piece.username"
+          :key="piece.pieceID"
           :index="index"
           :theme="lightTheme"
           :pieces="pieces"
@@ -100,7 +100,9 @@
     },
     methods: {
       handleScroll () {
-        this.restoreScrollY = this.$refs.mainEditor.scrollTop
+        if (this.$refs.mainEditor.scrollTop !== 0) {
+          this.restoreScrollY = this.$refs.mainEditor.scrollTop
+        }
       },
       editorUpdate () {
         this.$nextTick(this.restoreEditorScroll)
@@ -111,12 +113,9 @@
             if (!piece) return
             piece.updateLineNumbers()
           })
-          // this.restoreEditorScroll()
         }, 10)
-        // this.$nextTick(self.restoreEditorScroll)
       },
       themeChange (lightTheme) {
-        console.log('Changing theme')
         this.lightTheme = lightTheme
       },
       editorMount (editorPiece) {
@@ -187,7 +186,7 @@
       },
       lockDragCancel () {
         if (this.lockDragStartLocation) {
-          const editorElement = this.$refs.editorPiecesList
+          const editorElement = this.$refs.mainEditor
           this.restoreScrollY = editorElement.scrollTop
           this.lockDragStartLocation = null
           this.lockDragEndLocation = null
@@ -279,43 +278,16 @@
 
 <style scoped lang="scss">
 
+[v-cloak] {
+  display: none;
+}
+
 .editor {
   left: 0;
   right: 0;
   top: 0;
   bottom: 0;
-  overflow-y: inherit;
-  background-color: #272822;
-}
-
-.editor-pieces {
-  // display: flex;
-  // flex-direction: column;
-  height: auto;
-  width: auto;
   overflow-y: scroll;
-  padding-bottom: 1000px;
-}
-
-.editor-piece {
-  height: auto;
-  overflow-y: visible;
-  transition: all 0s;
-  display: block;
-  padding: 0;
-  margin: 0;
-  top: 0;
-}
-
-.editorPieceGroup-enter, .editorPieceGroup-leave-to {
-  opacity: 0;
-  max-height: 0;
-  position: absolute;
-}
-
-.editor {
-  width: 100%;
-  height: auto;
   background-color: #272822;
   &.lightTheme {
     background-color: #fff;
@@ -324,13 +296,43 @@
 }
 
 .editor-pieces {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
+  // display: flex;
+  // flex-direction: column;
+  height: 1000000pt;
+  width: auto;
+  overflow-y: visible;
+  padding-bottom: 1000px;
+  min-height: 1000000pt;
 }
 
-.editorPieceGroup-leave-active {
-  position: absolute;
+.editor-piece {
+  height: auto;
+  overflow-y: visible;
+  display: block;
+  padding: 0;
+  margin: 0;
+  top: 0;
+  opacity: 1;
+}
+
+.editorPieceGroup {
+  min-height: 100%
+}
+
+.swap-enter-active {
+  position: float;
+  opacity: 1;
+  // max-height: 0;
+  // display: block;
+  transition: all 1s;
+}
+
+.swap-leave-active {
+  position: relative;
+  opacity: 1;
+  transition: all 1s;
+  // max-height: 0;
+  display: none;
 }
 
 #placeholder {
