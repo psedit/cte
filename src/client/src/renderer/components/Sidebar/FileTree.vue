@@ -2,6 +2,7 @@
   <div>
     <ul class="fileTree">
       <file-tree-item v-for="(item, index) in fileList" :item="item" :key="index" @click="fileClick" @rightClick="rightClick"/>
+      <a v-if="fileList.length === 0">File tree is empty. Try adding files...</a>
     </ul>
 
     <vue-simple-context-menu
