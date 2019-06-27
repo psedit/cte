@@ -3,6 +3,7 @@ from .piece_table import PieceTable
 from .typedefs import LockError
 from typing import Dict, List, Tuple, Optional
 import os
+import uuid
 
 
 class ServerFile:
@@ -92,6 +93,7 @@ class ServerFile:
         cursor_lines = self.get_cursor_rows()
 
         self.pt.get_piece(lock_id).owner = ""
+        self.pt.get_piece(lock_id).piece_id = str(uuid.uuid4())
         self.pt.merge_unlocked_pieces()
 
         self.update_cursors(cursor_lines)
@@ -133,8 +135,11 @@ class ServerFile:
         """
         cursor_lines = {}
         for uname, cursor in self.cursors.items():
-            cursor_lines[uname] = (self.pt.piece_to_row(cursor.piece_id)
-                                   + cursor.offset)
+            try:
+                cursor_lines[uname] = (self.pt.piece_to_row(cursor.piece_id)
+                                       + cursor.offset)
+            except ValueError:
+                cursor_lines[uname] = 0
         return cursor_lines
 
     def update_cursors(self, cursors) -> None:

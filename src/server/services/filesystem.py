@@ -49,7 +49,7 @@ class Filesystem(Service):
         super().__init__(*super_args)
         # Check server config for root directory
         # TODO: retrieve from server
-        self.root_dir: str = os.path.realpath('../file_root')
+        self.root_dir: str = os.path.realpath('file_root')
         os.makedirs(self.root_dir, exist_ok=True)
         self.files: Dict[str, ServerFile] = {}
 
@@ -645,6 +645,10 @@ class Filesystem(Service):
         if not self.check_valid(address, username, path):
             return self._send_lock_response(path, False, address)
 
+
+        prev_table = str(self.files[path].pt)
+        prev_cursors = str(self.files[path].cursors)
+        
         try:
             lock_id = self.files[path].add_lock(piece_id, offset,
                                                 length, username)
@@ -657,10 +661,11 @@ class Filesystem(Service):
                                       }, address)
 
             return self._send_lock_response(path, False, address)
-        except ValueError:
+        except ValueError as e:
             self._error("Cursor repositioning has failed, possible table "
                         "divergence at the client side.")
-
+            return
+        
         self._send_lock_response(path, True, address)
         self._update_and_broadcast_piece_table(path, [lock_id])
         self._broadcast_file_cursors(path)
