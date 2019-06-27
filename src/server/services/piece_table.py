@@ -1,7 +1,7 @@
 from typing import List, Tuple, Dict, Union
 import uuid
-from piece import Piece
-from typedefs import LockError
+from .piece import Piece
+from .typedefs import LockError
 
 
 class PieceTable:
@@ -58,9 +58,6 @@ class PieceTable:
     def __getitem__(self, idx):
         return self.table[idx]
 
-    def __setitem__(self, idx, val):
-        self.table[idx] = val
-
     def _insert_block(self, text: Union[List[str], str]) -> int:
         """
         Insert a new block into the block dictionary, and return its id.
@@ -99,8 +96,6 @@ class PieceTable:
         piece = self.get_piece(piece_id)
         if piece:
             self.table.remove(piece)
-        else:
-            raise ValueError("Given uuid not in piece table")
 
     def _merge_neighbours_same_owner(self, piece_id: str, uname: str) -> None:
         """
@@ -167,7 +162,7 @@ class PieceTable:
         """
         for piece in self.table:
             row -= piece.length
-            if row <= 0:
+            if row < 0:
                 return piece.piece_id, piece.length + row
         raise ValueError("Row number out of bounds.")
 
