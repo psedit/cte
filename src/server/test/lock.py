@@ -1,6 +1,6 @@
 import asyncio
 import websockets
-from api import file_open_data, file_lock, file_lock_insert
+from api import file_open_data, file_lock, file_lock_insert, file_open
 
 
 async def bogus_lock(path, what, exists=True):
