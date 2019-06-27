@@ -1,7 +1,7 @@
-from server_file import ServerFile
-from typedefs import Address, LockError
+from .server_file import ServerFile
+from .typedefs import Address, LockError
+from .service import Service, message_type
 from typing import Dict, List
-from service import Service, message_type
 import base64
 import tarfile
 import os
@@ -724,5 +724,9 @@ class Filesystem(Service):
                                   client)
 
 
-if __name__ == "__main__":
+def main():
     Filesystem.start()
+
+
+if __name__ == "__main__":
+    main()
