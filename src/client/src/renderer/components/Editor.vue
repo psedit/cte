@@ -2,7 +2,7 @@
   <div class="editor" :class="{lightTheme}" ref="mainEditor" @scroll="handleScroll">
     <theme-switch @theme-change="themeChange"/>
     <add-piece-button class="add-piece-button-top"/>
-    <div class="editor-pieces" ref="editorPiecesList">
+    <div class="editor-pieces" ref="editorPiecesList" :style="{top: scrollPos + 'px'}">
       <transition-group name="swap" tag="editorPieceGroup">
         <editor-piece class="editor-piece"
           v-for="(piece, index) in pieces"
@@ -63,7 +63,8 @@
         lockDragEndLocation: null,
         dragList: null,
         lightTheme: false,
-        restoreScrollY: 0
+        restoreScrollY: 0,
+        scrollPos: 0
       }
     },
     watch: {
@@ -284,6 +285,15 @@
         })
       })
 
+      this.$refs.editorPiecesList.style.top = 0
+
+      this.$el.addEventListener('wheel', event => {
+        this.scrollPos = this.scrollPos - event.deltaY * 0.2
+        this.scrollPos = Math.min(0, this.scrollPos)
+        this.scrollPos = Math.max(-this.$refs.editorPiecesList.clientHeight, this.scrollPos)
+        console.info(event.deltaY, this.scrollPos)
+      })
+
       addEventListener('mouseup', (e) => {
         if (!e.composedPath()[0].classList.contains('user-gutter')) {
           this.lockDragCancel()
@@ -316,6 +326,7 @@
   // display: flex;
   // flex-direction: column;
   // height: 1000000pt;
+  position: relative;
   width: auto;
   overflow-y: visible;
   // padding-bottom: 1000px;

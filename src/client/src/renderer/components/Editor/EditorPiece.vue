@@ -481,6 +481,10 @@
   position: absolute;
 }
 
+.CodeMirror-linenumbers {
+  min-width: 3em;
+}
+
 .CodeMirror:not(.CodeMirror-focused) .CodeMirror-activeline-background{
   background-color: transparent;
 }
