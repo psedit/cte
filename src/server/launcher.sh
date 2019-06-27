@@ -10,7 +10,6 @@ function sitrap () {
 function launch () {
     export PYRO_SERIALIZERS_ACCEPTED=pickle
     export PYRO_SERIALIZER=pickle
-    cd services
     python3 -m Pyro4.naming &
     PIDN=$!
     python3 -m services message_bus &
