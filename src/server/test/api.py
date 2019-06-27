@@ -34,7 +34,13 @@ async def get_file_data(sock, path):
     return data['content']
 
 
-async def open_file(sock, path):
+async def join_file(sock, path):
+    data = {"type": "file-join", "content": {"file_path": path}}
+    msg = json.dumps(data)
+    await sock.send(msg)
+
+
+async def file_open(sock, path, exists=True):
     data = {"type": "file-list-request", "content": ""}
     msg = json.dumps(data)
     await sock.send(msg)
@@ -43,16 +49,14 @@ async def open_file(sock, path):
     data = json.loads(msg)
     file_tree = data['content']['root_tree']
 
-    if not has_file(file_tree, path):
+    if has_file(file_tree, path) != exists:
         raise RuntimeError('file not found')
 
-    data = {"type": "file-join", "content": {"file_path": path}}
-    msg = json.dumps(data)
-    await sock.send(msg)
+    await join_file(sock, path)
 
 
-async def open_file_data(sock, path):
-    await open_file(sock, path)
+async def file_open_data(sock, path):
+    await file_open(sock, path)
     return await get_file_data(sock, path)
 
 
@@ -71,8 +75,9 @@ async def fetch_files(sock):
     await sock.send(msg)
 
     msg = await sock.recv()
-    if msg['type'] != "file-project-response":
-        raise ValueError("invalid type:", msg['type'])
+    print('msg:', msg)
+    #if msg['type'] != "file-project-response":
+        #raise ValueError("invalid type:", msg['type'])
 
     return json.loads(msg)
 
