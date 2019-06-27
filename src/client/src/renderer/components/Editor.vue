@@ -89,7 +89,6 @@
         })
       },
       pieces: function (newPieces, oldPieces) {
-        console.log(this.pieces)
         Vue.nextTick(this.restoreEditorScroll)
       },
       pieceTable: function (newTable, oldTable) {
@@ -114,12 +113,9 @@
             if (!piece) return
             piece.updateLineNumbers()
           })
-          // this.restoreEditorScroll()
         }, 10)
-        // this.$nextTick(self.restoreEditorScroll)
       },
       themeChange (lightTheme) {
-        console.log('Changing theme')
         this.lightTheme = lightTheme
       },
       editorMount (editorPiece) {
