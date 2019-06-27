@@ -1,0 +1,2 @@
+## Programmers Guide
+This section of the wiki is dedicated to providing information concerning the inner workings of the client and server. Most higher level ideas are accounted for, but for implementation details we ask you to take a look at the [source code](https://github.com/psedit/cte/). In general the code is well documented, but if even after consulting the code things are still unclear, please refer to one of the project administrators.
