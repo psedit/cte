@@ -47,7 +47,7 @@
       VueSimpleContextMenu
     },
     props: {
-      fileList: Array,
+      fileList: Array
     },
     mounted () {
       addEventListener('click', (e) => {
