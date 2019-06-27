@@ -1,6 +1,8 @@
 #!/bin/bash
 
 START_DIR=`pwd`
+START_CMD=python3
+
 
 function sitrap () {
     kill $PIDN $PIDM $PIDL $PIDF $PIDW
@@ -12,26 +14,37 @@ function launch () {
     export PYRO_SERIALIZER=pickle
     python3 -m Pyro4.naming &
     PIDN=$!
-    python3 -m services message_bus &
+    eval $START_CMD -m services message_bus &
     PIDM=$!
-    python3 -m services logger &
+    eval $START_CMD -m services logger &
     PIDL=$!
-    python3 -m services filesystem &
+    eval $START_CMD -m services filesystem &
     PIDF=$!
-    python3 -m services ws_server &
+    eval $START_CMD -m services ws_server &
     PIDW=$!
-
-    trap 'kill $PIDN $PIDM $PIDL $PIDF $PIDW' INT TERM QUIT
-
-    wait $PIDN
+    sleep 5
 }
 
 case $1 in
     "start")
         launch
+        trap 'kill $PIDN $PIDM $PIDL $PIDF $PIDW' INT TERM QUIT
+
+        wait $PIDN
         ;;
     "test")
-        python3 -m pytest --cov-report term-missing --cov=services test/
+        python3 -m pytest --cov-report= --cov=services test/
+        START_CMD='coverage run -p'
+        launch
+        cd test
+        for i in file_*.py; do
+            python3 $i
+        done
+        cd $START_DIR
+        pkill -USR1 coverage
+        wait $PIDM $PIDL $PIDF $PIDW
+        coverage combine --append
+        coverage report -m
         ;;
     *)
         echo "Usage: $0 (start|test)"

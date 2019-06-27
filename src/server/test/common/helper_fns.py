@@ -9,11 +9,6 @@ import os
 
 _service_procs = []
 
-BASE_PATH = os.environ['PSEDIT_BASE_DIR']
-
-
-service_dir = path.Path(f'{BASE_PATH}/services')
-
 
 def snake(name):
     s1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
