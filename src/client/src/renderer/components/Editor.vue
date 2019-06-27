@@ -6,7 +6,7 @@
         <editor-piece class="editor-piece"
           v-for="(piece, index) in pieces"
           v-if="piece.text.length > 0"
-          :key="piece.pieceID + piece.username"
+          :key="piece.pieceID"
           :index="index"
           :pieces="pieces"
           :dragStart="lockDragStartLocation"
@@ -80,6 +80,7 @@
         })
       },
       pieces: function (newPieces, oldPieces) {
+        console.log(this.pieces)
         Vue.nextTick(this.restoreEditorScroll)
       },
       pieceTable: function (newTable, oldTable) {
@@ -274,6 +275,10 @@
 
 <style scoped lang="scss">
 
+[v-cloak] {
+  display: none;
+}
+
 .editor {
   left: 0;
   right: 0;
@@ -295,21 +300,31 @@
 .editor-piece {
   height: auto;
   overflow-y: visible;
-  transition: all 0s;
   display: block;
   padding: 0;
   margin: 0;
   top: 0;
+  opacity: 1;
 }
 
-.editorPieceGroup-enter, .editorPieceGroup-leave-to {
+.editorPieceGroup {
+  min-height: 100%
+}
+
+.swap-enter-active {
+  position: float;
   opacity: 0;
   max-height: 0;
-  position: absolute;
+  // display: block;
+  transition: all 1s;
 }
 
-.editorPieceGroup-leave-active {
-  position: absolute;
+.swap-leave-active {
+  position: relative;
+  // opacity: 0;
+  transition: all 1s;
+  // max-height: 0;
+  // display: block;
 }
 
 #placeholder {
