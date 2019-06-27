@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>main/connector.js - Documentation</title>
+
+    <script src="scripts/prettify/prettify.js"></script>
+    <script src="scripts/prettify/lang-css.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="https://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css">
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+<body>
+
+<input type="checkbox" id="nav-trigger" class="nav-trigger" />
+<label for="nav-trigger" class="navicon-button x">
+  <div class="navicon"></div>
+</label>
+
+<label for="nav-trigger" class="overlay"></label>
+
+<nav>
+    <li class="nav-link nav-home-link"><a href="index.html">Home</a></li><li class="nav-heading">Classes</li><li class="nav-heading"><span class="nav-item-type type-class">C</span><span class="nav-item-name"><a href="module-connector-Connector.html">Connector</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="module-connector-Connector.html#addEventListener">addEventListener</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="module-connector-Connector.html#close">close</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="module-connector-Connector.html#getURLString">getURLString</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="module-connector-Connector.html#isOpen">isOpen</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="module-connector-Connector.html#listenToMsg">listenToMsg</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="module-connector-Connector.html#reload">reload</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="module-connector-Connector.html#removeEventListener">removeEventListener</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="module-connector-Connector.html#request">request</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="module-connector-Connector.html#send">send</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="module-connector-Connector.html#setUp">setUp</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="module-connector-Connector.html#waitUntillOpen">waitUntillOpen</a></span></li><li class="nav-heading"><span class="nav-item-type type-class">C</span><span class="nav-item-name"><a href="Tab.html">Tab</a></span></li><li class="nav-heading">Modules</li><li class="nav-heading"><span class="nav-item-type type-module">M</span><span class="nav-item-name"><a href="module-connector.html">connector</a></span></li><li class="nav-heading"><span class="nav-item-type type-module">M</span><span class="nav-item-name"><a href="module-Editor_EditorPiece.html">Editor/EditorPiece</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="module-Editor_EditorPiece.html#initializeEditor">initializeEditor</a></span></li><li class="nav-heading"><span class="nav-item-type type-module">M</span><span class="nav-item-name"><a href="module-fileTracker.html">fileTracker</a></span></li><li class="nav-heading"><a href="global.html">Globals</a></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#_create">_create</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#convertBlockToJS">convertBlockToJS</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#convertChangeToJS">convertChangeToJS</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#convertPieceToPy">convertPieceToPy</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#convertTableTojs">convertTableTojs</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#convertTextBlocksToPy">convertTextBlocksToPy</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#convertTextBlockToPy">convertTextBlockToPy</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#convertToJS">convertToJS</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#convertToPy">convertToPy</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#correctJSON">correctJSON</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#edit">edit</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#fileChangeRequest">fileChangeRequest</a></span></li><li class="nav-item"><span class="nav-item-type type-member">M</span><span class="nav-item-name"><a href="global.html#files">files</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#getBlock">getBlock</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#getFile">getFile</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#getPieceByPieceID">getPieceByPieceID</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#getPieceIndexByPieceID">getPieceIndexByPieceID</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#getRange">getRange</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#getRangeById">getRangeById</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#getSettings">getSettings</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#getStart">getStart</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#getTextByPieceID">getTextByPieceID</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#len">len</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#lengthBetween">lengthBetween</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#lineToTableIndex">lineToTableIndex</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#locationChange">locationChange</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#nameChange">nameChange</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#newFile">newFile</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#rangeToAnchoredLength">rangeToAnchoredLength</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#removeItem">removeItem</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#setLocalWorkspace">setLocalWorkspace</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#setServerURL">setServerURL</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#setter">setter</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#stitch">stitch</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#uploadFile">uploadFile</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#writeJSON">writeJSON</a></span></li>
+</nav>
+
+<div id="main">
+    
+    <h1 class="page-title">main/connector.js</h1>
+    
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * Initiates a connection to a webpocket server once and
+ * simplifies the connection with some helper methods.
+ *
+ * @module connector
+ */
+import * as optionParser from './optionParser'
+const WebSocket = require('ws')
+const uuid = require('uuid/v4')
+
+/**
+ * @typedef {Object} Message
+ * @property {string} type - The type of message
+ * @property {string} uuid - The unique id of the message
+ * @property {string} sender - sender service or sender client address
+ * @property {string} pref_dest - sender service or sender client address
+ * @property {Object} content - the payload of the message
+ *
+ * @see https://github.com/psedit/cte/wiki/Server-service-messages
+ */
+
+/**
+ * @callback connectorCallback
+ * @param {Message} The message response.
+ */
+
+class Connector {
+  /**
+   * Collection of all listeners
+   *
+   * @type {{upgrade: Array, ping: Array, 'unexpected-response': Array, error: Array, pong: Array, message: {all: Array}, close: Array, open: Array}}
+   * @private
+   */
+  listeners = {
+    close: [],
+    error: [],
+    open: [],
+    ping: [],
+    pong: [],
+    'unexpected-response': [],
+    upgrade: [],
+    message: {
+      all: []
+    }
+  }
+
+  /**
+   * The websocket interface.
+   *
+   * @type WebSocket
+   */
+  ws;
+
+  /**
+   * The url to the server
+   *
+   * @type string
+   */
+  URLString;
+
+  /**
+   * Creates a connection and setups listeners.
+   * Also reads options from json file.
+   */
+  constructor () {
+    let settings = optionParser.getSettings()
+    this.setUp(settings.serverURL)
+  }
+
+  /**
+   * Sets up the connector.
+   * @param {string} pathString string of URL for websocket.
+   */
+  setUp (pathString) {
+    this.URLString = pathString
+
+    // Setup websocket
+    this.ws = new WebSocket(pathString, {
+      perMessageDeflate: false
+    })
+    // Setup listeners
+    for (let type in this.listeners) {
+      if (type === 'message') {
+        this.ws.on('message', (response) => {
+          response = JSON.parse(response)
+
+          for (let listener of this.listeners.message.all) {
+            listener(response)
+          }
+
+          if (response.type in this.listeners.message) {
+            for (let listener of this.listeners.message[response.type]) {
+              listener(response)
+            }
+          }
+        })
+      } else {
+        this.ws.on(type, (...args) => {
+          for (let listener of this.listeners[type]) {
+            listener(...args)
+          }
+        })
+      }
+    }
+  }
+  /**
+   * Got form:
+   * https://stackoverflow.com/questions/13546424/how-to-wait-for-a-websockets-readystate-to-change
+   * @param {function} callback is called when websocket is open
+   */
+  waitUntillOpen (callback) {
+    setTimeout(() => {
+      if (this.ws.readyState === 1) {
+        if (callback != null) {
+          callback()
+        }
+      } else {
+        this.waitUntillOpen(callback)
+      }
+    }, 5) // wait 5 milisecond for the connection...
+  }
+  /**
+   * Change the server URL
+   * @param {string} newPathString string with path for new url
+   */
+  reload (newPathString) {
+    optionParser.setServerURL(newPathString)
+    let settings = optionParser.getSettings()
+    this.setUp(settings.serverURL)
+  }
+  /**
+   * Closes connection to websocket server
+   *
+   * @param {number} code - Status code of why the connection is closing.
+   * @param {string} reason - A human readable reason of why the connection is closing.
+   */
+  close (code = 0, reason = 'I am done.') {
+    this.ws.close(code, reason)
+  }
+
+  /**
+   * Add event listener to the websocket interface.
+   *
+   * @param {string} type - A websocket event type.
+   * @param {connectorCallback} callback - The listener that is called when the specified event happens.
+   * @see https://github.com/websockets/ws/blob/HEAD/doc/ws.md#event-close-1
+   */
+  addEventListener (type, callback) {
+    if (!(type in this.listeners)) {
+      return
+    }
+
+    if (type === 'message') {
+      this.listeners.message.all.push(callback)
+    } else {
+      this.listeners[type].push(callback)
+    }
+  }
+
+  /**
+   * Check if connection is open.
+   *
+   * @return {Boolean} True if websocket is open, otherwise False.
+   */
+  isOpen () {
+    return this.ws.readyState === WebSocket.OPEN
+  }
+
+  /**
+   * Removes a listener.
+   *
+   * @param {string} type - The type of the event.
+   * @param {connectorCallback} callback - The function to stop listening to the specific event.
+   */
+  removeEventListener (type, callback) {
+    if (!(type in this.listeners)) {
+      return
+    }
+
+    let listeners = this.listeners
+
+    if (type === 'message') {
+      listeners = listeners.message
+    }
+
+    for (const type in listeners) {
+      const arr = listeners[type]
+      for (let i = 0; i &lt; arr.length; i++) {
+        if (arr[i] === callback) {
+          arr.splice(i, 1)
+          return
+        }
+      }
+    }
+  }
+
+  /**
+   * Return the String of the URL
+   */
+  getURLString () {
+    return optionParser.getSettings().serverURL
+  }
+  /**
+   * Send some content to the websocket server.
+   *
+   * @param {string} type - The type of the message.
+   * @param {Object} content - The payload of the message.
+   * @param {string} [sender = CLIENT] - The identifier of the sender.
+   * @param {string} [prefDest = null] - The destination where the message should preferable go.
+   */
+  send (type, content, sender = 'CLIENT', prefDest = null) {
+    const payload = {
+      type,
+      uuid: uuid(),
+      sender,
+      pref_def: prefDest,
+      content
+    }
+
+    this.ws.send(JSON.stringify(payload))
+  }
+
+  /**
+   * Sends a message and listens for the response.
+   * A helper method for messages with a request-response structure.
+   *
+   * @param {string} requestType - The type of the message send.
+   * @param {string} responseType - The type of the message to receive.
+   * @param {Object} content - The payload to send.
+   * @returns {Promise&lt;Object>} - A promise with the response content/
+   */
+  request (requestType, responseType, content) {
+    this.send(requestType, content)
+
+    return new Promise(resolve => {
+      const messageHandler = (response) => {
+        const responseObj = JSON.parse(response)
+        if (responseObj.type === responseType) {
+          this.ws.removeEventListener('message', messageHandler)
+          resolve(responseObj.content)
+        }
+      }
+      this.ws.on('message', messageHandler)
+    })
+  }
+
+  /**
+   * A method to listen to a specific message type.
+   * @param {string} type - The message type to listen to.
+   * @param {connectorCallback} listener - The function to call.
+   */
+  listenToMsg (type, listener) {
+    if (!(type in this.listeners.message)) {
+      this.listeners.message[type] = []
+    }
+
+    this.listeners.message[type].push(listener)
+  }
+}
+
+/**
+ * An instance of Connector.
+ * Use this to interact with this API.
+ */
+const inst = new Connector()
+export default inst
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<br class="clear">
+
+<footer>
+    Generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.6.2</a> on Thu Jun 27 2019 15:25:49 GMT+0200 (Central European Summer Time) using the Minami theme.
+</footer>
+
+<script>prettyPrint();</script>
+<script src="scripts/linenumber.js"></script>
+</body>
+</html>

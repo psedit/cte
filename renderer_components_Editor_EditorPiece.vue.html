@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>renderer/components/Editor/EditorPiece.vue - Documentation</title>
+
+    <script src="scripts/prettify/prettify.js"></script>
+    <script src="scripts/prettify/lang-css.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="https://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css">
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+<body>
+
+<input type="checkbox" id="nav-trigger" class="nav-trigger" />
+<label for="nav-trigger" class="navicon-button x">
+  <div class="navicon"></div>
+</label>
+
+<label for="nav-trigger" class="overlay"></label>
+
+<nav>
+    <li class="nav-link nav-home-link"><a href="index.html">Home</a></li><li class="nav-heading">Classes</li><li class="nav-heading"><span class="nav-item-type type-class">C</span><span class="nav-item-name"><a href="module-connector-Connector.html">Connector</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="module-connector-Connector.html#addEventListener">addEventListener</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="module-connector-Connector.html#close">close</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="module-connector-Connector.html#getURLString">getURLString</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="module-connector-Connector.html#isOpen">isOpen</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="module-connector-Connector.html#listenToMsg">listenToMsg</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="module-connector-Connector.html#reload">reload</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="module-connector-Connector.html#removeEventListener">removeEventListener</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="module-connector-Connector.html#request">request</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="module-connector-Connector.html#send">send</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="module-connector-Connector.html#setUp">setUp</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="module-connector-Connector.html#waitUntillOpen">waitUntillOpen</a></span></li><li class="nav-heading"><span class="nav-item-type type-class">C</span><span class="nav-item-name"><a href="Tab.html">Tab</a></span></li><li class="nav-heading">Modules</li><li class="nav-heading"><span class="nav-item-type type-module">M</span><span class="nav-item-name"><a href="module-connector.html">connector</a></span></li><li class="nav-heading"><span class="nav-item-type type-module">M</span><span class="nav-item-name"><a href="module-Editor_EditorPiece.html">Editor/EditorPiece</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="module-Editor_EditorPiece.html#initializeEditor">initializeEditor</a></span></li><li class="nav-heading"><span class="nav-item-type type-module">M</span><span class="nav-item-name"><a href="module-fileTracker.html">fileTracker</a></span></li><li class="nav-heading"><a href="global.html">Globals</a></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#_create">_create</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#convertBlockToJS">convertBlockToJS</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#convertChangeToJS">convertChangeToJS</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#convertPieceToPy">convertPieceToPy</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#convertTableTojs">convertTableTojs</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#convertTextBlocksToPy">convertTextBlocksToPy</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#convertTextBlockToPy">convertTextBlockToPy</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#convertToJS">convertToJS</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#convertToPy">convertToPy</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#correctJSON">correctJSON</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#edit">edit</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#fileChangeRequest">fileChangeRequest</a></span></li><li class="nav-item"><span class="nav-item-type type-member">M</span><span class="nav-item-name"><a href="global.html#files">files</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#getBlock">getBlock</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#getFile">getFile</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#getPieceByPieceID">getPieceByPieceID</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#getPieceIndexByPieceID">getPieceIndexByPieceID</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#getRange">getRange</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#getRangeById">getRangeById</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#getSettings">getSettings</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#getStart">getStart</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#getTextByPieceID">getTextByPieceID</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#len">len</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#lengthBetween">lengthBetween</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#lineToTableIndex">lineToTableIndex</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#locationChange">locationChange</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#nameChange">nameChange</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#newFile">newFile</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#rangeToAnchoredLength">rangeToAnchoredLength</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#removeItem">removeItem</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#setLocalWorkspace">setLocalWorkspace</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#setServerURL">setServerURL</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#setter">setter</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#stitch">stitch</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#uploadFile">uploadFile</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#writeJSON">writeJSON</a></span></li>
+</nav>
+
+<div id="main">
+    
+    <h1 class="page-title">renderer/components/Editor/EditorPiece.vue</h1>
+    
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>&lt;template>
+  &lt;div ref="cm" class="editor-piece" :class="{editable, open_editor: piece.username === ''}">
+    &lt;ghost-cursors ref="ghostCursors" :piece="piece"/>
+    &lt;add-piece-button :pieceID="piece.pieceID"/>
+  &lt;/div>
+&lt;/template>
+
+&lt;script>
+  import CodeMirror from 'codemirror/lib/codemirror'
+  import 'codemirror/lib/codemirror.css'
+  import 'codemirror/theme/monokai.css'
+  import 'codemirror/mode/javascript/javascript'
+  import 'codemirror/mode/python/python'
+  import 'codemirror/addon/hint/show-hint'
+  import 'codemirror/addon/hint/show-hint.css'
+  import 'codemirror/addon/hint/javascript-hint'
+  import 'codemirror/addon/edit/closebrackets'
+  import 'codemirror/addon/edit/matchbrackets'
+  import 'codemirror/addon/selection/active-line'
+  import { edit, indexOffsetRangeSort } from '../../../main/pieceTable'
+  import './multiEditor'
+  import connector from '../../../main/connector'
+  import {getRandomColor} from './RandomColor'
+  import GhostCursors from './GhostCursors'
+  import AddPieceButton from './AddPieceButton'
+
+  /**
+   * @module Editor/EditorPiece
+   * @desc A piece of the editor.
+   */
+  export default {
+    name: 'EditorPiece',
+    components: {
+      GhostCursors,
+      AddPieceButton
+    },
+    /**
+     * @vue-prop {Piece[]} pieces - The piece table
+     * @vue-prop {Number} index - The index of the current piece.
+     * @vue-prop {Object} dragStart - The start position of dragging.
+     * @vue-prop {Object} dragStop - The stop position of dragging.
+     */
+    props: {
+      pieces: Array,
+      index: Number,
+      dragStart: Object,
+      dragEnd: Object,
+      /* true: dark
+       * false: light
+       */
+      theme: Boolean
+    },
+    /**
+     * @vue-data {String} lang - The language of the code.
+   */
+    data () {
+      return {
+        lang: null,
+        focus: false
+      }
+    },
+
+    /**
+     * The codemirror instance as a promise
+     * @type Promise | null
+     */
+    myPromise: null,
+    /** @type CodeMirror | null */
+    cminstance: null,
+    /** @type Object | null */
+    startState: null,
+
+    watch: {
+      code (val) {
+        if (!this.editable) {
+          this.setText()
+        }
+      },
+      pieceDragStart: function (newDragStart, oldDragStart) {
+        this.updateDragStart(oldDragStart, newDragStart)
+      },
+      pieceDragLength: function (newDragEnd, oldDragEnd) {
+        this.updateDragLength(oldDragEnd, newDragEnd)
+      },
+      theme (newTheme) {
+        this.updateTheme(newTheme)
+      }
+    },
+    mounted () {
+      this.$emit('mounted', this)
+    },
+
+    /**
+     *
+     * @vue-computed {String[]} codeArray
+     * @vue-computed {String} code
+     * @vue-computed {Piece} piece
+     * @vue-computed {String} username
+     * @vue-computed {Boolean} editable
+     * @vue-computed {PieceTable} pieceTable
+     * @vue-computed {Number | null} pieceDragStart
+     * @vue-computed {Number} pieceDragLength
+     */
+    computed: {
+      codeArray () {
+        return this.pieces[this.index].text
+      },
+      code () {
+        return this.codeArray.join('').replace(/\n$/g, '')
+      },
+
+      piece () {
+        return this.pieces[this.index]
+      },
+      username () {
+        return this.pieces[this.index].username
+      },
+      editable () {
+        return this.$store.state.user.username === this.username
+      },
+      pieceTable () {
+        return this.$store.state.fileTracker.pieceTable
+      },
+
+      firstLineNumber () {
+        return this.pieces.slice(0, this.index).reduce((acc, val) => val.text.length + acc, 0) + 1
+      },
+
+      pieceDragStart () {
+        if (!(this.dragStart || this.dragEnd)) {
+          return null
+        }
+        let start = indexOffsetRangeSort(this.dragStart, this.dragEnd)[0]
+        if (start.piece &lt; this.index) {
+          return 0
+        } else if (start.piece === this.index) {
+          return start.line
+        }
+
+        return null
+      },
+      pieceDragLength () {
+        const cm = this.$options.cminstance
+        if (!(this.dragStart &amp;&amp; this.dragEnd)) {
+          return -1
+        }
+        let range = indexOffsetRangeSort(this.dragStart, this.dragEnd)
+        let start = range[0]
+        let end = range[1]
+        if (start.piece > this.index || end.piece &lt; this.index) {
+          return -1
+        } else if (end.piece > this.index) {
+          return cm.lineCount() - this.pieceDragStart
+        } else {
+          if (start.line &lt; this.index) {
+            return end.line + 1
+          } else {
+            return end.line - start.line + 1
+          }
+        }
+      }
+    },
+
+    methods: {
+      /**
+       * Initializes a codemirror editor.
+       * Also initiates the ghostcursors for this piece after
+       * codemirror has been initiated.
+       *
+       * Promise is made only once.
+       *
+       * @returns {Promise&lt;CodeMirror>} The promise resolved with the made CodeMirror instance.
+       */
+      initializeEditor () {
+        if (!this.$options.myPromise) {
+          this.$options.myPromise = new Promise(resolve => {
+            setTimeout(() => {
+              this._initializeEditor()
+              resolve(this.$options.cminstance)
+            }, 0)
+          })
+
+          this.$options.myPromise.then((cm) => this.$refs.ghostCursors.init(cm, this.piece))
+        }
+        return this.$options.myPromise
+      },
+
+      updateTheme (theme) {
+        const cm = this.$options.cminstance
+        if (this.theme) {
+          cm.setOption('theme', 'default')
+        } else {
+          cm.setOption('theme', 'monokai')
+        }
+      },
+
+      _initializeEditor () {
+        let initTheme = 'monokai'
+        if (this.theme) {
+          initTheme = 'default'
+        }
+        if (!window.CodeMirror) window.CodeMirror = CodeMirror
+        // debugger
+        const cm = CodeMirror(this.$refs.cm, {
+          mode: {
+            name: 'multi_editor',
+            lang: this.lang,
+            startState: this.$options.startState
+          },
+          lineNumbers: true,
+          theme: initTheme,
+          smartIndent: true,
+          lineWrapping: true,
+          showCursorWhenSelecting: true,
+          readOnly: !this.editable,
+          firstLineNumber: this.firstLineNumber,
+          viewportMargin: Infinity,
+          cursorBlinkRate: 0,
+          autoCloseBrackets: true,
+          styleActiveLine: true,
+          gutters: ['user-gutter', 'CodeMirror-linenumbers']
+        })
+
+        this.$options.cminstance = cm
+
+        if (this.lang === 'javascript') {
+          cm.addKeyMap({'Ctrl-Space': 'autocomplete'}, false)
+          cm.setOption('matchBrackets', true)
+          cm.setOption('autoCloseBrackets ', true)
+        }
+        cm.setValue(this.code)
+
+        if (this.username) {
+          cm.getGutterElement().style.setProperty('--background-color', getRandomColor(this.username).string())
+        }
+        cm.getGutterElement().setAttribute('title', this.username || 'Click and drag to lock a piece.')
+        this.initializeEvents()
+      },
+      unlock () {
+        connector.request('file-unlock-request', 'file-unlock-response', {
+          file_path: this.$store.state.fileTracker.openFile,
+          lock_id: this.pieces[this.index].pieceID
+        })
+      },
+      setText () {
+        const cm = this.$options.cminstance
+
+        const from = {line: 0, ch: 0}
+        const lastLine = cm.lastLine()
+        const to = {line: lastLine, ch: cm.getLine(lastLine).length}
+        cm.replaceRange(this.code, from, to)
+      },
+      updateDragStart (newDragStart, oldDragStart) {
+        const cm = this.$options.cminstance
+        cm.clearGutter('user-gutter')
+        for (let i = this.pieceDragStart; i &lt; this.pieceDragStart + this.pieceDragLength; i++) {
+          cm.setGutterMarker(this.relativeLineToLine(i), 'user-gutter',
+            this.gutterSelectMarker())
+        }
+      },
+      updateDragLength (newDragLength, oldDragLength) {
+        const cm = this.$options.cminstance
+        cm.clearGutter('user-gutter')
+        for (let i = this.pieceDragStart; i &lt; this.pieceDragStart + this.pieceDragLength; i++) {
+          cm.setGutterMarker(this.relativeLineToLine(i), 'user-gutter',
+            this.gutterSelectMarker())
+        }
+      },
+      lineToRelativeLine (line) {
+        const cm = this.$options.cminstance
+        return line - cm.firstLine()
+      },
+      relativeLineToLine (line) {
+        const cm = this.$options.cminstance
+        return (cm.firstLine() + line)
+      },
+
+      gutterSelectMarker () {
+        const marker = document.createElement('div')
+        marker.classList.add('lock-gutter-marker')
+        marker.innerHTML = '&amp;nbsp;'
+        return marker
+      },
+
+      initializeEvents () {
+        const cm = this.$options.cminstance
+
+        cm.on('focus', () => {
+          this.focus = true
+          const cursorPos = cm.doc.getCursor()
+          connector.send('cursor-move', {
+            file_path: this.$store.state.fileTracker.openFile,
+            piece_id: this.pieces[this.index].pieceID,
+            offset: cursorPos.line,
+            column: cursorPos.ch
+          })
+        })
+
+        cm.on('update', () => {
+          this.$emit('update')
+        })
+
+        cm.on('viewportChange', () => {
+          this.$emit('viewportChange', this.index)
+        })
+
+        cm.on('scrollCursorIntoView', (_, e) => {
+          e.preventDefault()
+        })
+
+        cm.on('cursorActivity', () => {
+          if (!this.focus) return
+          const cursorPos = cm.doc.getCursor()
+
+          connector.send('cursor-move', {
+            file_path: this.$store.state.fileTracker.openFile,
+            piece_id: this.pieces[this.index].pieceID,
+            offset: cursorPos.line,
+            column: cursorPos.ch
+          })
+        })
+
+        if (this.editable) {
+          cm.on('changes', ({cminstance}) => {
+            const value = cm.getValue()
+            const content = value.split('\n').map(val => val + '\n')
+            const newPieceTable = edit(this.pieceTable, this.pieces[this.index].pieceID, content)
+            this.$store.dispatch('updatePieceTable', newPieceTable)
+
+            connector.send('file-delta', {
+              file_path: this.$store.state.fileTracker.openFile,
+              piece_uuid: this.pieces[this.index].pieceID,
+              content: content.join('')
+            })
+          })
+
+          cm.on('cursorActivity', () => {
+            const cursorPos = cm.doc.getCursor()
+
+            connector.send('cursor-move', {
+              file_path: this.$store.state.fileTracker.openFile,
+              piece_id: this.pieces[this.index].pieceID,
+              offset: cursorPos.line,
+              column: cursorPos.ch
+            })
+          })
+        }
+
+        const gutter = cm.getGutterElement()
+        if (!this.editable) {
+          gutter.addEventListener('mousedown', (e) => {
+            const line = cm.lineAtHeight(e.pageY)
+            const relLine = this.lineToRelativeLine(line)
+            this.$emit('lockDragStart', relLine, this.index, e)
+          })
+          gutter.addEventListener('mousemove', (e) => {
+            const line = cm.lineAtHeight(e.pageY)
+            const relLine = this.lineToRelativeLine(line)
+            this.$emit('lockDragUpdate', relLine, this.index, e)
+          })
+          gutter.addEventListener('mouseup', (e) => {
+            const line = cm.lineAtHeight(e.pageY)
+            const relLine = this.lineToRelativeLine(line)
+            this.$emit('lockDragEnd', relLine, this.index, e)
+          })
+        }
+        if (this.editable) {
+          gutter.addEventListener('contextmenu', this.unlock)
+        }
+      },
+
+      updateLineNumbers () {
+        const cm = this.$options.cminstance
+        cm.setOption('firstLineNumber', this.firstLineNumber)
+      }
+    }
+  }
+&lt;/script>
+
+&lt;style lang="scss">
+@import url(https://cdn.jsdelivr.net/gh/tonsky/FiraCode@1.206/distr/fira_code.css);
+.editor-piece {
+  &amp;:last-child {
+    .CodeMirror {
+      height: 100%;
+    }
+  }
+  border-bottom: 1px rgba(255, 255, 255, 0.2) dashed;
+  position: relative;
+}
+
+.CodeMirror {
+  height: auto;
+  font-family: 'Fira Code', monospace;
+  font-variant-ligatures: contextual;
+}
+
+.CodeMirror-lines {
+  min-height: unset !important;
+  padding: 0;
+}
+.editable {
+  .CodeMirror-cursor {
+    animation: blink 1s step-end infinite;
+  }
+  .user-gutter {
+    box-shadow: 0 0 3em 1em var(--background-color);
+  }
+}
+
+.open_editor {
+  .user-gutter {
+    box-shadow: none;
+  }
+}
+
+.user-gutter {
+  width: 1em;
+  background-color: var(--background-color, #aaa);
+}
+
+.lock-gutter-marker {
+  width: 100%;
+  background-color: #fff;
+  pointer-events: none;
+  position: absolute;
+
+}
+
+.CodeMirror-activeline-gutter {
+  pointer-events: none;
+}
+
+@keyframes blink {
+  from,
+  to {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0;
+  }
+}
+&lt;/style>
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<br class="clear">
+
+<footer>
+    Generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.6.2</a> on Thu Jun 27 2019 15:25:49 GMT+0200 (Central European Summer Time) using the Minami theme.
+</footer>
+
+<script>prettyPrint();</script>
+<script src="scripts/linenumber.js"></script>
+</body>
+</html>

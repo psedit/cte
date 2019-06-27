@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>renderer/store/modules/fileTracker.js - Documentation</title>
+
+    <script src="scripts/prettify/prettify.js"></script>
+    <script src="scripts/prettify/lang-css.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="https://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css">
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+<body>
+
+<input type="checkbox" id="nav-trigger" class="nav-trigger" />
+<label for="nav-trigger" class="navicon-button x">
+  <div class="navicon"></div>
+</label>
+
+<label for="nav-trigger" class="overlay"></label>
+
+<nav>
+    <li class="nav-link nav-home-link"><a href="index.html">Home</a></li><li class="nav-heading">Classes</li><li class="nav-heading"><span class="nav-item-type type-class">C</span><span class="nav-item-name"><a href="module-connector-Connector.html">Connector</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="module-connector-Connector.html#addEventListener">addEventListener</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="module-connector-Connector.html#close">close</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="module-connector-Connector.html#getURLString">getURLString</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="module-connector-Connector.html#isOpen">isOpen</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="module-connector-Connector.html#listenToMsg">listenToMsg</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="module-connector-Connector.html#reload">reload</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="module-connector-Connector.html#removeEventListener">removeEventListener</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="module-connector-Connector.html#request">request</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="module-connector-Connector.html#send">send</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="module-connector-Connector.html#setUp">setUp</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="module-connector-Connector.html#waitUntillOpen">waitUntillOpen</a></span></li><li class="nav-heading"><span class="nav-item-type type-class">C</span><span class="nav-item-name"><a href="Tab.html">Tab</a></span></li><li class="nav-heading">Modules</li><li class="nav-heading"><span class="nav-item-type type-module">M</span><span class="nav-item-name"><a href="module-connector.html">connector</a></span></li><li class="nav-heading"><span class="nav-item-type type-module">M</span><span class="nav-item-name"><a href="module-Editor_EditorPiece.html">Editor/EditorPiece</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="module-Editor_EditorPiece.html#initializeEditor">initializeEditor</a></span></li><li class="nav-heading"><span class="nav-item-type type-module">M</span><span class="nav-item-name"><a href="module-fileTracker.html">fileTracker</a></span></li><li class="nav-heading"><a href="global.html">Globals</a></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#_create">_create</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#convertBlockToJS">convertBlockToJS</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#convertChangeToJS">convertChangeToJS</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#convertPieceToPy">convertPieceToPy</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#convertTableTojs">convertTableTojs</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#convertTextBlocksToPy">convertTextBlocksToPy</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#convertTextBlockToPy">convertTextBlockToPy</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#convertToJS">convertToJS</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#convertToPy">convertToPy</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#correctJSON">correctJSON</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#edit">edit</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#fileChangeRequest">fileChangeRequest</a></span></li><li class="nav-item"><span class="nav-item-type type-member">M</span><span class="nav-item-name"><a href="global.html#files">files</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#getBlock">getBlock</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#getFile">getFile</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#getPieceByPieceID">getPieceByPieceID</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#getPieceIndexByPieceID">getPieceIndexByPieceID</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#getRange">getRange</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#getRangeById">getRangeById</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#getSettings">getSettings</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#getStart">getStart</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#getTextByPieceID">getTextByPieceID</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#len">len</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#lengthBetween">lengthBetween</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#lineToTableIndex">lineToTableIndex</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#locationChange">locationChange</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#nameChange">nameChange</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#newFile">newFile</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#rangeToAnchoredLength">rangeToAnchoredLength</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#removeItem">removeItem</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#setLocalWorkspace">setLocalWorkspace</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#setServerURL">setServerURL</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#setter">setter</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#stitch">stitch</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#uploadFile">uploadFile</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#writeJSON">writeJSON</a></span></li>
+</nav>
+
+<div id="main">
+    
+    <h1 class="page-title">renderer/store/modules/fileTracker.js</h1>
+    
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>import Tab from '../../components/Tabs/tabType'
+import connector from '../../../main/connector'
+import { convertToJS, getFile, create, lengthBetween } from '../../../main/pieceTable'
+
+/**
+ * Manages the changes of files on the server.
+ *
+ * @module fileTracker
+ */
+
+const state = {
+  pieces: null,
+  pieceTable: null,
+  openFile: '',
+  filePaths: '',
+  tabs: []
+}
+
+const mutations = {
+  serverURLChange (store) {
+  },
+  /**
+   * Updates the piecetable using the getFile function from pieceTable.js
+   * @param {Object} state
+   * @param {pieceTable} pieceTable
+   */
+  updatePieces (state, pieceTable) {
+    state.pieces = getFile(pieceTable)
+  },
+
+  /**
+   * Removes all tabs.
+   * @param {Object} state
+   */
+  clearTabs (state) {
+    state.tabs = []
+  },
+  /**
+   * @param {Object} state
+   * @param {pieceTable} pieceTable
+   */
+  updatePieceTable (state, pieceTable) {
+    state.pieceTable = pieceTable
+  },
+  /**
+   * Adds a tab to state.
+   * @param {Object} state vuex state
+   * @param {string} filePath filepath to file that needs to be added as tab
+   */
+  addTab (state, filePath) {
+    if (state.tabs.every(x => x.filePath !== filePath)) {
+      const newTab = new Tab(filePath)
+      state.tabs = [...state.tabs, newTab]
+    }
+  },
+  /**
+   * Removes tab to state.
+   * @param {Object} state vuex state
+   * @param {string} filePath filepath to file of the tab that needs to removed
+   */
+  removeTab (state, tabPath) {
+    state.tabs = state.tabs.filter(x => x.filePath !== tabPath)
+  },
+  /**
+   * Updates the filepaths.
+   * @param {Object} state vuex state
+   * @param {Object[]} filePaths
+   */
+  updateFiles (state, filePaths) {
+    state.filePaths = filePaths
+  },
+  updateOpenFile (state, filePath) {
+    state.openFile = filePath
+  },
+  /**
+   * Renames a given tab.
+   * @param {Object} store vuex store
+   * @param {Object} payload a key array with keys pathToDir, the path to the
+   * directory in which the file is located (has to end on '/'), oldName, the
+   * current name of the file, and newName, the new name of the file.
+   * They are stored in one object because this can't be done differently for mutations.
+   */
+  renameTab (state, payload) {
+    if (payload.pathToDir + payload.oldName === state.openFile) {
+      state.openFile = payload.pathToDir + payload.newName
+    }
+    for (let tab of state.tabs) {
+      if (tab.fileName === payload.oldName) {
+        tab.filePath = payload.pathToDir + payload.newName
+        tab.fileName = payload.newName
+        break
+      }
+    }
+  }
+}
+
+const actions = {
+  /**
+   * Opens a file from the root of the project, and updates the code.
+   * Also changes the openedFile state. Add the file to the tabs.
+   * @param {Object} store vuex store
+   * @param {string} filePath the file path to document to be opened
+   */
+  openFile (store, filePath) {
+    if (filePath === store.state.openFile) {
+      return
+    }
+    store.commit('updateOpenFile', filePath)
+    store.commit('addTab', filePath)
+
+    connector.send(
+      'file-join',
+      {
+        'file_path': filePath
+      }
+    )
+
+    connector.request(
+      'file-content-request',
+      'file-content-response',
+      {
+        'file_path': filePath,
+        'start': 0,
+        'length': -1
+      }
+    ).then((data) => {
+      const pieceTable = convertToJS(data)
+      store.dispatch('updatePieceTable', pieceTable)
+    })
+  },
+  /**
+   * Move to the tab left from the tab with the given index.
+   */
+  prevTab (store, index) {
+    if (index === 0) {
+      index = store.state.tabs.length
+    }
+    store.dispatch('openFile', store.state.tabs[index - 1].filePath)
+  },
+  /**
+   * Move to the tab right from the tab with the given index.
+   */
+  nextTab (store, index) {
+    if (index === store.state.tabs.length - 1) {
+      index = -1
+    }
+    store.dispatch('openFile', store.state.tabs[index + 1].filePath)
+  },
+  /**
+  * Updates pieces and piece table
+  * @param {Object} store
+  * @param {PieceTable} pieceTable
+  */
+  updatePieceTable (store, pieceTable) {
+    store.commit('updatePieceTable', pieceTable)
+    store.commit('updatePieces', pieceTable)
+  },
+  serverURLChange (store) {
+    store.commit('serverURLChange')
+    store.dispatch('clearTabs')
+  },
+  /**
+   * Removes a tab from state and switches to a new tab if the tab was the
+   * currently opened tab. The changes made to the tab are also saved, and
+   * after closing the user is removed from the list of users in a tab.
+   * @param {Object} store vuex store
+   * @param {Tab} tabToRemove the tab that needs to be removed
+   */
+  removeTab (store, tabToRemove) {
+    connector.send('file-leave', {
+      file_path: store.state.openFile,
+      force_exit: 1
+    })
+    if (tabToRemove.filePath === store.state.openFile) {
+      if (store.state.tabs.length === 1) {
+        store.commit('updateOpenFile', '')
+        store.dispatch('updatePieceTable', create(''))
+      } else {
+        const i = store.state.tabs.indexOf(tabToRemove)
+        store.dispatch('prevTab', i)
+      }
+    }
+    store.commit('removeTab', tabToRemove.filePath)
+  },
+  /**
+   * Removes a tab from state and switches to a new tab if the tab was opened.
+   * This function only needs the file to be removed, and doesn't save changes or
+   * update the user list like removeTab does.
+   * @param {Object} store vuex store
+   * @param {string} tabPath the path to the tab that needs to be removed
+   */
+  removeTabByPath (store, tabPath) {
+    if (tabPath === store.state.openFile) {
+      if (store.state.tabs.length === 1) {
+        store.commit('updateOpenFile', '')
+        store.dispatch('updatePieceTable', create(''))
+      } else {
+        let i = 0
+        for (let tab of store.state.tabs) {
+          if (tab.filePath === tabPath) {
+            break
+          }
+          i++
+        }
+        store.dispatch('prevTab', i)
+      }
+    }
+    store.commit('removeTab', tabPath)
+  },
+  updateCodeAction (state, newCode) {
+    state.commit('updateCode', newCode)
+  },
+  /**
+   * Sends a request for a lock to the server.
+   * @param {Object} state
+   * @param {{start: {id, offset}, end: {id, offset}}} payload
+   */
+  requestLockAction (state, payload) {
+    connector.request('file-lock-request', 'file-lock-response',
+      {
+        'file_path': state.openFile,
+        'piece_uuid': payload.start.id,
+        'offset': payload.start.offset,
+        'length': lengthBetween(this.state.pieces, payload.start.id,
+          payload.start.offset, payload.end.start, payload.end.offset)
+      }
+    )
+  },
+  /**
+   * Closes all open tabs.
+   * @param {Object} store
+   */
+  clearTabs (store) {
+    store.commit('updateOpenFile', '')
+    store.commit('clearTabs')
+    store.dispatch('updatePieceTable', create(''))
+  },
+  /**
+   * Moves from the current tab to another tab in the given direction.
+   * @param {Object} store vuex store
+   * @param {int} direction 1 for moving to the next tab, 0 for to the previous
+   */
+  scrollTab (store, direction) {
+    let i = 0
+    for (let tab of store.state.tabs) {
+      if (tab.filePath === store.state.openFile) {
+        if (direction) {
+          store.dispatch('nextTab', i)
+        } else {
+          store.dispatch('prevTab', i)
+        }
+        break
+      }
+      i++
+    }
+  }
+}
+
+export default {
+  state,
+  mutations,
+  actions
+}
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<br class="clear">
+
+<footer>
+    Generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.6.2</a> on Thu Jun 27 2019 15:25:49 GMT+0200 (Central European Summer Time) using the Minami theme.
+</footer>
+
+<script>prettyPrint();</script>
+<script src="scripts/linenumber.js"></script>
+</body>
+</html>
