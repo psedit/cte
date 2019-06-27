@@ -9,7 +9,6 @@ const uuid = require('uuid/v4')
 const fs = require('fs')
 const {dialog} = require('electron')
 
-// const path = 'ws://bami.party:12345'
 const path = 'ws://segfault.party:12345'
 const homedir = require('os').homedir()
 const settingsDirPath = homedir + '/pseditor-settings/'

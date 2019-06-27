@@ -102,7 +102,8 @@ export function convertToJS (pyPieceTable) {
   }
 }
 
-/**
+/** 
+ * Converts an individual block from python to javascript.
  * @param {Object.<string, TextBlock>} obj
  * @param {any[]} block
  * @returns {Object.<string, TextBlock>} text blocks
@@ -116,7 +117,8 @@ export function convertBlockToJS (obj, [blockID, closed, lines]) {
   return obj
 }
 
-/**
+/** 
+ * Convert the table to python.
  * @param {any[]} piece
  * @returns {Piece}
  */
@@ -130,7 +132,8 @@ export function convertTableTojs ([pieceID, blockID, start, length, username]) {
   }
 }
 
-/**
+/** 
+ * Converts the indivual properties of update to javascript.
  * @param {Object.<string, TextBlock>} textBlocks
  * @param {Object} update
  * @returns {Update}
@@ -146,7 +149,8 @@ export function convertChangeToJS (textBlocks, update) {
   }
 }
 
-/**
+/** 
+ * Converts a javascript piecetable to python
  * @param {PieceTable} pieceTable
  * @returns {Object} an python piece table to send over sockets
  */
@@ -157,7 +161,8 @@ export function convertToPy ({ textBlocks, table }) {
   }
 }
 
-/**
+/** 
+ * Convert the blocks in a piecetable to python.
  * @param {PieceTable} pieceTable
  * @returns {any[]} a block list
  */
@@ -167,7 +172,8 @@ export function convertTextBlocksToPy ({ textBlocks, table }) {
   })
 }
 
-/**
+/** 
+ * Convert individual javascript textblock to python
  * @param {Object.<string, TextBlock>} textBlocks
  * @param {number} blockID
  * @return {any[]} a block
@@ -177,7 +183,8 @@ export function convertTextBlockToPy (textBlocks, blockID) {
   return [blockID, !open, lines]
 }
 
-/**
+/** 
+ * Convert a single pice from javascript to python.
  * @param {Piece} piece
  * @returns {any[]} piece
  */
@@ -185,7 +192,7 @@ export function convertPieceToPy ({ pieceID, blockID, start, length }) {
   return [pieceID, blockID, start, length]
 }
 
-/**
+/** 
  * Returns the length of the stitched file according to the table.
  * @param {Piece[]} table
  * @returns {number} the length of the table
@@ -194,6 +201,11 @@ export function len (table) {
   return table.reduce((total, curr) => total + curr.length, 0)
 }
 
+/**
+ * Return A and B in order.
+ * @param {*} A 
+ * @param {*} B 
+ */
 export function indexOffsetRangeSort (A, B) {
   const comp = indexOffsetCompare(A, B)
   if (comp > 0) {
@@ -203,6 +215,11 @@ export function indexOffsetRangeSort (A, B) {
   }
 }
 
+/**
+ * Determine the order of A and B.
+ * @param {Object} A 
+ * @param {Object} B 
+ */
 export function indexOffsetCompare (A, B) {
   if (A.piece < B.piece || (A.piece === B.piece && A.line < B.line)) {
     return -1
@@ -214,12 +231,12 @@ export function indexOffsetCompare (A, B) {
 }
 
 /**
- *
- * @param {*} table
- * @param {*} idxA
- * @param {*} offsetA
- * @param {*} idxB
- * @param {*} offsetB
+ * Make a new piece based on selected lines.
+ * @param {PieceTable} table
+ * @param {int} idxA
+ * @param {int} offsetA
+ * @param {int} idxB
+ * @param {int} offsetB
  */
 export function rangeToAnchoredLength (table, idxA, offsetA,
   idxB, offsetB) {
@@ -249,8 +266,10 @@ export function rangeToAnchoredLength (table, idxA, offsetA,
 /**
  * Compute number of lines between two locations in the piece table
  * @param {Piece[]} table
- * @param {*} start
- * @param {*} end
+ * @param {Piece} startpiece
+ * @param {int} startoffset
+ * @param {piece} endpiece
+ * @param {int} endoffset
  */
 export function lengthBetween (table, startpiece, startoffset,
   endpiece, endoffset) {
@@ -321,6 +340,7 @@ export function getRange (table, lineNumber, length) {
 }
 
 /**
+ * Determine the start and end pieces based on ID's.
  * @param {Piece[]} table
  * @param {PieceID} startPieceID
  * @param {PieceID} endPieceID
@@ -337,6 +357,7 @@ export function getRangeById (table, startPieceID, endPieceID) {
 }
 
 /**
+ * Get a block by pieceID
  * @param {pieceTable} pieceTable
  * @param {string} pieceID
  * @returns {TextBlock} the corresponding TextBlock
@@ -347,6 +368,7 @@ export function getBlock ({ textBlocks, table }, pieceID) {
 }
 
 /**
+ * Return a piece with corresponding ID.
  * @param {Piece[]} table
  * @param {string} pieceID
  * @returns {Piece}
@@ -356,6 +378,7 @@ export function getPieceByPieceID (table, pieceID) {
 }
 
 /**
+ * Get the piece index based on piece ID.
  * @param {Piece[]} table
  * @param {string} pieceID
  * @returns {number}
@@ -378,6 +401,7 @@ export function stitch ({ textBlocks, table }) {
 }
 
 /**
+ * Get the text from a piece based on the PieceID
  * @param {PieceTable} pieceTable
  * @param {string} pieceID
  * @returns {string[]} the text of the corresponding block
@@ -389,6 +413,7 @@ export function getTextByPieceID ({ textBlocks, table }, pieceID) {
 }
 
 /**
+ * Get file pieces from the piecetable.
  * @param {PieceTable}
  * @returns {FilePiece[]} a list of file pieces
  */
@@ -404,6 +429,7 @@ export function getFile ({ textBlocks, table }) {
 }
 
 /**
+ * Return new piecetable based on an edit.
  * @param {PieceTable} pieceTable
  * @param {number} pieceID
  * @param {string[]} lines
