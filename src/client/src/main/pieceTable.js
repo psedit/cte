@@ -102,7 +102,7 @@ export function convertToJS (pyPieceTable) {
   }
 }
 
-/** 
+/**
  * Converts an individual block from python to javascript.
  * @param {Object.<string, TextBlock>} obj
  * @param {any[]} block
@@ -117,7 +117,7 @@ export function convertBlockToJS (obj, [blockID, closed, lines]) {
   return obj
 }
 
-/** 
+/**
  * Convert the table to python.
  * @param {any[]} piece
  * @returns {Piece}
@@ -132,7 +132,7 @@ export function convertTableTojs ([pieceID, blockID, start, length, username]) {
   }
 }
 
-/** 
+/**
  * Converts the indivual properties of update to javascript.
  * @param {Object.<string, TextBlock>} textBlocks
  * @param {Object} update
@@ -149,7 +149,7 @@ export function convertChangeToJS (textBlocks, update) {
   }
 }
 
-/** 
+/**
  * Converts a javascript piecetable to python
  * @param {PieceTable} pieceTable
  * @returns {Object} an python piece table to send over sockets
@@ -161,7 +161,7 @@ export function convertToPy ({ textBlocks, table }) {
   }
 }
 
-/** 
+/**
  * Convert the blocks in a piecetable to python.
  * @param {PieceTable} pieceTable
  * @returns {any[]} a block list
@@ -172,7 +172,7 @@ export function convertTextBlocksToPy ({ textBlocks, table }) {
   })
 }
 
-/** 
+/**
  * Convert individual javascript textblock to python
  * @param {Object.<string, TextBlock>} textBlocks
  * @param {number} blockID
@@ -183,7 +183,7 @@ export function convertTextBlockToPy (textBlocks, blockID) {
   return [blockID, !open, lines]
 }
 
-/** 
+/**
  * Convert a single pice from javascript to python.
  * @param {Piece} piece
  * @returns {any[]} piece
@@ -192,7 +192,7 @@ export function convertPieceToPy ({ pieceID, blockID, start, length }) {
   return [pieceID, blockID, start, length]
 }
 
-/** 
+/**
  * Returns the length of the stitched file according to the table.
  * @param {Piece[]} table
  * @returns {number} the length of the table
@@ -203,8 +203,8 @@ export function len (table) {
 
 /**
  * Return A and B in order.
- * @param {*} A 
- * @param {*} B 
+ * @param {*} A
+ * @param {*} B
  */
 export function indexOffsetRangeSort (A, B) {
   const comp = indexOffsetCompare(A, B)
@@ -217,8 +217,8 @@ export function indexOffsetRangeSort (A, B) {
 
 /**
  * Determine the order of A and B.
- * @param {Object} A 
- * @param {Object} B 
+ * @param {Object} A
+ * @param {Object} B
  */
 export function indexOffsetCompare (A, B) {
   if (A.piece < B.piece || (A.piece === B.piece && A.line < B.line)) {
