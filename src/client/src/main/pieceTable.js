@@ -1,3 +1,7 @@
+/**
+ * @module pieceTable
+ */
+
 const uuid = require('uuid/v4')
 const { mergeLeft, clone } = require('ramda')
 

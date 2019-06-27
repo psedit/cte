@@ -1,3 +1,7 @@
+/**
+ * @module fileManager
+ */
+
 import connector from '../../../main/connector'
 
 /** Sends message to the server indicating a file change.
