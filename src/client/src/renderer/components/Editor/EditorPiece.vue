@@ -100,6 +100,7 @@
     },
     mounted () {
       this.$emit('mounted', this)
+      document.documentElement.style.setProperty('--user-color', getRandomColor(this.$store.state.user.username))
     },
 
     computed: {
@@ -467,6 +468,10 @@
   .user-gutter {
     box-shadow: none;
   }
+}
+
+.CodeMirror-cursor {
+  border-left: 4px solid var(--user-color) !important;
 }
 
 .user-gutter {
