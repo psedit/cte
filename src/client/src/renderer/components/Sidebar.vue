@@ -36,6 +36,16 @@
   const tar = require('tar')
   const fs = require('fs')
 
+  /**
+   * @module Sidebar
+   *
+   * @vue-data {String[]} currPath - The path with every directory/file name seperate in the array.
+   * @vue-data {Array} completeTree - The file tree structure as recieved by the server.
+   *
+   * @vue-computed {Array} currItems - All items in the current folder.
+   * @vue-computed {String} currPathString - The current path string.
+   * @vue-computed {String} displayPath - The path string that will be displayed at top of the sidebar.
+   */
   export default {
     name: 'sidebar',
     data () {
