@@ -34,6 +34,7 @@ TeamCode was written by:
 * Sverre Kroesen
 * Folkert van Verseveld
 * Mund Vetter
-* Robin WacannoJim Wagemans
+* Robin Wacanno
+* Jim Wagemans
 
 See LICENSE for legal information about using our product.
