@@ -1,4 +1,4 @@
-[Logo](https://i.imgur.com/Pr4SJn7.png)
+![Logo](https://i.imgur.com/Pr4SJn7.png)
 ## Introduction
 A real-time collaborative text editor: Google Docs for code
 
