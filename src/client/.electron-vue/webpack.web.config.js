@@ -114,6 +114,9 @@ let webConfig = {
     filename: '[name].js',
     path: path.join(__dirname, '../dist/web')
   },
+  node: {
+    fs: 'empty'
+  },
   resolve: {
     alias: {
       '@': path.join(__dirname, '../src/renderer'),

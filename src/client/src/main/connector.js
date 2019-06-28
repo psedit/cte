@@ -26,43 +26,41 @@ const uuid = require('uuid/v4')
 
 class Connector {
   /**
-   * Collection of all listeners
-   *
-   * @type {{upgrade: Array, ping: Array, 'unexpected-response': Array, error: Array, pong: Array, message: {all: Array}, close: Array, open: Array}}
-   * @private
-   */
-  listeners = {
-    close: [],
-    error: [],
-    open: [],
-    ping: [],
-    pong: [],
-    'unexpected-response': [],
-    upgrade: [],
-    message: {
-      all: []
-    }
-  }
-
-  /**
-   * The websocket interface.
-   *
-   * @type WebSocket
-   */
-  ws;
-
-  /**
-   * The url to the server
-   *
-   * @type string
-   */
-  URLString;
-
-  /**
    * Creates a connection and setups listeners.
    * Also reads options from json file.
    */
   constructor () {
+    /**
+     * The websocket interface.
+     *
+     * @type WebSocket
+     */
+    this.ws = null
+
+    /**
+     * The url to the server
+     *
+     * @type string
+     */
+    this.URLString = null
+
+    /**
+    * Collection of all listeners
+    *
+    * @type {{upgrade: Array, ping: Array, 'unexpected-response': Array, error: Array, pong: Array, message: {all: Array}, close: Array, open: Array}}
+    */
+    this.listeners = {
+      close: [],
+      error: [],
+      open: [],
+      ping: [],
+      pong: [],
+      'unexpected-response': [],
+      upgrade: [],
+      message: {
+        all: []
+      }
+    }
     let settings = optionParser.getSettings()
     this.setUp(settings.serverURL)
   }

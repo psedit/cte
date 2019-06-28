@@ -28,7 +28,7 @@ function createWindow () {
     height: 563,
     useContentSize: true,
     width: 1000,
-    icon: path.join(__dirname, '../renderer/assets/logoKlein.png'),
+    icon: path.join(__dirname, '../../build/icons/256x256.png'),
     webPreferences: {
       nodeIntegration: true // attempt to fix process not found error
     }
