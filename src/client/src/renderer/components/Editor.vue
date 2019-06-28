@@ -4,7 +4,7 @@
     <add-piece-button class="add-piece-button-top"/>
     <scroll-bar :max="scrollHeight" v-model="scrollPos" ref="scrollbar"/>
 
-    <div class="editor-pieces" ref="editorPiecesList" :style="{transform: `translateY(${-scrollPos}px)`}" v-if="ready">
+    <div class="editor-pieces" ref="editorPiecesList" :style="{transform: `translateY(${-scrollPos}px)`}" v-show="ready">
       <transition-group name="swap" tag="editorPieceGroup">
         <editor-piece class="editor-piece"
           v-for="(piece, index) in pieces"

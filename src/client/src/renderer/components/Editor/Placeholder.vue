@@ -1,7 +1,8 @@
 <template>
   <div class="template">
-      <img src="@/assets/logoGroot.png" alt="" class="logo">
-      <div class="text"><== Select a file</div>
+    <div class="logo"></div>
+    <!--<img src="@/assets/logoGroot.png" alt="" class="logo">-->
+    <div class="text">⇚ Select a file</div>
   </div>
 </template>
 
@@ -16,16 +17,22 @@
     position: relative;
   }
   .logo {
-    filter: drop-shadow(0 0 0.1em rgba(#333, 0.3));
+    background-image: url("../../assets/logoGroot.png");
+    background-repeat: no-repeat;
+    background-size: contain;
+    background-position: center;
+    filter: drop-shadow(0 0 0.1em rgba(#555, 0.9));
+    height: 50%;
     width: 50%;
     position: absolute;
-    top: 25%;
+    top: 20%;
     left: 25%;
   }
   .text {
     position: absolute;
-    top: 60%;
-    left: 25%;
+    bottom: 10%;
+    width: 100%;
+    color: #999;
 
   }
 </style>
