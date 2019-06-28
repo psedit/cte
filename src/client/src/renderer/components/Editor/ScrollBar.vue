@@ -12,6 +12,15 @@
 </template>
 
 <script>
+  /**
+   * @module ScrollBar
+   * @desc Contains the logic for the scrollbar.
+   * @vue-data {number} viewportHeight the height of the viewport
+   * @vue-data {number} max the height of your document
+   * @vue-data {boolean} dragging whether the user is dragging the scrollbar
+   * @vue-computed {number} thumbHeight the height of the dragable part of the scrollbar
+   * @vue-computed {number} top the position of the thumbbar
+   */
   export default {
     name: 'ScrollBar',
     props: {
@@ -35,6 +44,9 @@
     },
 
     methods: {
+      /**
+       * Renders the scrollbar
+       */
       render () {
         const editor = this.$parent
         this.viewportHeight = editor.$el.clientHeight
@@ -44,11 +56,16 @@
           this.render()
         })
       },
-
+      /**
+       * Sets the dragging state to false.
+       */
       mouseup () {
         this.dragging = false
       },
-
+      /**
+       * Emits when the position when the user is dragging
+       * @param {Object} event a mouse move event
+       */
       mousemove (event) {
         if (this.dragging) {
           const top = this.top + event.movementY
@@ -56,7 +73,10 @@
           this.$emit('input', val)
         }
       },
-
+      /**
+       * Sets the dragging state to true and prevents the default.
+       * @param event a mouse down event
+       */
       mousedown (event) {
         this.dragging = true
         event.preventDefault()
@@ -77,7 +97,6 @@
   font-size: 1.3em;
   position: fixed;
   width: .5em;
-  /*background-color: rgba(30, 30, 30, 0.2);*/
   right: 0;
   top: 2em;
 }
