@@ -12,11 +12,15 @@
         /* Start listening to error messages and show a pop up with the message
          * when receiving an error.
          */
-        // connector.listenToMsg('error-response', ({content}) => {
-        //   if (content.error_code === 2) return
-        //   let message = `Error: ${content.message}\n\nError code: ${content.error_code}`
-        //   dialog.showErrorBox('Oops! We messed up...', message)
-        // })
+        connector.listenToMsg('error-response', ({content}) => {
+          if (content.error_code === 2) return
+          if (content.error_code === 5) {
+            this.$toasted.error('Someone else locked this region')
+            return
+          }
+          let message = `Error: ${content.message}\n\nError code: ${content.error_code}`
+          this.$toasted.error('Oops! We messed up...', message)
+        })
       })
     }
   }

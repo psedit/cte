@@ -42,7 +42,6 @@
 </template>
 
 <script>
-  // import Vue from 'vue'
   import EditorPiece from './Editor/EditorPiece'
   import ThemeSwitch from './ThemeSwitch'
   import convert from './Editor/cursor'
@@ -323,14 +322,9 @@
 }
 
 .editor-pieces {
-  // display: flex;
-  // flex-direction: column;
-  // height: 1000000pt;
   position: relative;
   width: auto;
   overflow-y: visible;
-  // padding-bottom: 1000px;
-  // min-height: 1000000pt;
 }
 
 .editor-piece {
@@ -348,10 +342,7 @@
 }
 
 .swap-enter-active {
-  /*position: float;*/
   opacity: 1;
-  // max-height: 0;
-  // display: block;
   transition: all 1s;
 }
 
@@ -359,7 +350,6 @@
   position: relative;
   opacity: 1;
   transition: all 1s;
-  // max-height: 0;
   display: none;
 }
 
