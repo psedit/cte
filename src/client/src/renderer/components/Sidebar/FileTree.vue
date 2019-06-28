@@ -32,7 +32,7 @@
    * Displays a list of all files, i.e., the file tree, as seen on the sidebar.
    * Also manages everything relevant to the file tree.
    *
-   * @module fileTracker
+   * @module fileTree
    *
    * @vue-data {Boolean} isOpen -
    * @vue-data {Object[]} rightClickOptionsFile - a list of all options for when you rightclick a file.
