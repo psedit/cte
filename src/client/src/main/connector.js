@@ -72,6 +72,9 @@ class Connector {
    * @param {string} pathString string of URL for websocket.
    */
   setUp (pathString) {
+    if (this.ws) {
+      this.close(1000, 'Going to someone else.')
+    }
     this.URLString = pathString
 
     // Setup websocket
@@ -134,7 +137,7 @@ class Connector {
    * @param {number} code - Status code of why the connection is closing.
    * @param {string} reason - A human readable reason of why the connection is closing.
    */
-  close (code = 0, reason = 'I am done.') {
+  close (code = 1000, reason = 'I am done.') {
     this.ws.close(code, reason)
   }
 
