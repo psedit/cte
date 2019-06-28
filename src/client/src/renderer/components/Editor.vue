@@ -277,7 +277,7 @@
       this.$refs.editorPiecesList.style.top = 0
 
       this.$el.addEventListener('wheel', event => {
-        this.scrollPos = this.scrollPos + event.deltaY * 0.2
+        this.scrollPos = this.scrollPos + event.deltaY
         this.scrollPos = Math.max(0, this.scrollPos)
         this.scrollPos = Math.min(this.$refs.editorPiecesList.clientHeight - 20, this.scrollPos)
       })
