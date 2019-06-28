@@ -11,7 +11,7 @@
   /**
    * @module FileTreeItem
    * @desc handles an invdidual folder or link
-   * @vue-prop {Array} item contains the file tree of that item 
+   * @vue-prop {Array} item contains the file tree of that item.
    */
   import FolderIcon from 'vue-material-design-icons/Folder'
   import FileIcon from 'vue-material-design-icons/File'
