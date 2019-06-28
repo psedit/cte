@@ -244,7 +244,7 @@
         if (this.username) {
           cm.getGutterElement().style.setProperty('--background-color', getRandomColor(this.username).string())
         }
-        cm.getGutterElement().setAttribute('title', this.username || 'Click and drag to lock a piece.')
+        cm.getGutterElement().setAttribute('title', this.username.replace(/[0-9]/g, '').replace(/_/g, '') || 'Click and drag to lock a piece.')
         this.initializeEvents()
       },
 

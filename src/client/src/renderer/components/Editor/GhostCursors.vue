@@ -2,7 +2,7 @@
   <div class="ghost-cursors">
     <ghost-cursor v-for="(cursor, index) in cursors"
                  :filepath="cursor.filepath"
-                 :username="cursor.username"
+                 :username="cursor.username.replace(/[0-9]/g, '').replace(/_/g, '')"
                  :line="cursor.line"
                  :ch="cursor.ch"
                  :backgroundColor="cursor.color"
