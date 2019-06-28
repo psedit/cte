@@ -10,6 +10,16 @@
  */
 import LightbulbOutline from 'vue-material-design-icons/LightbulbOutline'
 import Lightbulb from 'vue-material-design-icons/Lightbulb'
+
+/**
+ * @module ThemeSwitch
+ * @desc A switch to switch between themes.
+ *
+ * @vue-data {Boolean} lightTheme - True if lighttheme is selected, false otherwise.
+ *
+ * @vue-computed {String} tooltip - The tooltip text that is displayed on the button.
+ * @vue-computed {String} currPathString - The current path string.
+ */
 export default {
   name: 'theme-button',
   components: {
@@ -31,10 +41,16 @@ export default {
     }
   },
   methods: {
+    /**
+     * Switches to light theme
+     */
     turnOn () {
       this.lightTheme = true
       this.$emit('theme-change', this.lightTheme)
     },
+    /**
+     * Switches to dark theme
+     */
     turnOff () {
       this.lightTheme = false
       this.$emit('theme-change', this.lightTheme)

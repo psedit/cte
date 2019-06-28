@@ -1,6 +1,11 @@
 import { getRandomColor } from './RandomColor'
 
 /**
+ * @module cursor
+ * @desc Converts server representation to client representation.
+ */
+
+/**
  * @typedef Cursor
  * @property {string} username
  * @property {string} filepath

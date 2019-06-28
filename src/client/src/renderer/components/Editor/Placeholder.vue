@@ -1,12 +1,15 @@
 <template>
   <div class="template">
     <div class="logo"></div>
-    <!--<img src="@/assets/logoGroot.png" alt="" class="logo">-->
     <div class="text">⇚ Select a file</div>
   </div>
 </template>
 
 <script>
+  /**
+   * @module Placeholder
+   * @desc Placeholder contains the content that gets shown, when the editor is not opened.
+   */
   export default {
     name: 'Placeholder'
   }

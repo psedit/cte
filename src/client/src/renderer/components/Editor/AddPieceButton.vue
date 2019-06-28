@@ -9,6 +9,16 @@
 <script>
   import LockPlusIcon from 'vue-material-design-icons/LockPlus'
   import Connector from './../../../../src/main/connector'
+  /**
+   * Displays a list of all files, i.e., the file tree, as seen on the sidebar.
+   * Also manages everything relevant to the file tree.
+   *
+   * @module AddPieceButton
+   *
+   * @vue-prop {String} [pieceID=''] - The piece ID this button appends a piece to. Can be empty if you want to prepend
+   *                                   a piece to the entire document.
+   */
+
   export default {
     name: 'AddPieceButton',
     components: {
@@ -21,6 +31,9 @@
       }
     },
     methods: {
+      /**
+       * Sends a request to the server.
+       */
       click () {
         Connector.send('file-lock-insert-request', {
           file_path: this.$store.state.fileTracker.openFile,

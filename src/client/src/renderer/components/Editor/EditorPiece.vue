@@ -433,7 +433,9 @@
        */
       updateLineNumbers () {
         const cm = this.$options.cminstance
-        cm.setOption('firstLineNumber', this.firstLineNumber)
+        if (cm) {
+          cm.setOption('firstLineNumber', this.firstLineNumber)
+        }
       }
     }
   }

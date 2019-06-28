@@ -8,24 +8,22 @@
 </template>
 
 <script>
+  /**
+   * @module FileTreeItem
+   * @desc handles an invdidual folder or link
+   * @vue-prop {Array} item contains the file tree of that item.
+   */
   import FolderIcon from 'vue-material-design-icons/Folder'
   import FileIcon from 'vue-material-design-icons/File'
-  // import FileTree from './FileTree'
 
   export default {
     name: 'FileTreeItem',
     components: {
       FolderIcon,
       FileIcon
-      // FileTree: () => import('./FileTree.vue')
     },
     props: {
       item: [Array, String]
-    },
-    data () {
-      return {
-        isOpen: false
-      }
     },
     computed: {
       /**
