@@ -1,3 +1,7 @@
+/**
+ * @module multiEditor
+ * @desc shares the syntax states between editor pieces.
+ */
 import CodeMirror from 'codemirror/lib/codemirror'
 
 CodeMirror.defineMode('multi_editor', function (config, parserConfig) {
