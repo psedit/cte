@@ -370,7 +370,7 @@
 
   &-item {
     border-style: solid;
-    border-width: 0.5em;
+    border-width: 0.2em;
     display: inline-block;
     padding: 0.05em 0.5em;
     border-radius: 2em;
