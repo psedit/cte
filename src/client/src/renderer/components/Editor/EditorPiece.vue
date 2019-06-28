@@ -338,6 +338,10 @@
       initializeEvents () {
         const cm = this.$options.cminstance
 
+        cm.on('blur', () => {
+          this.focus = false
+        })
+
         cm.on('focus', () => {
           this.focus = true
           const cursorPos = cm.doc.getCursor()
