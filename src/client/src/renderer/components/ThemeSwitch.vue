@@ -10,6 +10,17 @@
  */
 import LightbulbOutline from 'vue-material-design-icons/LightbulbOutline'
 import Lightbulb from 'vue-material-design-icons/Lightbulb'
+
+/**
+ * @module ThemeSwitch
+ *
+ * @vue-data {Boolean} lightTheme - If the value .
+ * @vue-data {Array} completeTree - The file tree structure as recieved by the server.
+ *
+ * @vue-computed {Array} currItems - All items in the current folder.
+ * @vue-computed {String} currPathString - The current path string.
+ * @vue-computed {String} displayPath - The path string that will be displayed at top of the sidebar.
+ */
 export default {
   name: 'theme-button',
   components: {

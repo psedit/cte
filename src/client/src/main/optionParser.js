@@ -1,3 +1,8 @@
+/**
+ * @module optionParser
+ * @desc Parses the locally saved settings.
+ */
+
 const fs = require('fs')
 const {dialog} = require('electron')
 const homedir = require('os').homedir()
