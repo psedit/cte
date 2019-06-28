@@ -477,7 +477,7 @@
 }
 
 .CodeMirror-cursor {
-  border-left: 4px solid var(--user-color) !important;
+  border-left: 2px solid var(--user-color) !important;
 }
 
 .user-gutter {
