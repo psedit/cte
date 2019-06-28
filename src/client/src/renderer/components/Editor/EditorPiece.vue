@@ -364,6 +364,8 @@
           if (!this.focus) return
           const cursorPos = cm.doc.getCursor()
 
+          this.$emit('cursorActivity', cm.cursorCoords(true, 'page').top)
+
           connector.send('cursor-move', {
             file_path: this.$store.state.fileTracker.openFile,
             piece_id: this.pieces[this.index].pieceID,
@@ -479,6 +481,10 @@
   background-color: #fff;
   pointer-events: none;
   position: absolute;
+}
+
+.CodeMirror-linenumbers {
+  min-width: 3em;
 }
 
 .CodeMirror:not(.CodeMirror-focused) .CodeMirror-activeline-background{
