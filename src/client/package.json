@@ -1,9 +1,9 @@
 {
   "name": "teamcode",
   "version": "0.0.1",
-  "author": "groep A",
+  "contributors": ["Mark Bebawy", "Martijn Besamusca", "Maxim van den Berg", "Chris Bras", "Sam van Kampen", "Frederick Kreuk", "Sverre Kroesen", "Folkert van Verseveld", "Mund Vetter", "Robin Wacanno", "Jim Wagemans"],
   "description": "the client of cte",
-  "license": null,
+  "license": "SEE LICENSE IN <COPYING.md>",
   "main": "./dist/electron/main.js",
   "scripts": {
     "build": "node .electron-vue/build.js && electron-builder",
