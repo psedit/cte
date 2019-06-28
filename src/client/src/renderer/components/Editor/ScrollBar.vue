@@ -86,6 +86,6 @@
   position: relative;
   width: 100%;
   border-radius: .25em;
-  background-color: #f00;
+  background-color: #999;
 }
 </style>

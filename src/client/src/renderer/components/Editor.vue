@@ -20,6 +20,7 @@
           @lockDragEnd="lockDragEnd"
           @mounted="editorMount"
           @viewportChange="editorViewPortChange"
+          @cursorActivity="keepYInView"
           @update="editorUpdate"
           ref="editorPieces"
         />
@@ -105,6 +106,14 @@
       }
     },
     methods: {
+      keepYInView (y) {
+        const top = 16 * 1.3 * 2
+        if (y < top) {
+          this.scrollPos -= top + 16 * 1.3 - y
+        } else if (y > this.$el.clientHeight + top - 32 * 1.3) {
+          this.scrollPos -= this.$el.clientHeight + top - 32 * 1.3 - y
+        }
+      },
       /* Update the line numbers for each piece.
        */
       editorViewPortChange (index) {
@@ -308,7 +317,6 @@
   position: relative;
   width: auto;
   overflow-y: visible;
-  transition: transform linear 100ms;
   // padding-bottom: 1000px;
   // min-height: 1000000pt;
 }
