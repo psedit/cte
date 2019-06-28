@@ -79,6 +79,7 @@
        * handle changing cursors.
        */
       filePath (val) {
+        this.scrollPos = 0
         this.$store.commit('emptyCursors')
         if (val === '') return
 
