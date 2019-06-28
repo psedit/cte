@@ -1,6 +1,6 @@
 {
   "name": "teamcode",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "contributors": ["Mark Bebawy", "Martijn Besamusca", "Maxim van den Berg", "Chris Bras", "Sam van Kampen", "Frederick Kreuk", "Sverre Kroesen", "Folkert van Verseveld", "Mund Vetter", "Robin Wacanno", "Jim Wagemans"],
   "description": "the client of cte",
   "license": "SEE LICENSE IN <COPYING.md>",
