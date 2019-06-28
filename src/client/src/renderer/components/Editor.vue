@@ -4,7 +4,7 @@
     <add-piece-button class="add-piece-button-top"/>
     <scroll-bar :max="scrollHeight" v-model="scrollPos" ref="scrollbar"/>
 
-    <div class="editor-pieces" ref="editorPiecesList" :style="{transform: `translateY(${-scrollPos}px)`}">
+    <div class="editor-pieces" ref="editorPiecesList" :style="{transform: `translateY(${-scrollPos}px)`}" v-show="ready">
       <transition-group name="swap" tag="editorPieceGroup">
         <editor-piece class="editor-piece"
           v-for="(piece, index) in pieces"
@@ -26,15 +26,17 @@
         />
       </transition-group>
     </div>
-    <!--<div id="placeholder" v-if="!this.ready">⇚ Select a file</div>-->
+
+    <placeholder id="placeholder" v-if="!this.ready" />
+
     <div class="user-list" v-if="pieces.length > 0">
       <div
         class="user-list-item"
         v-for="cursor in cursors"
         :key="cursor.username"
-        :title="cursor.username"
+        :title="cursor.username.replace(/[0-9]/g, '').replace(/_/g, '')"
         :style="{borderColor: cursor.color}"
-      >{{ cursor.username.toUpperCase() }}</div>
+      >{{ cursor.username.toUpperCase().replace(/[0-9]/g, '').replace(/_/g, '') }}</div>
     </div>
   </div>
 </template>
@@ -49,10 +51,12 @@
   import { convertChangeToJS, edit, rangeToAnchoredLength } from '../../main/pieceTable'
   import AddPieceButton from './Editor/AddPieceButton'
   import ScrollBar from './Editor/ScrollBar'
+  import Placeholder from './Editor/Placeholder'
 
   export default {
     name: 'Editor',
     components: {
+      Placeholder,
       EditorPiece,
       ThemeSwitch,
       AddPieceButton,
@@ -216,7 +220,7 @@
 
     computed: {
       ready () {
-        return this.code !== undefined && this.code !== ''
+        return this.pieces.length > 0
       },
       username () {
         return this.$store.state.user.username
@@ -357,22 +361,6 @@
   transition: all 1s;
   // max-height: 0;
   display: none;
-}
-
-#placeholder {
-  font-size: 3em;
-  height: 100%;
-  width: 100%;
-  line-height: 100%;
-  color: #555;
-  text-align: center;
-
-  &:before {
-    content: "";
-    display: inline-block;
-    height: 100%;
-    vertical-align: middle;
-  }
 }
 
 .user-list {
