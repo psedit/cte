@@ -37,7 +37,7 @@ class Filesystem(Service):
     - Clients can (and are required to) join specific files to gain access to
       its contents and functions ;
     - Cursor locations are stored and broadcasted to users;
-    -  Clients can request locks in files, and
+    - Clients can request locks in files, and
     - Clients can update the file content in their locks;
     - Clients can add, remove or rename files;
     - Clients can download all files on the server.
@@ -50,8 +50,9 @@ class Filesystem(Service):
         # Check server config for root directory
         # TODO: retrieve from server
         self.root_dir: str = os.path.realpath('file_root')
-        os.makedirs(self.root_dir, exist_ok=True)
-        self.files: Dict[str, ServerFile] = {}
+        if not os.path.exists(self.root_dir):
+            os.makedirs(self.root_dir, exist_ok=True)
+        files: Dict[str, ServerFile] = {}
 
     #
     # FILE I/O
@@ -538,15 +539,19 @@ class Filesystem(Service):
 
         # Update the file paths within memory.
         if self._isdir(old_path):
-            for p in self.files.keys():
+            files_new = {}
+            for p in self.files:
                 if p.startswith(old_path):
                     p_new = p.replace(old_path, new_path, 1)
 
                     self.files[p].change_file_path(p_new)
                     self.files[p_new] = self.files[p]
-                    del self.files[p]
+                else:
+                    files_new[p] = self.files[p]
+
+            self.files = files_new
         else:
-            if old_path in self.files.keys():
+            if old_path in self.files:
                 self.files[old_path].change_file_path(new_path)
                 self.files[new_path] = self.files[old_path]
                 del self.files[old_path]
@@ -560,9 +565,11 @@ class Filesystem(Service):
         if self._isdir(old_path):
             shutil.rmtree(old_abs)
 
-            for p in self.files.keys():
-                if p.startswith(old_path):
-                    del self.files[p]
+            files_new = {}
+            for p in self.files:
+                if not p.startswith(old_path):
+                    files_new[p] = self.files[p]
+            self.files = files_new
         else:
             os.remove(old_abs)
 
@@ -648,7 +655,7 @@ class Filesystem(Service):
 
         prev_table = str(self.files[path].pt)
         prev_cursors = str(self.files[path].cursors)
-        
+
         try:
             lock_id = self.files[path].add_lock(piece_id, offset,
                                                 length, username)
@@ -665,7 +672,7 @@ class Filesystem(Service):
             self._error("Cursor repositioning has failed, possible table "
                         "divergence at the client side.")
             return
-        
+
         self._send_lock_response(path, True, address)
         self._update_and_broadcast_piece_table(path, [lock_id])
         self._broadcast_file_cursors(path)

@@ -24,4 +24,17 @@ Our minimal viable product consists of the following:
 
 ## Credits
 
-See COPYING.md for all names
+TeamCode was written by:
+* Mark Bebawy
+* Martijn Besamusca
+* Maxim van den Berg
+* Chris Bras
+* Sam van Kampen
+* Frederick Kreuk
+* Sverre Kroesen
+* Folkert van Verseveld
+* Mund Vetter
+* Robin Wacanno
+* Jim Wagemans
+
+See LICENSE for legal information about using our product.

@@ -20,7 +20,15 @@ signal.signal(signal.SIGUSR1, handler)
 
 
 def list_ser(obj):
-    """ Try serializing unknown objects as lists. """
+    """
+    Try serializing unknown objects as lists.
+
+    This function is here because we use some dataclasses which are not, by
+    default, JSON serializable. They can be iterated over, however, and contain
+    only JSON serializable objects. Therefore, we simply turn them into lists
+    and pass them on to the JSON. This also works well client-side, as the
+    dataclasses replaced plain lists.
+    """
     return [*obj]
 
 
