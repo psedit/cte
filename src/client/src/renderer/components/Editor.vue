@@ -96,7 +96,16 @@
           }
         })
       },
-
+      pieces () {
+        let updateLines = () => {
+          this.$refs.editorPieces.forEach(piece => {
+            if (!piece) return
+            piece.updateLineNumbers()
+          })
+        }
+        this.$nextTick(updateLines)
+        setTimeout(updateLines, 10)
+      },
       scrollPos () {
         if (this.scrollPos < 0) {
           this.scrollPos = 0
