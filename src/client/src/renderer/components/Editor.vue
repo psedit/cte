@@ -32,9 +32,9 @@
         class="user-list-item"
         v-for="cursor in cursors"
         :key="cursor.username"
-        :title="cursor.username"
+        :title="cursor.username.replace(/[0-9]/g, '').replace(/_/g, '')"
         :style="{borderColor: cursor.color}"
-      >{{ cursor.username.toUpperCase() }}</div>
+      >{{ cursor.username.toUpperCase().replace(/[0-9]/g, '').replace(/_/g, '') }}</div>
     </div>
   </div>
 </template>
