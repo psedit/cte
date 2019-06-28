@@ -15,7 +15,8 @@
    *
    * @module AddPieceButton
    *
-   * @vue-prop {String} [pieceID=''] - The piece ID this button appends a piece to.
+   * @vue-prop {String} [pieceID=''] - The piece ID this button appends a piece to. Can be empty if you want to prepend
+   *                                   a piece to the entire document.
    */
 
   export default {
@@ -30,6 +31,9 @@
       }
     },
     methods: {
+      /**
+       * Sends a request to the server.
+       */
       click () {
         Connector.send('file-lock-insert-request', {
           file_path: this.$store.state.fileTracker.openFile,

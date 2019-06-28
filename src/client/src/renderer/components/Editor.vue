@@ -42,7 +42,6 @@
 </template>
 
 <script>
-  // import Vue from 'vue'
   import EditorPiece from './Editor/EditorPiece'
   import ThemeSwitch from './ThemeSwitch'
   import convert from './Editor/cursor'
@@ -53,6 +52,27 @@
   import ScrollBar from './Editor/ScrollBar'
   import Placeholder from './Editor/Placeholder'
 
+  /**
+   * @module EditorPiece
+   * @desc The entire editor. Regulates the EditorPieces and scrolling.
+   *
+   * @vue-data {Object} lockDragStartLocation - The start position of the locking region that is being dragged.
+   * @vue-data {Object} lockDragEndLocation - The end position of the locking region that is being dragged.
+   * @vue-data {Number} scrollPos - The position of the scroll-top.
+   *
+   * @vue-watch filePath - Updates the cursor list and scrolling.
+   * @vue-watch pieces - Updates line numbers.
+   * @vue-watch scrollPos - Limits the scroll position to the boundaries of the window.
+   *
+   * @vue-computed {Boolean} ready - True if there is a file shown.
+   * @vue-computed {String} username - The username of the current user.
+   * @vue-computed {Array} pieces - The pieces of the pieceTable
+   * @vue-computed {Object} pieceTable - The full piece table of the loaded file.
+   * @vue-computed {String} filePath - The path of the loaded file.
+   * @vue-computed {Array} cursors - The cursors that are currently in this piece-editor.
+   * @vue-computed {String} lang - The language of the loaded file.
+   * @vue-computed {Number} scrollHeight - The height of the full editor (also the part outside the view window).
+   */
   export default {
     name: 'Editor',
     components: {
@@ -62,15 +82,11 @@
       AddPieceButton,
       ScrollBar
     },
-    /**
-     * Data properties
-     * @returns {{dragList: null, lockDragStartLocation: null, lockDragEndLocation: null}}
-     */
+
     data () {
       return {
         lockDragStartLocation: null,
         lockDragEndLocation: null,
-        dragList: null,
         lightTheme: false,
         scrollPos: 0
       }
@@ -119,6 +135,10 @@
       }
     },
     methods: {
+      /**
+       * Scrolls to a position so that objects on the y coordinate are on screen
+       * @param {Number} y - A vertical window relative position.
+       */
       keepYInView (y) {
         const top = 16 * 1.3 * 2
         if (y < top) {
@@ -127,7 +147,9 @@
           this.scrollPos -= this.$el.clientHeight + top - 32 * 1.3 - y
         }
       },
-      /* Update the line numbers for each piece.
+      /**
+       * Updates linenumbers if there is an line added or removed.
+       * @param {Number} index - The index of the piece that has been changed.
        */
       editorViewPortChange (index) {
         setTimeout(() => {
@@ -137,16 +159,32 @@
           })
         }, 10)
       },
+      /**
+       * Changes theme.
+       *
+       * @param {Boolean} lightTheme - If true, it will switch to light theme, otherwise to a dark theme.
+       */
       themeChange (lightTheme) {
         this.lightTheme = lightTheme
       },
+      /**
+       * Initializes an editor after the element has mounted.
+       * @param {EditorPiece} editorPiece - The editor piece wrapper that has been mounted.
+       */
       editorMount (editorPiece) {
         const index = this.$refs.editorPieces.indexOf(editorPiece)
         this.initializeEditor(index)
       },
+      /**
+       * A hook to a update from the editor.
+       */
       editorUpdate () {
       },
 
+      /**
+       * Asynchronously initialises the editors.
+       * @param {Number} index - The index of the piece you want to initialize.
+       */
       async initializeEditor (index) {
         const piece = this.$refs.editorPieces[index]
         piece.lang = this.lang
@@ -156,7 +194,10 @@
         piece.$options.startState = await this.getPreviousState(index)
         return piece.initializeEditor()
       },
-      /* Let the editor piece at index get the state of the previous piece.
+      /**
+       * Returns the last state of the editor.
+       * Is used for syntax highlighting.
+       * @param {Number} index - The index of the piece you want the previous state of.
        */
       async getPreviousState (index) {
         if (index === 0) return undefined
@@ -167,14 +208,9 @@
         }
         return cm.getStateAfter(cm.lastLine(), true)
       },
-      /* request to lock part of the file.
-       */
-      requestLock (startId, startOffset, endId, endOffset) {
-        let payload = { start: {id: startId, offset: startOffset},
-          end: {id: endId, offset: endOffset}}
-        this.$store.dispatch('requestLock', payload)
-      },
-      /* Handles the selection of a locking area.
+      /**
+       *  Handles the selection of a locking area.
+       *  @param {} line
        */
       lockDragStart (line, index) {
         this.lockDragStartLocation = {piece: index, line}
@@ -187,7 +223,10 @@
           }
         }
       },
-      /* Requests lock when region is selected
+      /**
+       * Requests lock when region is selected
+       * @param {Number} line - The relative line on which the user has released their drag.
+       * @param {Number} index - The index of the piece in which the user has released their drag.
        */
       lockDragEnd (line, index) {
         if (this.lockDragStartLocation === null) return
@@ -205,7 +244,8 @@
 
         this.lockDragCancel()
       },
-      /* Cancels lock selection.
+      /**
+       * Cancels lock selection.
        */
       lockDragCancel () {
         if (this.lockDragStartLocation) {
