@@ -15,7 +15,10 @@
   import ErrorMessenger from './ErrorMessenger'
   import connector from '../../main/connector.js'
   const {dialog} = require('electron').remote
-
+  /**
+   * @module LandingPage
+   * @desc The page module you first see.
+   */
   export default {
     name: 'landing-page',
     components: { Editor, Sidebar, Tabs, ErrorMessenger },
@@ -38,6 +41,10 @@
       })
     },
     methods: {
+      /**
+       * Opens an link
+       * @param link - the URL you want to go to.
+       */
       open (link) {
         this.$electron.shell.openExternal(link)
       }

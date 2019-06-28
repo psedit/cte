@@ -7,6 +7,10 @@
 
   export default {
     name: 'error-messenger',
+    /**
+     * @module ErrorMessenger
+     * @desc Displays error toasts if there is an error.
+     */
     mounted () {
       connector.addEventListener('open', () => {
         /* Start listening to error messages and show a pop up with the message
@@ -23,6 +27,6 @@
 </script>
 
 <style>
-  
+
 </style>
 

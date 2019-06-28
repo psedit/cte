@@ -13,13 +13,12 @@ import Lightbulb from 'vue-material-design-icons/Lightbulb'
 
 /**
  * @module ThemeSwitch
+ * @desc A switch to switch between themes.
  *
- * @vue-data {Boolean} lightTheme - If the value .
- * @vue-data {Array} completeTree - The file tree structure as recieved by the server.
+ * @vue-data {Boolean} lightTheme - True if lighttheme is selected, false otherwise.
  *
- * @vue-computed {Array} currItems - All items in the current folder.
+ * @vue-computed {String} tooltip - The tooltip text that is displayed on the button.
  * @vue-computed {String} currPathString - The current path string.
- * @vue-computed {String} displayPath - The path string that will be displayed at top of the sidebar.
  */
 export default {
   name: 'theme-button',
@@ -42,10 +41,16 @@ export default {
     }
   },
   methods: {
+    /**
+     * Switches to light theme
+     */
     turnOn () {
       this.lightTheme = true
       this.$emit('theme-change', this.lightTheme)
     },
+    /**
+     * Switches to dark theme
+     */
     turnOff () {
       this.lightTheme = false
       this.$emit('theme-change', this.lightTheme)

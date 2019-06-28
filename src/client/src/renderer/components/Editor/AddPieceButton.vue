@@ -9,6 +9,15 @@
 <script>
   import LockPlusIcon from 'vue-material-design-icons/LockPlus'
   import Connector from './../../../../src/main/connector'
+  /**
+   * Displays a list of all files, i.e., the file tree, as seen on the sidebar.
+   * Also manages everything relevant to the file tree.
+   *
+   * @module AddPieceButton
+   *
+   * @vue-prop {String} [pieceID=''] - The piece ID this button appends a piece to.
+   */
+
   export default {
     name: 'AddPieceButton',
     components: {
