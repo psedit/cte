@@ -15,6 +15,12 @@
 <style scoped lang="scss">
   .template {
     position: relative;
+    font-size: 3em;
+    height: 100%;
+    width: 100%;
+    line-height: 100%;
+    color: #555;
+    text-align: center;
   }
   .logo {
     background-image: url("../../assets/logoGroot.png");

@@ -14,7 +14,7 @@
           :theme="lightTheme"
           :pieces="pieces"
           :dragStart="lockDragStartLocation"
-          :dragEnd="lockDragEndLocatiorn"
+          :dragEnd="lockDragEndLocation"
           @lockDragStart="lockDragStart"
           @lockDragUpdate="lockDragUpdate"
           @lockDragEnd="lockDragEnd"
@@ -352,15 +352,6 @@
   transition: all 1s;
   // max-height: 0;
   display: none;
-}
-
-#placeholder {
-  font-size: 3em;
-  height: 100%;
-  width: 100%;
-  line-height: 100%;
-  color: #555;
-  text-align: center;
 }
 
 .user-list {
