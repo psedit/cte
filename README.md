@@ -13,7 +13,6 @@ Our project is a real-time collaborative text editor, intended for programming i
 
 See [this wiki](https://github.com/psedit/cte/wiki) for the most up-to-date version.
 Each release will be published on [this page](https://github.com/psedit/cte/releases).
-Currently, the latest version is still in a pre-alpha state.
 
 *Please don't use this product in a production environment. We have created this in merely 4 weeks and we cannot guarantee it to be safe or secure in any way. We are not responsible for any damage that may arise from using this product.*
 
